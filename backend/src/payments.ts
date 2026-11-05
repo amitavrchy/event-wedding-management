@@ -15,6 +15,7 @@ import { AuthGuard } from "./auth";
 import { ownEvent } from "./access";
 import { commission } from "./domain";
 import { parse, z } from "./validation";
+import { publishBooking } from "./realtime";
 @Controller("payments")
 export class PaymentsController {
   constructor(private db: Database) {}
@@ -122,7 +123,7 @@ export class PaymentsController {
     return this.capture(data.paymentId);
   }
   async capture(id: string) {
-    return this.db.$transaction(async (tx) => {
+    const result = await this.db.$transaction(async (tx) => {
       const payment = await tx.payment.findUniqueOrThrow({ where: { id } });
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${payment.bookingId}))`;
       const fresh = await tx.payment.findUniqueOrThrow({ where: { id } });
@@ -166,5 +167,10 @@ export class PaymentsController {
       });
       return tx.payment.update({ where: { id }, data: { status: "CAPTURED" } });
     });
+    const booking = await this.db.booking.findUniqueOrThrow({
+      where: { id: result.bookingId },
+    });
+    await publishBooking(this.db, booking.eventId, booking.vendorId);
+    return result;
   }
 }

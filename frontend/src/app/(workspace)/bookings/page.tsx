@@ -20,6 +20,7 @@ export default function Bookings() {
     [busy, setBusy] = useState(""),
     [review, setReview] = useState<Booking | null>(null),
     [cancel, setCancel] = useState<Booking | null>(null);
+  const [reason, setReason] = useState("");
   async function load() {
     try {
       setItems(await api<Booking[]>("bookings"));
@@ -54,6 +55,17 @@ export default function Bookings() {
   async function status(b: Booking, status: string) {
     setBusy(b.id);
     try {
+      if (status === "CANCELLED" && b.status === "CONFIRMED") {
+        await api("disputes", {
+          method: "POST",
+          body: json({ bookingId: b.id, reason }),
+        });
+        notify(
+          "Cancellation review requested. An administrator will review your refund.",
+        );
+        setCancel(null);
+        return;
+      }
       await api(`bookings/${b.id}/status`, {
         method: "PATCH",
         body: json({ status }),
@@ -180,6 +192,17 @@ export default function Bookings() {
       )}
       {cancel && (
         <Modal title="Cancel this booking?" onClose={() => setCancel(null)}>
+          {cancel.status === "CONFIRMED" && (
+            <Field label="Reason for cancellation review">
+              <textarea
+                minLength={10}
+                maxLength={1000}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Tell us what changed (at least 10 characters)"
+              />
+            </Field>
+          )}
           <p>
             Cancel your reservation with{" "}
             {cancel.service.vendor?.businessName || cancel.service.title}?
@@ -194,7 +217,9 @@ export default function Bookings() {
               busy={busy === cancel.id}
               onClick={() => void status(cancel, "CANCELLED")}
             >
-              Confirm cancellation
+              {cancel.status === "CONFIRMED"
+                ? "Request cancellation review"
+                : "Confirm cancellation"}
             </Button>
           </div>
         </Modal>

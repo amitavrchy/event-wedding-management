@@ -168,9 +168,6 @@ export default function Settings() {
             <div className="account-note">
               <strong>{user?.fullName}</strong>
               <p>
-                Event ID: <code>{event.id}</code>
-              </p>
-              <p>
                 Session: {user?.role.toLowerCase().replace("_", " ")} ·
                 Asia/Dhaka
               </p>

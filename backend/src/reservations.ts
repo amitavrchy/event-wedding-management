@@ -8,6 +8,7 @@ export async function reserve(
     serviceId: string;
     startAt: string;
     policyFlags: string[];
+    quoteId?: string;
   },
   discountBps = 0,
 ) {
@@ -50,9 +51,27 @@ export async function reserve(
     throw new ConflictException(
       `${service.title} is already reserved for that time`,
     );
-  const priceMinor = Math.round(
+  let priceMinor = Math.round(
     (service.basePriceMinor * (10000 - discountBps)) / 10000,
   );
+  if (data.quoteId) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${data.quoteId}))`;
+    const quote = await tx.quote.findUniqueOrThrow({
+      where: { id: data.quoteId },
+    });
+    if (
+      quote.eventId !== data.eventId ||
+      quote.vendorId !== service.vendorId ||
+      quote.status !== "ACCEPTED" ||
+      quote.expiresAt < new Date()
+    )
+      throw new BadRequestException(
+        "This quote is unavailable for this booking",
+      );
+    if (await tx.booking.findUnique({ where: { quoteId: data.quoteId } }))
+      throw new ConflictException("This quote has already been booked");
+    priceMinor = quote.amountMinor;
+  }
   return tx.booking.create({
     data: {
       ...data,

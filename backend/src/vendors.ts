@@ -17,25 +17,83 @@ import { amount, date, parse, z } from "./validation";
 @Controller("vendors")
 export class VendorsController {
   constructor(private db: Database) {}
+  @Get("mine") @UseGuards(AuthGuard) mine(@Req() req: any) {
+    return this.db.vendor.findMany({
+      where: { ownerId: req.user.sub },
+      include: { services: true },
+    });
+  }
+  @Get(":id/clients") @UseGuards(AuthGuard) async clients(
+    @Req() req: any,
+    @Param("id") id: string,
+  ) {
+    await ownVendor(this.db, id, req.user);
+    const conversations = await this.db.conversation.findMany({
+      where: { vendorId: id },
+      select: { eventId: true },
+    });
+    return this.db.event.findMany({
+      where: { id: { in: conversations.map((c) => c.eventId) } },
+      select: { id: true, title: true },
+    });
+  }
   @Get() async list(@Query() query: any) {
     const q = parse(
       z.object({
         category: z.string().max(50).optional(),
         city: z.string().max(80).optional(),
         q: z.string().max(100).optional(),
+        startAt: date.optional(),
       }),
       query,
     );
-    return this.db.vendor.findMany({
+    const vendors = await this.db.vendor.findMany({
       where: {
         status: "ACTIVE",
         category: q.category,
         city: q.city,
         businessName: q.q ? { contains: q.q, mode: "insensitive" } : undefined,
       },
-      include: { services: true },
+      include: {
+        services: {
+          include: {
+            blocks: true,
+            bookings: {
+              where: {
+                OR: [
+                  { status: "CONFIRMED" },
+                  {
+                    status: { in: ["HELD", "AWAITING_ADVANCE"] },
+                    holdExpiresAt: { gt: new Date() },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
       take: 100,
     });
+    const start = q.startAt ? new Date(q.startAt) : null;
+    return vendors
+      .map((v) => ({
+        ...v,
+        services: v.services
+          .filter((s) => {
+            if (!start) return true;
+            const end = new Date(
+              +start + (s.durationHours + s.bufferHours) * 3600000,
+            );
+            return (
+              !s.blocks.some((b) => b.startAt < end && b.endAt > start) &&
+              !s.bookings.some(
+                (b) => b.startAt < end && b.reservedUntil > start,
+              )
+            );
+          })
+          .map(({ blocks, bookings, ...service }) => service),
+      }))
+      .filter((v) => !start || v.services.length);
   }
   @Get(":id") async get(@Param("id") id: string) {
     return this.db.vendor.findFirst({
@@ -110,7 +168,10 @@ export class VendorsController {
     const data = parse(
       z.object({
         title: z.string().min(2).max(100),
-        basePriceMinor: amount,
+        basePriceMinor: amount.refine(
+          (n) => n > 0,
+          "Service price must be positive",
+        ),
         durationHours: z.number().int().min(1).max(72),
         bufferHours: z.number().int().min(0).max(24).default(1),
         capacity: z.number().int().positive().optional(),
@@ -133,7 +194,7 @@ export class VendorsController {
           endAt: date,
           reason: z.string().max(200).optional(),
         })
-        .refine((d) => d.startAt < d.endAt),
+        .refine((d) => new Date(d.startAt) < new Date(d.endAt)),
       body,
     );
     const service = await this.db.vendorService.findFirst({

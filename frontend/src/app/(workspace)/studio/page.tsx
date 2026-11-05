@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Store, Plus, CalendarDays, FileText } from "lucide-react";
 import { useApp } from "@/lib/context";
 import { api, json } from "@/lib/api";
 import { localDateToISO } from "@/lib/format";
+import { Vendor } from "@/lib/types";
 import {
   Button,
   CardHeading,
@@ -17,6 +18,26 @@ export default function Studio() {
   const [tab, setTab] = useState("business"),
     [busy, setBusy] = useState(false),
     [vendorId, setVendorId] = useState("");
+  const [businesses, setBusinesses] = useState<Vendor[]>([]),
+    [clients, setClients] = useState<{ id: string; title: string }[]>([]);
+  async function loadBusinesses() {
+    try {
+      const mine = await api<Vendor[]>("vendors/mine");
+      setBusinesses(mine);
+      setVendorId((current) => current || mine[0]?.id || "");
+    } catch (e) {
+      notify((e as Error).message, true);
+    }
+  }
+  useEffect(() => {
+    if (user?.role === "VENDOR") void loadBusinesses();
+  }, [user]);
+  useEffect(() => {
+    if (!vendorId) return;
+    void api<typeof clients>(`vendors/${vendorId}/clients`)
+      .then(setClients)
+      .catch((e) => notify(e.message, true));
+  }, [vendorId, notify]);
   if (user?.role !== "VENDOR")
     return <Empty title="This space is for wedding professionals" />;
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -66,6 +87,7 @@ export default function Studio() {
         body: json(body),
       });
       if (tab === "business") setVendorId(result.id);
+      await loadBusinesses();
       await refresh();
       notify(
         tab === "business"
@@ -89,9 +111,9 @@ export default function Studio() {
       <div className="info-note">
         <Store size={20} />
         <span>
-          New businesses need administrator approval. Your vendor ID is returned
-          after applying. Hosts can share their event ID from their workspace
-          URL or settings.
+          New businesses need administrator approval. Choose your business below
+          to add services or manage dates. Your clients appear after they start
+          a conversation with you.
         </span>
       </div>
       <div className="tabs">
@@ -124,12 +146,19 @@ export default function Studio() {
         />
         <form className="form-stack padded" onSubmit={submit}>
           {tab !== "business" && (
-            <Field label="Your vendor ID">
-              <input
+            <Field label="Your business">
+              <select
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
                 required
-              />
+              >
+                <option value="">Choose a business</option>
+                {businesses.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.businessName} · {v.status.toLowerCase()}
+                  </option>
+                ))}
+              </select>
             </Field>
           )}
           {tab === "business" && (
@@ -222,8 +251,16 @@ export default function Studio() {
           )}
           {tab === "calendar" && (
             <>
-              <Field label="Service ID">
-                <input name="serviceId" required />
+              <Field label="Service">
+                <select name="serviceId" required>
+                  {businesses
+                    .find((v) => v.id === vendorId)
+                    ?.services.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.title}
+                      </option>
+                    ))}
+                </select>
               </Field>
               <Field label="Unavailable from (Asia/Dhaka)">
                 <input name="startAt" type="datetime-local" required />
@@ -238,8 +275,15 @@ export default function Studio() {
           )}
           {tab === "quote" && (
             <>
-              <Field label="Host’s event ID">
-                <input name="eventId" required />
+              <Field label="Client celebration">
+                <select name="eventId" required>
+                  <option value="">Choose a client celebration</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
               </Field>
               <Field label="Quote description">
                 <input name="label" required />
@@ -267,11 +311,6 @@ export default function Studio() {
                 ? "calendar block"
                 : tab}
           </Button>
-          {vendorId && (
-            <div className="info-note">
-              Your vendor ID: <code>{vendorId}</code>
-            </div>
-          )}
         </form>
       </section>
       <div className="button-group section-gap">
@@ -285,11 +324,10 @@ export default function Studio() {
         </Link>
       </div>
       <details className="calendar-details section-gap">
-        <summary>Published service IDs</summary>
-        {vendors.map((v) => (
+        <summary>Your published services</summary>
+        {businesses.map((v) => (
           <p key={v.id}>
-            {v.businessName}:{" "}
-            {v.services.map((s) => `${s.title} (${s.id})`).join(", ")}
+            {v.businessName}: {v.services.map((s) => s.title).join(", ")}
           </p>
         ))}
       </details>

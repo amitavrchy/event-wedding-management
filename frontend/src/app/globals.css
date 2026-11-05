@@ -3120,6 +3120,23 @@ td small {
   flex-direction: column;
   gap: 15px;
 }
+.availability-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #9b8377;
+  max-width: 210px;
+  flex: 1;
+  min-width: 160px;
+}
+.availability-field input {
+  font-size: 14px;
+  background: #fff;
+}
+.filter-bar:has(.availability-field) {
+  align-items: flex-end;
+}
 .notice-card {
   display: flex;
   align-items: center;

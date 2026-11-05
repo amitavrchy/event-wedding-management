@@ -15,12 +15,14 @@ import {
   PageHeading,
 } from "@/components/ui";
 import { CollectionCheckout } from "@/components/collection-checkout";
+import { QuoteCheckout } from "@/components/quote-checkout";
 export default function Packages() {
   const { event, notify, vendors } = useApp();
   const [bundles, setBundles] = useState<Bundle[]>([]),
     [quotes, setQuotes] = useState<Quote[]>([]),
     [selected, setSelected] = useState<Bundle | null>(null),
     [composing, setComposing] = useState(false),
+    [bookingQuote, setBookingQuote] = useState<Quote | null>(null),
     [busy, setBusy] = useState("");
   async function load() {
     try {
@@ -106,6 +108,15 @@ export default function Packages() {
               </div>
               <strong>{taka(q.amountMinor)}</strong>
               <Badge value={q.status} />
+              {q.status === "ACCEPTED" &&
+                vendors.some((v) => v.id === q.vendorId) && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setBookingQuote(q)}
+                  >
+                    Book this quote
+                  </Button>
+                )}
               {q.status === "SENT" && (
                 <div className="button-group">
                   {["ACCEPTED", "REJECTED"].map((status) => (
@@ -200,6 +211,13 @@ export default function Packages() {
         <CollectionCheckout
           bundle={selected}
           onClose={() => setSelected(null)}
+        />
+      )}
+      {bookingQuote && (
+        <QuoteCheckout
+          quote={bookingQuote}
+          vendor={vendors.find((v) => v.id === bookingQuote.vendorId)!}
+          onClose={() => setBookingQuote(null)}
         />
       )}
     </>

@@ -12,6 +12,7 @@ import { Database } from "./prisma";
 import { AuthGuard, Identity } from "./auth";
 import { ownEvent, ownVendor } from "./access";
 import { parse, z } from "./validation";
+import { publishMessage } from "./realtime";
 @Controller("conversations")
 @UseGuards(AuthGuard)
 export class MessagesController {
@@ -59,11 +60,13 @@ export class MessagesController {
     @Param("id") id: string,
   ) {
     await this.access(id, req.user);
-    return this.db.message.findMany({
-      where: { conversationId: id },
-      orderBy: { createdAt: "asc" },
-      take: 200,
-    });
+    return (
+      await this.db.message.findMany({
+        where: { conversationId: id },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      })
+    ).reverse();
   }
   @Post(":id/messages") async send(
     @Req() req: any,
@@ -75,9 +78,11 @@ export class MessagesController {
       z.object({ body: z.string().trim().min(1).max(4000) }),
       body,
     );
-    return this.db.message.create({
+    const message = await this.db.message.create({
       data: { ...data, conversationId: id, senderId: req.user.sub },
     });
+    publishMessage(id, message);
+    return message;
   }
   async access(id: string, user: Identity) {
     const c = await this.db.conversation.findUniqueOrThrow({ where: { id } });

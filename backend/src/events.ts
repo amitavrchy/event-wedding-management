@@ -83,7 +83,10 @@ export class EventsController {
           endsAt: date,
           venueName: z.string().max(150).optional(),
         })
-        .refine((d) => d.startsAt < d.endsAt, "End must follow start"),
+        .refine(
+          (d) => new Date(d.startsAt) < new Date(d.endsAt),
+          "End must follow start",
+        ),
       body,
     );
     return this.db.eventDay.create({ data: { ...data, eventId: id } });

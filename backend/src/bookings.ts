@@ -16,6 +16,7 @@ import { ownEvent, ownVendor } from "./access";
 import { activeStatuses } from "./domain";
 import { date, parse, z } from "./validation";
 import { reserve } from "./reservations";
+import { publishBooking } from "./realtime";
 @Controller("bookings")
 @UseGuards(AuthGuard)
 export class BookingsController {
@@ -36,6 +37,7 @@ export class BookingsController {
         eventId: z.string(),
         serviceId: z.string(),
         startAt: date,
+        quoteId: z.string().optional(),
         policyFlags: z
           .array(z.enum(["RAIN_DATE", "FORCE_MAJEURE"]))
           .default([]),
@@ -43,7 +45,9 @@ export class BookingsController {
       body,
     );
     await ownEvent(this.db, data.eventId, req.user);
-    return this.db.$transaction((tx) => reserve(tx, data));
+    const booking = await this.db.$transaction((tx) => reserve(tx, data));
+    await publishBooking(this.db, booking.eventId, booking.vendorId);
+    return booking;
   }
   @Patch(":id/status") async status(
     @Req() req: any,

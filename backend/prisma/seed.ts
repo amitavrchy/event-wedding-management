@@ -134,6 +134,14 @@ async function seed() {
       rsvpDeadline: new Date("2027-02-01T18:00:00+06:00"),
     },
   });
+  const grand = await db.vendor.findUniqueOrThrow({
+    where: { slug: "the-grand-palace" },
+  });
+  await db.conversation.upsert({
+    where: { eventId_vendorId: { eventId: event.id, vendorId: grand.id } },
+    update: {},
+    create: { eventId: event.id, vendorId: grand.id },
+  });
   for (const [id, name, date, venue] of [
     ["holud", "Gaye Holud", "2027-02-12", "Rosewood Estate"],
     ["wedding", "Wedding ceremony", "2027-02-14", "The Grand Palace"],

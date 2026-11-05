@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { api } from "./api";
@@ -25,6 +26,7 @@ type AppState = {
 };
 const Context = createContext<AppState | null>(null);
 export function Provider({ children }: { children: React.ReactNode }) {
+  const generation = useRef(0);
   const [user, setUser] = useState<User | null>(null),
     [ready, setReady] = useState(false),
     [events, setEvents] = useState<Event[]>([]),
@@ -44,6 +46,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
     } catch {}
     setReady(true);
     const expire = () => {
+      generation.current++;
       setUser(null);
       setEvent(null);
       setEvents([]);
@@ -53,6 +56,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
   }, []);
   const refresh = useCallback(async () => {
     if (!user) return;
+    const request = ++generation.current;
     setLoading(true);
     setError("");
     try {
@@ -60,14 +64,16 @@ export function Provider({ children }: { children: React.ReactNode }) {
         api<Event[]>("events"),
         api<Vendor[]>("vendors"),
       ]);
+      const id = all.find((e) => e.id === selected)?.id || all[0]?.id;
+      const detail = id ? await api<Event>(`events/${id}`) : null;
+      if (request !== generation.current) return;
       setEvents(all);
       setVendors(v);
-      const id = all.find((e) => e.id === selected)?.id || all[0]?.id;
-      setEvent(id ? await api<Event>(`events/${id}`) : null);
+      setEvent(detail);
     } catch (e) {
-      setError((e as Error).message);
+      if (request === generation.current) setError((e as Error).message);
     } finally {
-      setLoading(false);
+      if (request === generation.current) setLoading(false);
     }
   }, [user, selected]);
   useEffect(() => {
@@ -95,6 +101,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
     setUser(u);
   }
   function logout() {
+    generation.current++;
     sessionStorage.removeItem("utsab-token");
     sessionStorage.removeItem("utsab-user");
     setUser(null);

@@ -3,6 +3,22 @@ import { JwtService } from "@nestjs/jwt";
 import { Database } from "./prisma";
 import { Identity } from "./auth";
 import { ownEvent, ownVendor } from "./access";
+let broadcast: Server | undefined;
+export function publishMessage(room: string, message: unknown) {
+  broadcast?.to(room).emit("message", message);
+}
+export async function publishBooking(
+  db: Database,
+  eventId: string,
+  vendorId: string,
+) {
+  const [event, vendor] = await Promise.all([
+    db.event.findUnique({ where: { id: eventId } }),
+    db.vendor.findUnique({ where: { id: vendorId } }),
+  ]);
+  for (const id of [event?.hostId, vendor?.ownerId])
+    if (id) broadcast?.to(`user:${id}`).emit("booking:update", { eventId });
+}
 export function realtime(
   server: any,
   db: Database,
@@ -10,6 +26,7 @@ export function realtime(
   origins: string[],
 ) {
   const io = new Server(server, { cors: { origin: origins } });
+  broadcast = io;
   io.use(async (socket, next) => {
     try {
       socket.data.user = await jwt.verifyAsync(socket.handshake.auth.token);
@@ -19,6 +36,21 @@ export function realtime(
     }
   });
   io.on("connection", (socket) => {
+    void socket.join(`user:${socket.data.user.sub}`);
+    let count = 0,
+      reset = Date.now() + 60000;
+    socket.use((packet, next) => {
+      if (Date.now() > reset) {
+        count = 0;
+        reset = Date.now() + 60000;
+      }
+      if (++count > 60) return next(new Error("Message rate limit exceeded"));
+      next();
+    });
+    socket.on("leave", (id: string) => {
+      if (typeof id === "string" && !id.startsWith("user:"))
+        void socket.leave(id);
+    });
     socket.on("join", async (id: string, ack: (value: any) => void) => {
       try {
         if (typeof id !== "string" || id.length > 100)

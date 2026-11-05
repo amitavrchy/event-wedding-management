@@ -96,6 +96,7 @@ model Booking {
   priceMinor Int
   advanceMinor Int
   category String
+  quoteId String? @unique
   policyFlags String[] @default([])
   createdAt DateTime @default(now())
   @@index([serviceId,startAt,reservedUntil])
@@ -202,4 +203,12 @@ model Notification {
   read Boolean @default(false)
   createdAt DateTime @default(now())
   @@index([recipientId,createdAt])
+}
+model Dispute {
+  id String @id @default(cuid())
+  bookingId String @unique
+  eventId String
+  reason String
+  status String @default("REQUESTED")
+  createdAt DateTime @default(now())
 }

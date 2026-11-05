@@ -23,6 +23,7 @@ import { realtime } from "./realtime";
 import { ApiErrors } from "./errors";
 import { CartController } from "./cart";
 import { NotificationsController } from "./notifications";
+import { DisputesController } from "./disputes";
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   throw new Error("JWT_SECRET must have at least 32 characters");
 @Controller("health")
@@ -62,6 +63,7 @@ class HealthController {
     AdminController,
     CartController,
     NotificationsController,
+    DisputesController,
   ],
   providers: [
     Database,

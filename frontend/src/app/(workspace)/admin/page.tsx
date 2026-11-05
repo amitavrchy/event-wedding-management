@@ -19,19 +19,28 @@ type Ledger = {
   netMinor: number;
   status: string;
 };
+type Dispute = {
+  id: string;
+  bookingId: string;
+  reason: string;
+  status: string;
+};
 export default function Admin() {
   const { user, notify } = useApp();
   const [vendors, setVendors] = useState<Vendor[]>([]),
     [ledger, setLedger] = useState<Ledger[]>([]),
+    [disputes, setDisputes] = useState<Dispute[]>([]),
     [busy, setBusy] = useState("");
   async function load() {
     try {
-      const [v, l] = await Promise.all([
+      const [v, l, d] = await Promise.all([
         api<Vendor[]>("admin/vendors"),
         api<Ledger[]>("admin/ledger"),
+        api<Dispute[]>("disputes"),
       ]);
       setVendors(v);
       setLedger(l);
+      setDisputes(d);
     } catch (e) {
       notify((e as Error).message, true);
     }
@@ -60,7 +69,53 @@ export default function Admin() {
         title="Platform administration"
         description="Review businesses, manage commission rates, and reconcile vendor payouts."
       />
-      <section className="card">
+      <section className="card section-gap">
+        <CardHeading
+          title="Cancellation & refund reviews"
+          subtitle="Approving a sandbox refund reverses its capture and vendor ledger. No real money moves."
+        />
+        {disputes.map((d) => (
+          <div className="quote-row" key={d.id}>
+            <div>
+              <h3>Cancellation review</h3>
+              <p>{d.reason}</p>
+            </div>
+            <Badge value={d.status} />
+            {d.status === "REQUESTED" && (
+              <div className="button-group">
+                {["REFUND", "REJECT"].map((action) => (
+                  <Button
+                    key={action}
+                    variant="secondary"
+                    busy={busy === d.id}
+                    onClick={async () => {
+                      setBusy(d.id);
+                      try {
+                        await api(`disputes/${d.id}/resolve`, {
+                          method: "POST",
+                          body: json({ action }),
+                        });
+                        await load();
+                        notify("Review resolved");
+                      } catch (e) {
+                        notify((e as Error).message, true);
+                      } finally {
+                        setBusy("");
+                      }
+                    }}
+                  >
+                    {action === "REFUND"
+                      ? "Approve sandbox refund"
+                      : "Reject request"}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {!disputes.length && <Empty title="No cancellation reviews pending" />}
+      </section>
+      <section className="card section-gap">
         <CardHeading title="Vendor applications & moderation" />
         <div className="table-scroll">
           <table>
