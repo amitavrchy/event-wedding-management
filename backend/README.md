@@ -33,3 +33,5 @@ npm run verify
 The retained GitHub Actions template is [ci/workflows/ci.yml](ci/workflows/ci.yml). GitHub only discovers workflows at the repository root under `.github/workflows`; automatic GitHub Actions are therefore disabled by the requested two-folder layout. The template can be used by an external runner, and the local verifier remains executable.
 
 Read [docs/OPERATIONS.md](docs/OPERATIONS.md), [docs/API.md](docs/API.md), and [Project_spec.md](Project_spec.md). Seed accounts are for local development only and seeding refuses `NODE_ENV=production`.
+
+The advanced suite is documented in [docs/ADVANCED_SCOPE.md](docs/ADVANCED_SCOPE.md). It includes capacity-safe seating, live run sheets, QR check-in, expiring event/vendor collaboration, account-signed agreements, actual installment capture, lead CRM, recurring blackout calendars, moderated celebration websites, inspiration, recommendations, automations, and financial/activity analytics. The demo planner account is `planner@utsab.local` with the same local seed password.

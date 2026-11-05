@@ -6,6 +6,9 @@ jobs:
   product-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
     services:
       postgres:
         image: postgres:17-alpine
@@ -43,25 +46,34 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
       - run: npm ci
+      - run: npm ci
+        working-directory: frontend
       - run: npm run db:generate
       - run: npm run db:migrate
       - run: npm run db:seed
       - run: npm test
-      - run: npm run build
+      - run: npm run build && npm --prefix ../frontend run build
       - run: npm audit --audit-level=high
+      - run: npm audit --audit-level=high
+        working-directory: frontend
       - run: npx playwright install --with-deps chromium
+        working-directory: frontend
       - name: Start production servers
         run: |
-          npm run start -w backend > /tmp/utsab-api.log 2>&1 &
-          npm run start -w frontend > /tmp/utsab-web.log 2>&1 &
+          npm run start > /tmp/utsab-api.log 2>&1 &
+          npm --prefix ../frontend run start > /tmp/utsab-web.log 2>&1 &
           node scripts/wait-for.mjs http://localhost:4000/api/health http://localhost:3000
       - run: npm run test:e2e
+        working-directory: frontend
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: browser-checks
           path: |
-            artifacts/
-            test-results/
+            frontend/artifacts/
+            frontend/test-results/
           retention-days: 7

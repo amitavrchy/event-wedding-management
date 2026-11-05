@@ -26,4 +26,6 @@ npm run test:e2e
 
 Browser output stays inside `frontend/artifacts/` and `frontend/test-results/`. Fonts remain at least 14px. Motion respects the operating system's reduced-motion setting.
 
+Open **Planning studio** for host tools or **Business suite** for vendor CRM and operations. `Ctrl/⌘ K` opens the command menu. Event selection is preserved per account in the current browser tab. The advanced routes and supported workflows are described in [the feature matrix](../backend/docs/ADVANCED_SCOPE.md).
+
 See [the API reference](../backend/docs/API.md), [operations](../backend/docs/OPERATIONS.md), and [the original specification](../backend/Project_spec.md). Live payment and messaging delivery credentials are environment-specific; sandbox payments do not move real money.

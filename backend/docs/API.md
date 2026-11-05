@@ -4,7 +4,7 @@ Base URL: `http://localhost:4000/api`. Requests and responses are JSON. Protecte
 
 | Method    | Route                           | Behavior                                                  |
 | --------- | ------------------------------- | --------------------------------------------------------- |
-| POST      | `/auth/register`                | `email,password,fullName,role=HOST                        | VENDOR` |
+| POST      | `/auth/register`                | `email,password,fullName,role` (HOST or VENDOR)           |
 | POST      | `/auth/login`                   | `email,password` → token and user                         |
 | GET/POST  | `/events`                       | Owned event list / create                                 |
 | GET/PATCH | `/events/:id`                   | Owned event details / settings                            |
@@ -92,3 +92,51 @@ Socket.IO accepts `{auth:{token}}`. `join(conversationId)` checks conversation o
 `GET /vendors/mine` lists the current vendor?s businesses including pending applications. `GET /vendors/:id/clients` lists client celebrations from existing conversations and requires business ownership. `POST /bookings` accepts an optional `quoteId`; it must be an accepted, unexpired quote for the same event and vendor and may be booked only once.
 
 `GET /disputes` lists owned cancellation reviews (all for administrators). `POST /disputes` accepts `{bookingId,reason}` for a paid booking. `POST /disputes/:id/resolve` accepts `{action:"REFUND"}` or `{action:"REJECT"}` and requires an administrator. Refunds are sandbox-only, reverse captured payment and ledger status, and release the reservation atomically.
+
+## Advanced planning and business APIs
+
+All protected advanced routes use the same bearer session. Event collaborators must have an unexpired membership; viewers may read, editors may operate, and only the owner manages memberships. The business equivalents are viewer and manager.
+
+| Route group                                     | Methods and behavior                                                                     |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `/collaboration/:scope/:id`                     | GET owner membership/invite list; scope is EVENT or VENDOR                               |
+| `/collaboration/:scope/:id/invites`             | POST email, permission, days; returns a seven-day share token                            |
+| `/collaboration/accept/:token`                  | POST consumes the invitation for the matching account email                              |
+| `/collaboration/:scope/:id/members/:memberId`   | DELETE revokes membership and disconnects that account's live sockets                    |
+| `/collaboration/:scope/:id/invites/:inviteId`   | DELETE cancels a pending invitation                                                      |
+| `/events/:id/seating`                           | GET tables, permitted guest fields, and venue capacity                                   |
+| `/events/:id/seating/tables`                    | POST label, capacity, shape, x/y                                                         |
+| `/events/:id/seating/tables/:tableId`           | PATCH x/y with version; DELETE unassigns its guests and removes table                    |
+| `/events/:id/seating/assign`                    | POST guestId and tableId (nullable), capacity-safe under concurrency                     |
+| `/events/:id/run-sheet`                         | GET cues; POST dayId, title, startsAt, durationMinutes, owner, location, notes           |
+| `/events/:id/run-sheet/:itemId`                 | PATCH version and status/details; DELETE non-live cue                                    |
+| `/events/:id/check-in/:dayId`                   | GET arrivals; POST invitation token for idempotent check-in                              |
+| `/events/:id/check-in/:entryId`                 | DELETE arrival correction                                                                |
+| `/contracts`                                    | POST fixed client agreement; a vendor/client conversation is required                    |
+| `/contracts/event/:id`, `/contracts/business`   | GET host or business agreement lists                                                     |
+| `/contracts/:id/sign`                           | POST name and accepted=true, restricted to actual event owner                            |
+| `/contracts/:id/withdraw`                       | POST withdrawal before signature                                                         |
+| `/invoices/event/:id`, `/invoices/business`     | GET invoice snapshots, captured totals, and installment records                          |
+| `/invoices/:bookingId/plan`                     | POST exact remaining-balance installments with label, amountMinor, dueAt                 |
+| `/vendors/:id/leads`                            | GET/POST pipeline; PATCH/DELETE `/:leadId` for owned inquiries                           |
+| `/vendors/:id/availability`                     | GET private resources, reservations, and blocks                                          |
+| `/vendors/:id/availability/recurring`           | POST serviceId, from/until dates, weekdays 0?6, fromTime/untilTime, reason; max 90 days  |
+| `/vendors/:id/availability/blocks/:blockId`     | DELETE owned blackout                                                                    |
+| `/events/:id/automations`                       | GET rules/runs; POST trigger/action rule                                                 |
+| `/events/:id/automations/:ruleId`               | PATCH enabled; DELETE rule while preserving run history                                  |
+| `/events/:id/automations/run`                   | POST checks eligible rules idempotently                                                  |
+| `/events/:id/website`                           | GET editor data; PUT full draft with version, published, optional password/clearPassword |
+| `/events/:id/website/guestbook/:entryId`        | PATCH approved; DELETE entry                                                             |
+| `/public/sites/:slug`                           | Public GET; protected websites expose only passwordRequired until authorized             |
+| `/public/sites/:slug/access`                    | Public POST password returns permitted public website data                               |
+| `/public/sites/:slug/guestbook`                 | Public POST name/message/password; messages await moderation                             |
+| `/events/:id/inspiration`                       | GET/POST IMAGE, COLOR, or NOTE records; DELETE `/:itemId`                                |
+| `/favorites`                                    | GET user's saved professionals; POST/DELETE `/:vendorId`                                 |
+| `/events/:id/recommendations`                   | GET explained, deterministic vendor matching                                             |
+| `/insights/event/:id`, `/insights/business/:id` | GET actual planning, financial, and activity metrics                                     |
+| `/categories`                                   | Public GET active categories; admin POST name adds/restores one                          |
+| `/categories/:id`                               | Admin PATCH enabled hides/restores a category                                            |
+
+Public RSVP responses also accept `dietaryNotes` and `dayResponses: [{dayId,status}]`. Day identifiers must belong to the invitation event. Check-in verifies both the overall accepted response and any per-day response. View-only guest responses omit invitation tokens.
+
+`POST /payments` additionally accepts `kind: INSTALLMENT` with `installmentId`. Capture checks the exact scheduled balance and serializes against all other payments on that booking. Paying the full remaining balance also settles pending milestones. Refunds mark milestones cancelled.

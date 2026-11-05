@@ -5,11 +5,15 @@
 Run the frontend and API as separate long-lived Node processes. Supply PostgreSQL 17 and Redis 7. Set `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET` (random, at least 32 characters), `WEBHOOK_SECRET` (a separate random secret), `APP_URL`, and explicit comma-separated `CORS_ORIGINS` in the API environment. Set `API_URL` and `NEXT_PUBLIC_SOCKET_URL` before the frontend build. Socket.IO needs an HTTPS endpoint with WebSocket upgrades allowed by the reverse proxy. Never expose PostgreSQL/Redis publicly.
 
 ```sh
-npm ci
-npm run db:generate
-npm run db:migrate
-npm run build
-npm start
+npm --prefix backend ci
+npm --prefix frontend ci
+npm --prefix backend run db:generate
+npm --prefix backend run db:migrate
+npm --prefix backend run build
+npm --prefix frontend run build
+# Run these as two supervised processes:
+npm --prefix backend start
+npm --prefix frontend start
 ```
 
 The seed is for development only. Provision a production administrator through a controlled database operation; public registration accepts HOST and VENDOR only. Rotate the example secrets and keep `.env` files outside source control. `PAYMENT_MODE=sandbox` enables simulated captures. Every other mode refuses checkout until real gateway adapters are added.
@@ -30,9 +34,15 @@ The worker expires holds/quotes every minute and upserts daily in-app reminders 
 - Monitor API errors, worker errors, PostgreSQL storage, Redis availability, and your process supervisor. HTTP errors conceal database internals from users.
 - Back up PostgreSQL regularly and test restoration. Redis holds job schedules; business state remains in PostgreSQL.
 - Run integration and browser tests against disposable databases. Tests intentionally create accounts' planning records and simulated transactions.
-- Check `npm audit` after dependency updates. Root overrides pin patched multer/deepmerge versions; rerun builds and schema commands when changing them.
+- Check `npm audit` in both applications after dependency updates. Backend overrides pin patched multer/deepmerge versions; rerun builds and schema commands when changing them.
 - Auth/public RSVP rate limits are process-local. A multi-instance public deployment needs a shared limiter; the application deliberately does not trust arbitrary forwarded IP headers.
 
 ## Current limits
 
-The original spec is broader than the delivered local product. Live payment/refund adapters, external SMS/email delivery, automatic replacement matching, vendor teams, signed media uploads, and optional scoped planners are unfinished. Admin categories use the fixed marketplace categories rather than a category editor. Accepted quotes can be booked once against a service from the same vendor, using the quoted total. Cancellation reviews support administrator-approved sandbox refunds. These do not transfer real funds.
+Live payment/refund adapters, external SMS/email delivery, automatic bank payouts, signed media uploads, and cancellation-specific automatic replacement orchestration remain unfinished. Venue/professional recommendations are available as an explained ranking against city, allocation, guest capacity, and the next event date. Event collaborators, business teammates, editable marketplace categories, signed-in account acknowledgements, installment plans, and the advanced operations tools are implemented; see [ADVANCED_SCOPE.md](ADVANCED_SCOPE.md) for their exact behavior and boundaries.
+
+## Repository and verification
+
+Only `frontend/`, `backend/`, and Git's internal `.git/` exist at the repository root. Dependencies, lockfiles, environment files, test output, documentation, and infrastructure stay inside those applications. Install both applications separately. From `backend/`, run `npm run verify`; it checks the root structure, generates Prisma, builds both applications, runs backend tests, and audits both trees. Set `TEST_DATABASE_URL` to a disposable migrated database to enable database tests. With already-running servers, add `-- --browser` to include the browser suite. On Windows, stop the API before regenerating Prisma to avoid locking its native engine DLL.
+
+The workflow under `backend/ci/workflows/ci.yml` is a template with corrected independent-package paths. It is not discovered by GitHub Actions in this location. The strict two-folder structure intentionally has no root `.github/` directory, so automatic GitHub Actions are unavailable until that structure requirement changes or an external runner invokes the verification commands.
