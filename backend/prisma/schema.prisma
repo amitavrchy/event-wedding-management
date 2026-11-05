@@ -51,7 +51,7 @@ model Event {
   id String @id @default(cuid())
   hostId String
   title String
-  eventType String @default("WEDDING")
+  eventType String @default("GENERAL")
   city String @default("Dhaka")
   status String @default("PLANNING")
   budgetMinor Int @default(150000000)

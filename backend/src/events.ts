@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Get,
   Param,
@@ -12,6 +13,7 @@ import { AuthGuard } from "./auth";
 import { Database } from "./prisma";
 import { ownEvent, eventAccess } from "./access";
 import { amount, date, parse, z } from "./validation";
+import { eventTypes, templateFor, allocateBudget } from "./event-templates";
 @Controller("events")
 @UseGuards(AuthGuard)
 export class EventsController {
@@ -27,16 +29,55 @@ export class EventsController {
     const data = parse(
       z.object({
         title: z.string().min(2).max(150),
-        eventType: z
-          .enum(["WEDDING", "HOLUD", "RECEPTION", "CORPORATE"])
-          .default("WEDDING"),
+        eventType: z.enum(eventTypes).default("GENERAL"),
+        starterPlan: z.boolean().default(true),
+        startsAt: date.optional(),
+        durationHours: z.number().int().min(1).max(72).optional(),
         city: z.string().default("Dhaka"),
         budgetMinor: amount,
         guestCapacity: z.number().int().min(1).max(10000),
       }),
       body,
     );
-    return this.db.event.create({ data: { ...data, hostId: req.user.sub } });
+    const { starterPlan, startsAt, durationHours, ...event } = data,
+      template = templateFor(event.eventType);
+    if (startsAt && new Date(startsAt) <= new Date())
+      throw new BadRequestException("Choose a future event date");
+    return this.db.event.create({
+      data: {
+        ...event,
+        hostId: req.user.sub,
+        tasks: starterPlan
+          ? {
+              create: template.checklist.map((title, index) => ({
+                title,
+                dueAt: startsAt
+                  ? new Date(
+                      +new Date(startsAt) -
+                        (template.checklist.length - index) * 3 * 86400000,
+                    )
+                  : undefined,
+              })),
+            }
+          : undefined,
+        budget: starterPlan
+          ? { create: allocateBudget(event.budgetMinor, template.allocations) }
+          : undefined,
+        days: startsAt
+          ? {
+              create: {
+                name: template.dayName,
+                startsAt: new Date(startsAt),
+                endsAt: new Date(
+                  +new Date(startsAt) +
+                    (durationHours || template.durationHours) * 3600000,
+                ),
+              },
+            }
+          : undefined,
+      },
+      include: { days: true, tasks: true, budget: true },
+    });
   }
   @Get(":id") async get(@Req() req: any, @Param("id") id: string) {
     const access = await ownEvent(this.db, id, req.user, "read");
@@ -70,6 +111,7 @@ export class EventsController {
     const data = parse(
       z.object({
         title: z.string().min(2).max(150).optional(),
+        eventType: z.enum(eventTypes).optional(),
         budgetMinor: amount.optional(),
         guestCapacity: z.number().int().min(1).max(10000).optional(),
         rsvpDeadline: date.optional(),

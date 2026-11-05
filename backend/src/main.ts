@@ -38,6 +38,7 @@ import { AnalyticsController } from "./analytics";
 import { CategoriesController } from "./categories";
 import { AvailabilityController } from "./availability";
 import { RecommendationsController } from "./recommendations";
+import { EventTypesController } from "./event-types";
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   throw new Error("JWT_SECRET must have at least 32 characters");
 @Controller("health")
@@ -94,6 +95,7 @@ class HealthController {
     CategoriesController,
     AvailabilityController,
     RecommendationsController,
+    EventTypesController,
   ],
   providers: [
     Database,
