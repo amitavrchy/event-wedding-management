@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "npm run build && concurrently -k \"tsc -w -p tsconfig.json\" \"node --watch dist/main.js\"",
+    "dev:all":"concurrently -n api,web \"npm run dev\" \"npm --prefix ../frontend run dev\"",
+    "verify":"node scripts/verify.mjs",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "db:generate": "prisma generate",
@@ -30,10 +32,16 @@
     "zod": "^4.1.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.0",
+    "prettier": "^3.9.10",
+    "deepmerge-ts": "^8.0.2",
+    "multer": "^2.5.0",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "prisma": "^6.19.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
-  }
+  },
+  "overrides":{"multer":"^2.5.0","deepmerge-ts":"^8.0.2"},
+  "engines":{"node":">=22"}
 }
