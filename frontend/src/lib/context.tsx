@@ -41,8 +41,11 @@ export function Provider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem("utsab-user");
-      if (saved && sessionStorage.getItem("utsab-token"))
-        setUser(JSON.parse(saved));
+      if (saved && sessionStorage.getItem("utsab-token")) {
+        const restored = JSON.parse(saved) as User;
+        setUser(restored);
+        setSelected(sessionStorage.getItem(`utsab-event-${restored.id}`) || "");
+      }
     } catch {}
     setReady(true);
     const expire = () => {
@@ -99,6 +102,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
     sessionStorage.setItem("utsab-token", token);
     sessionStorage.setItem("utsab-user", JSON.stringify(u));
     setUser(u);
+    setSelected(sessionStorage.getItem(`utsab-event-${u.id}`) || "");
   }
   function logout() {
     generation.current++;
@@ -123,7 +127,10 @@ export function Provider({ children }: { children: React.ReactNode }) {
         error,
         loading,
         refresh,
-        selectEvent: setSelected,
+        selectEvent: (id) => {
+          if (user) sessionStorage.setItem(`utsab-event-${user.id}`, id);
+          setSelected(id);
+        },
         login,
         logout,
         notify,

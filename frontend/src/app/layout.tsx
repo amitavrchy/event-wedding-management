@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Provider } from "@/lib/context";
 import "./globals.css";
+import "./advanced.css";
 export const metadata: Metadata = {
   title: {
     default: "Utsab — Your moments, beautifully together",

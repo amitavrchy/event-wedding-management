@@ -20,11 +20,14 @@ import {
   ShieldCheck,
   Search,
   Bell,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { useApp } from "@/lib/context";
 import { AuthScreen } from "./auth-screen";
+import { CommandMenu } from "./command-menu";
 const navigation = [
   ["/", "Overview", LayoutDashboard],
+  ["/planning", "Planning studio", Sparkles],
   ["/vendors", "Find vendors", Store],
   ["/bookings", "My bookings", CalendarDays],
   ["/budget", "Budget planner", Wallet],
@@ -98,6 +101,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
           ))}
           {user.role === "VENDOR" && (
             <Link
+              href="/business"
+              className={`nav-item ${path === "/business" ? "active" : ""}`}
+            >
+              <BriefcaseBusiness size={20} />
+              Business suite
+            </Link>
+          )}
+          {user.role === "VENDOR" && (
+            <Link
               href="/studio"
               className={`nav-item ${path === "/studio" ? "active" : ""}`}
             >
@@ -152,14 +164,32 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span>Your workspace</span>
             <span className="breadcrumb-slash">/</span>
             <strong>
-              {navigation.find(([url]) => url === path)?.[1] || "Settings"}
+              {navigation.find(([url]) => url === path)?.[1] ||
+                (
+                  {
+                    "/seating": "Seating studio",
+                    "/run-sheet": "Control room",
+                    "/check-in": "Guest welcome",
+                    "/website": "Celebration website",
+                    "/contracts": "Agreements",
+                    "/finance": "Finance desk",
+                    "/collaboration": "Planning circle",
+                    "/automations": "Workflows",
+                    "/inspiration": "Inspiration atelier",
+                    "/insights": "Insights",
+                    "/shortlist": "Your shortlist",
+                    "/business": "Business suite",
+                    "/availability": "Resource calendar",
+                    "/studio": "Vendor studio",
+                    "/admin": "Administration",
+                    "/notifications": "Reminders",
+                  } as Record<string, string>
+                )[path] ||
+                "Settings"}
             </strong>
           </div>
           <div className="topbar-actions">
-            <Link href="/vendors" className="top-search">
-              <Search size={17} />
-              <span>Find something lovely</span>
-            </Link>
+            <CommandMenu />
             <span className="topbar-separator" />
             <Link
               href="/notifications"
@@ -186,6 +216,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="main-content">
+          {event?.access === "VIEWER" && (
+            <div className="info-note">
+              <ShieldCheck size={19} />
+              <span>
+                You have read-only access to this celebration. Planning changes
+                need an editor invitation from the host.
+              </span>
+            </div>
+          )}
           {error && (
             <div className="error-banner" role="alert">
               <span>{error}</span>

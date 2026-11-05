@@ -44,6 +44,9 @@ export type Guest = {
   token: string;
   mealPreference?: string;
   tableLabel?: string;
+  seatingTableId?: string;
+  groupName?: string;
+  dietaryNotes?: string;
 };
 export type Booking = {
   id: string;
@@ -69,6 +72,8 @@ export type Expense = {
 };
 export type Event = {
   id: string;
+  hostId?: string;
+  access?: "OWNER" | "EDITOR" | "VIEWER";
   title: string;
   eventType: string;
   city: string;

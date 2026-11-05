@@ -2,7 +2,8 @@ export const taka = (minor: number, compact = false) =>
   new Intl.NumberFormat("en-BD", {
     style: "currency",
     currency: "BDT",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: compact ? 0 : Math.abs(minor) % 100 ? 2 : 0,
+    maximumFractionDigits: compact ? 1 : 2,
     notation: compact ? "compact" : "standard",
   })
     .format(minor / 100)

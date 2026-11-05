@@ -52,6 +52,25 @@ export default function Dashboard() {
           </Button>
         }
       />
+      <Link
+        href={user?.role === "VENDOR" ? "/business" : "/planning"}
+        className="advanced-entry"
+      >
+        <div>
+          <span className="eyebrow">YOUR NEXT LEVEL OF PLANNING</span>
+          <strong>
+            {user?.role === "VENDOR"
+              ? "Open your business suite"
+              : "Step into your planning studio"}
+          </strong>
+          <p>
+            {user?.role === "VENDOR"
+              ? "Client pipeline, agreements, resource calendars, and business insights."
+              : "Floor plans, live cues, guest passes, your website, and a whole lot more."}
+          </p>
+        </div>
+        <ArrowUpRight size={25} />
+      </Link>
       {event ? (
         <>
           <section className="celebration-hero">
