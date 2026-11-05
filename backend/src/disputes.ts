@@ -90,6 +90,10 @@ export class DisputesController {
           where: { id: booking.id },
           data: { status: "CANCELLED" },
         });
+        await tx.installment.updateMany({
+          where: { bookingId: booking.id },
+          data: { status: "CANCELLED" },
+        });
       }
       return tx.dispute.update({
         where: { id },

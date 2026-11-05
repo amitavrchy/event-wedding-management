@@ -24,6 +24,20 @@ import { ApiErrors } from "./errors";
 import { CartController } from "./cart";
 import { NotificationsController } from "./notifications";
 import { DisputesController } from "./disputes";
+import { CollaborationController } from "./collaboration";
+import { SeatingController } from "./seating";
+import { RunSheetController } from "./run-sheet";
+import { CheckInController } from "./check-in";
+import { ContractsController } from "./contracts";
+import { InvoicesController } from "./invoices";
+import { CrmController } from "./crm";
+import { AutomationsController } from "./automations";
+import { WebsitesController, PublicWebsitesController } from "./websites";
+import { InspirationController, FavoritesController } from "./inspiration";
+import { AnalyticsController } from "./analytics";
+import { CategoriesController } from "./categories";
+import { AvailabilityController } from "./availability";
+import { RecommendationsController } from "./recommendations";
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   throw new Error("JWT_SECRET must have at least 32 characters");
 @Controller("health")
@@ -64,6 +78,22 @@ class HealthController {
     CartController,
     NotificationsController,
     DisputesController,
+    CollaborationController,
+    SeatingController,
+    RunSheetController,
+    CheckInController,
+    ContractsController,
+    InvoicesController,
+    CrmController,
+    AutomationsController,
+    WebsitesController,
+    PublicWebsitesController,
+    InspirationController,
+    FavoritesController,
+    AnalyticsController,
+    CategoriesController,
+    AvailabilityController,
+    RecommendationsController,
   ],
   providers: [
     Database,

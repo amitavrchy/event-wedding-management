@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { Database } from "./prisma";
 import { AuthGuard } from "./auth";
-import { ownEvent, ownVendor } from "./access";
+import { ownEvent, ownVendor, eventAccess, vendorAccess } from "./access";
 import { activeStatuses } from "./domain";
 import { date, parse, z } from "./validation";
 import { reserve } from "./reservations";
@@ -25,8 +25,8 @@ export class BookingsController {
     return this.db.booking.findMany({
       where:
         req.user.role === "VENDOR"
-          ? { service: { vendor: { ownerId: req.user.sub } } }
-          : { event: { hostId: req.user.sub } },
+          ? { service: { vendor: vendorAccess(req.user.sub) } }
+          : { event: eventAccess(req.user.sub) },
       include: { service: { include: { vendor: true } }, event: true },
       orderBy: { startAt: "asc" },
     });

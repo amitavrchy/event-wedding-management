@@ -23,7 +23,7 @@ export class PaymentsController {
     @Req() req: any,
     @Param("id") id: string,
   ) {
-    await ownEvent(this.db, id, req.user);
+    await ownEvent(this.db, id, req.user, "read");
     return this.db.payment.findMany({
       where: { eventId: id },
       orderBy: { createdAt: "desc" },
@@ -37,7 +37,8 @@ export class PaymentsController {
       z.object({
         bookingId: z.string(),
         provider: z.enum(["SANDBOX", "BKASH", "NAGAD", "SSLCOMMERZ"]),
-        kind: z.enum(["ADVANCE", "BALANCE"]),
+        kind: z.enum(["ADVANCE", "BALANCE", "INSTALLMENT"]),
+        installmentId: z.string().optional(),
         idempotencyKey: z.string().min(16).max(100),
       }),
       body,
@@ -56,7 +57,11 @@ export class PaymentsController {
         where: { idempotencyKey: data.idempotencyKey },
       });
       if (previous) {
-        if (previous.bookingId !== booking.id || previous.kind !== data.kind)
+        if (
+          previous.bookingId !== booking.id ||
+          previous.kind !== data.kind ||
+          previous.installmentId !== (data.installmentId || null)
+        )
           throw new BadRequestException(
             "Idempotency key belongs to a different payment",
           );
@@ -76,14 +81,29 @@ export class PaymentsController {
           current.holdExpiresAt < new Date())
       )
         throw new BadRequestException("Booking is closed or its hold expired");
-      if (data.kind === "BALANCE" && current.status !== "CONFIRMED")
+      if (data.kind !== "ADVANCE" && current.status !== "CONFIRMED")
         throw new BadRequestException("Pay the advance first");
       if (data.kind === "ADVANCE" && paid > 0)
         throw new BadRequestException("Advance already paid");
-      const amountMinor =
+      let amountMinor =
         data.kind === "ADVANCE"
           ? current.advanceMinor
           : current.priceMinor - paid;
+      if (data.kind === "INSTALLMENT") {
+        if (!data.installmentId)
+          throw new BadRequestException("Choose a scheduled installment");
+        const installment = await tx.installment.findFirstOrThrow({
+          where: {
+            id: data.installmentId,
+            bookingId: booking.id,
+            status: "PENDING",
+          },
+        });
+        amountMinor = installment.amountMinor;
+      } else if (data.installmentId)
+        throw new BadRequestException(
+          "Installment reference is only valid for an installment payment",
+        );
       if (amountMinor <= 0) throw new BadRequestException("Already fully paid");
       return tx.payment.create({
         data: { ...data, eventId: booking.eventId, amountMinor },
@@ -142,6 +162,17 @@ export class PaymentsController {
         where: { bookingId: booking.id, status: "CAPTURED" },
         _sum: { amountMinor: true },
       });
+      if (payment.installmentId) {
+        const installment = await tx.installment.findFirstOrThrow({
+          where: { id: payment.installmentId, bookingId: booking.id },
+        });
+        if (installment.status !== "PENDING")
+          throw new BadRequestException("This installment is already settled");
+        await tx.installment.update({
+          where: { id: installment.id },
+          data: { status: "PAID" },
+        });
+      }
       if (payment.kind === "ADVANCE" && (paid._sum.amountMinor || 0) > 0)
         throw new BadRequestException(
           "An advance was already captured for this booking",
@@ -165,6 +196,11 @@ export class PaymentsController {
         where: { id: booking.id },
         data: { status: "CONFIRMED" },
       });
+      if (payment.kind === "BALANCE")
+        await tx.installment.updateMany({
+          where: { bookingId: booking.id, status: "PENDING" },
+          data: { status: "PAID" },
+        });
       return tx.payment.update({ where: { id }, data: { status: "CAPTURED" } });
     });
     const booking = await this.db.booking.findUniqueOrThrow({

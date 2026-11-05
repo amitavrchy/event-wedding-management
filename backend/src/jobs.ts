@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { Queue, Worker } from "bullmq";
 import { Database } from "./prisma";
 import { createReminders } from "./reminders";
+import { executeAutomations } from "./automations";
 @Injectable()
 export class Jobs implements OnModuleInit, OnModuleDestroy {
   private queue?: Queue;
@@ -32,6 +33,7 @@ export class Jobs implements OnModuleInit, OnModuleDestroy {
           data: { status: "EXPIRED" },
         });
         await createReminders(this.db);
+        await executeAutomations(this.db);
       },
       { connection },
     );

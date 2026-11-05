@@ -10,7 +10,7 @@ import {
 } from "@nestjs/common";
 import { Database } from "./prisma";
 import { AuthGuard, Identity } from "./auth";
-import { ownEvent, ownVendor } from "./access";
+import { ownEvent, ownVendor, eventAccess, vendorAccess } from "./access";
 import { parse, z } from "./validation";
 import { publishMessage } from "./realtime";
 @Controller("conversations")
@@ -22,13 +22,13 @@ export class MessagesController {
     const ids = vendor
       ? (
           await this.db.vendor.findMany({
-            where: { ownerId: req.user.sub },
+            where: vendorAccess(req.user.sub),
             select: { id: true },
           })
         ).map((v) => v.id)
       : (
           await this.db.event.findMany({
-            where: { hostId: req.user.sub },
+            where: eventAccess(req.user.sub),
             select: { id: true },
           })
         ).map((e) => e.id);

@@ -63,7 +63,7 @@ export class PackagesController {
 export class QuotesController {
   constructor(private db: Database) {}
   @Get("event/:id") async list(@Req() req: any, @Param("id") id: string) {
-    await ownEvent(this.db, id, req.user);
+    await ownEvent(this.db, id, req.user, "read");
     return this.db.quote.findMany({ where: { eventId: id } });
   }
   @Post() async create(@Req() req: any, @Body() body: unknown) {

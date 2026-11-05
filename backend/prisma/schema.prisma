@@ -25,6 +25,7 @@ model Vendor {
   status String @default("APPLIED")
   commissionBps Int @default(1000)
   services VendorService[]
+  members VendorMember[]
 }
 model VendorService {
   id String @id @default(cuid())
@@ -63,6 +64,7 @@ model Event {
   expenses Expense[]
   guests Guest[]
   bookings Booking[]
+  members EventMember[]
 }
 model EventDay {
   id String @id @default(cuid())
@@ -131,6 +133,9 @@ model Guest {
   token String @unique
   mealPreference String?
   tableLabel String?
+  seatingTableId String?
+  groupName String @default("Friends")
+  dietaryNotes String?
 }
 model Package {
   id String @id @default(cuid())
@@ -157,6 +162,7 @@ model Payment {
   status String @default("PENDING")
   amountMinor Int
   kind String
+  installmentId String?
   idempotencyKey String @unique
   createdAt DateTime @default(now())
 }
@@ -211,4 +217,188 @@ model Dispute {
   reason String
   status String @default("REQUESTED")
   createdAt DateTime @default(now())
+}
+model EventMember {
+ id String @id @default(cuid())
+ eventId String
+ event Event @relation(fields:[eventId],references:[id],onDelete:Cascade)
+ userId String
+ permission String @default("EDITOR")
+ expiresAt DateTime
+ @@unique([eventId,userId])
+}
+model VendorMember {
+ id String @id @default(cuid())
+ vendorId String
+ vendor Vendor @relation(fields:[vendorId],references:[id],onDelete:Cascade)
+ userId String
+ permission String @default("MANAGER")
+ expiresAt DateTime
+ @@unique([vendorId,userId])
+}
+model WorkspaceInvite {
+ id String @id @default(cuid())
+ token String @unique
+ scope String
+ scopeId String
+ email String
+ permission String
+ expiresAt DateTime
+ memberExpiresAt DateTime
+ acceptedBy String?
+ createdAt DateTime @default(now())
+}
+model SeatTable {
+ id String @id @default(cuid())
+ eventId String
+ label String
+ capacity Int @default(8)
+ shape String @default("ROUND")
+ x Float @default(100)
+ y Float @default(100)
+ version Int @default(1)
+ @@unique([eventId,label])
+}
+model RunSheetItem {
+ id String @id @default(cuid())
+ eventId String
+ dayId String
+ title String
+ startsAt DateTime
+ durationMinutes Int
+ owner String
+ location String?
+ notes String?
+ status String @default("PLANNED")
+ version Int @default(1)
+ @@index([eventId,startsAt])
+}
+model Contract {
+ id String @id @default(cuid())
+ eventId String
+ vendorId String
+ title String
+ body String
+ amountMinor Int
+ contentHash String
+ status String @default("SENT")
+ signedBy String?
+ signerName String?
+ signedAt DateTime?
+ createdAt DateTime @default(now())
+}
+model Installment {
+ id String @id @default(cuid())
+ bookingId String
+ eventId String
+ label String
+ amountMinor Int
+ dueAt DateTime
+ status String @default("PENDING")
+ @@index([eventId,dueAt])
+}
+model Lead {
+ id String @id @default(cuid())
+ vendorId String
+ name String
+ email String?
+ eventDate DateTime?
+ estimatedMinor Int @default(0)
+ stage String @default("NEW")
+ notes String @default("")
+ followUpAt DateTime?
+ createdAt DateTime @default(now())
+ @@index([vendorId,stage])
+}
+model AutomationRule {
+ id String @id @default(cuid())
+ eventId String
+ title String
+ trigger String
+ daysBefore Int @default(7)
+ action String
+ message String
+ enabled Boolean @default(true)
+ createdBy String
+ createdAt DateTime @default(now())
+}
+model AutomationRun {
+ id String @id @default(cuid())
+ key String @unique
+ ruleId String
+ eventId String
+ result String
+ createdAt DateTime @default(now())
+}
+model EventWebsite {
+ id String @id @default(cuid())
+ eventId String @unique
+ slug String @unique
+ headline String
+ story String @default("")
+ coverUrl String
+ theme String @default("ROSE")
+ faqs Json
+ passwordHash String?
+ published Boolean @default(false)
+ version Int @default(1)
+ updatedAt DateTime @updatedAt
+}
+model GuestbookEntry {
+ id String @id @default(cuid())
+ websiteId String
+ name String
+ message String
+ approved Boolean @default(false)
+ createdAt DateTime @default(now())
+ @@index([websiteId,approved])
+}
+model MoodItem {
+ id String @id @default(cuid())
+ eventId String
+ kind String
+ title String
+ value String
+ tag String @default("Inspiration")
+ createdAt DateTime @default(now())
+}
+model Favorite {
+ id String @id @default(cuid())
+ userId String
+ vendorId String
+ @@unique([userId,vendorId])
+}
+model Activity {
+ id String @id @default(cuid())
+ eventId String?
+ vendorId String?
+ actorId String
+ actorName String
+ action String
+ detail String
+ createdAt DateTime @default(now())
+ @@index([eventId,createdAt])
+ @@index([vendorId,createdAt])
+}
+model GuestCheckin {
+ id String @id @default(cuid())
+ eventId String
+ dayId String
+ guestId String
+ partySize Int
+ checkedInBy String
+ createdAt DateTime @default(now())
+ @@unique([dayId,guestId])
+}
+model GuestResponse {
+ id String @id @default(cuid())
+ guestId String
+ dayId String
+ status String
+ @@unique([guestId,dayId])
+}
+model Category {
+ id String @id @default(cuid())
+ name String @unique
+ enabled Boolean @default(true)
 }

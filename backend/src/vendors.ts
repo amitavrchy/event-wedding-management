@@ -8,18 +8,19 @@ import {
   Req,
   UseGuards,
   ForbiddenException,
+  BadRequestException,
   ConflictException,
 } from "@nestjs/common";
 import { Database } from "./prisma";
 import { AuthGuard } from "./auth";
-import { ownVendor } from "./access";
+import { ownVendor, vendorAccess } from "./access";
 import { amount, date, parse, z } from "./validation";
 @Controller("vendors")
 export class VendorsController {
   constructor(private db: Database) {}
   @Get("mine") @UseGuards(AuthGuard) mine(@Req() req: any) {
     return this.db.vendor.findMany({
-      where: { ownerId: req.user.sub },
+      where: vendorAccess(req.user.sub),
       include: { services: true },
     });
   }
@@ -140,13 +141,7 @@ export class VendorsController {
       z.object({
         businessName: z.string().min(2).max(100),
         slug: z.string().regex(/^[a-z0-9-]+$/),
-        category: z.enum([
-          "Venue",
-          "Photography",
-          "Catering",
-          "Decoration",
-          "Makeup",
-        ]),
+        category: z.string().min(2).max(50),
         city: z.string().min(2),
         description: z.string().min(20).max(3000),
         image: z
@@ -157,6 +152,12 @@ export class VendorsController {
       }),
       body,
     );
+    if (
+      !(await this.db.category.findFirst({
+        where: { name: data.category, enabled: true },
+      }))
+    )
+      throw new BadRequestException("Choose an active marketplace category");
     return this.db.vendor.create({ data: { ...data, ownerId: req.user.sub } });
   }
   @Post(":id/services") @UseGuards(AuthGuard) async service(

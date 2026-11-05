@@ -18,7 +18,7 @@ import { budgetAlert } from "./domain";
 export class BudgetController {
   constructor(private db: Database) {}
   @Get() async get(@Req() req: any, @Param("id") id: string) {
-    const event = await ownEvent(this.db, id, req.user);
+    const event = await ownEvent(this.db, id, req.user, "read");
     const [items, bookings, expenses, payments] = await Promise.all([
       this.db.budgetItem.findMany({ where: { eventId: id } }),
       this.db.booking.findMany({

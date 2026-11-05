@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 const db = new PrismaClient();
 async function seed() {
   if (process.env.NODE_ENV === "production")
@@ -87,6 +87,14 @@ async function seed() {
       "photo-1596462502278-27bfdc403348",
     ],
   ] as const;
+  for (const name of [
+    "Venue",
+    "Photography",
+    "Catering",
+    "Decoration",
+    "Makeup",
+  ])
+    await db.category.upsert({ where: { name }, update: {}, create: { name } });
   for (const [
     slug,
     businessName,
@@ -231,6 +239,201 @@ async function seed() {
         "A beautifully coordinated venue, florals, and photography collection.",
       serviceIds: services.map((s) => s.id),
       discountBps: 800,
+    },
+  });
+  const lastDay = await db.eventDay.findFirstOrThrow({
+    where: { eventId: event.id },
+    orderBy: { endsAt: "desc" },
+  });
+  const planner = await db.user.upsert({
+    where: { email: "planner@utsab.local" },
+    update: {},
+    create: {
+      email: "planner@utsab.local",
+      fullName: "Nadia Hassan",
+      passwordHash,
+      role: "HOST",
+    },
+  });
+  await db.eventMember.upsert({
+    where: { eventId_userId: { eventId: event.id, userId: planner.id } },
+    update: {},
+    create: {
+      eventId: event.id,
+      userId: planner.id,
+      permission: "EDITOR",
+      expiresAt: new Date(+lastDay.endsAt + 86400000),
+    },
+  });
+  for (const [id, label, x, y] of [
+    ["seat-family", "Family", 130, 170],
+    ["seat-friends", "Friends", 400, 170],
+    ["seat-colleagues", "Colleagues", 680, 170],
+  ] as const)
+    await db.seatTable.upsert({
+      where: { id },
+      update: {},
+      create: {
+        id,
+        eventId: event.id,
+        label,
+        capacity: 8,
+        shape: id === "seat-colleagues" ? "RECTANGLE" : "ROUND",
+        x,
+        y,
+      },
+    });
+  for (let i = 0; i < 4; i++) {
+    const g = await db.guest.findUnique({ where: { id: `guest-${i}` } });
+    if (g && !g.seatingTableId)
+      await db.guest.update({
+        where: { id: g.id },
+        data: {
+          seatingTableId: i < 2 ? "seat-family" : "seat-friends",
+          tableLabel: i < 2 ? "Family" : "Friends",
+          groupName: i < 2 ? "Family" : "Friends",
+        },
+      });
+  }
+  const weddingDay = await db.eventDay.findUniqueOrThrow({
+    where: { id: "day-wedding" },
+  });
+  for (const [i, title, owner, duration] of [
+    [0, "Venue & floral setup", "Bloom & Beyond", 60],
+    [1, "Photography team arrival", "Stories by Light", 30],
+    [2, "Guest welcome & seating", "Welcome team", 30],
+    [3, "The wedding ceremony", "Celebration coordinator", 45],
+    [4, "Dinner service", "Royal Feast", 60],
+    [5, "Family photographs", "Stories by Light", 30],
+  ] as const)
+    await db.runSheetItem.upsert({
+      where: { id: `cue-${i}` },
+      update: {},
+      create: {
+        id: `cue-${i}`,
+        eventId: event.id,
+        dayId: weddingDay.id,
+        title,
+        owner,
+        durationMinutes: duration,
+        startsAt: new Date(+weddingDay.startsAt + (i - 2) * 45 * 60000),
+        status: i === 0 ? "READY" : "PLANNED",
+        location: "The Grand Palace",
+      },
+    });
+  for (const [i, name, stage, value] of [
+    [0, "Nusrat & Adnan", "NEW", 350000],
+    [1, "Farzana & Imran", "QUALIFIED", 450000],
+    [2, "The Rahman reception", "PROPOSAL", 600000],
+    [3, "A little anniversary", "WON", 180000],
+    [4, "Dhaka Creative Awards", "QUALIFIED", 750000],
+    [5, "Winter garden celebration", "LOST", 300000],
+  ] as const)
+    await db.lead.upsert({
+      where: { id: `lead-${i}` },
+      update: {},
+      create: {
+        id: `lead-${i}`,
+        vendorId: grand.id,
+        name,
+        stage,
+        estimatedMinor: value * 100,
+        email: `inquiry${i + 1}@example.com`,
+        notes:
+          "Development sample inquiry. Confirm the brief and expected guest count.",
+        eventDate: new Date(Date.now() + (40 + i * 12) * 86400000),
+        followUpAt: new Date(Date.now() + (i - 1) * 86400000),
+      },
+    });
+  const contractData = {
+    eventId: event.id,
+    vendorId: grand.id,
+    title: "The Grand Palace · celebration agreement",
+    body: "Scope: Exclusive use of the signature ballroom for your wedding celebration, including six hours of service and two hours of setup buffer.\n\nResponsibilities: The venue team will prepare the room and coordinate access with your wedding professionals. The host will confirm the final guest count seven days before the celebration.\n\nPayments: A 30% advance confirms your reserved date; the balance follows the agreed milestones.\n\nChanges and cancellations: Contact the venue before making changes. Paid cancellation requests are reviewed by the platform administrator.\n\nThis is a development sample agreement. Review and replace it with your own agreed terms before use.",
+    amountMinor: 25000000,
+  };
+  await db.contract.upsert({
+    where: { id: "contract-grand-palace" },
+    update: {},
+    create: {
+      id: "contract-grand-palace",
+      ...contractData,
+      contentHash: createHash("sha256")
+        .update(JSON.stringify(contractData))
+        .digest("hex"),
+    },
+  });
+  for (const [id, kind, title, value, tag] of [
+    [
+      "mood-florals",
+      "IMAGE",
+      "Soft florals & warm light",
+      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=85",
+      "The atmosphere",
+    ],
+    ["mood-rose", "COLOR", "A little dusty rose", "#b97b86", "Our palette"],
+    ["mood-sage", "COLOR", "Garden sage", "#899a7d", "Our palette"],
+    [
+      "mood-note",
+      "NOTE",
+      "A room that feels like us",
+      "Warm candlelight, seasonal flowers, and enough room for our favorite people to dance. Keep the stage intimate and the welcome personal.",
+      "The atmosphere",
+    ],
+  ] as const)
+    await db.moodItem.upsert({
+      where: { id },
+      update: {},
+      create: { id, eventId: event.id, kind, title, value, tag },
+    });
+  for (const v of await db.vendor.findMany({
+    where: { slug: { in: ["the-grand-palace", "stories-by-light"] } },
+  }))
+    await db.favorite.upsert({
+      where: { userId_vendorId: { userId: host.id, vendorId: v.id } },
+      update: {},
+      create: { userId: host.id, vendorId: v.id },
+    });
+  await db.automationRule.upsert({
+    where: { id: "automation-final-check" },
+    update: {},
+    create: {
+      id: "automation-final-check",
+      eventId: event.id,
+      title: "Our final little check-in",
+      trigger: "EVENT_APPROACHING",
+      daysBefore: 7,
+      action: "CREATE_TASK",
+      message:
+        "Confirm arrival times and handoffs with every wedding professional.",
+      createdBy: host.id,
+      enabled: false,
+    },
+  });
+  await db.eventWebsite.upsert({
+    where: { eventId: event.id },
+    update: {},
+    create: {
+      eventId: event.id,
+      slug: "ayesha-and-raihan",
+      headline: "Ayesha & Raihan — a beautiful beginning",
+      story:
+        "Some stories begin with a grand gesture. Ours began with a conversation that neither of us wanted to end. We’re bringing our favorite people together to celebrate all the little moments that led us here.",
+      coverUrl:
+        "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85",
+      theme: "ROSE",
+      faqs: [
+        {
+          question: "What should we wear?",
+          answer:
+            "Bring your favorite festive look and a little room for dancing.",
+        },
+        {
+          question: "How do I RSVP?",
+          answer: "Please use the personal invitation link we shared with you.",
+        },
+      ],
+      published: false,
     },
   });
   console.log(

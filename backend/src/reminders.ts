@@ -29,6 +29,25 @@ export async function createReminders(db: Database, now = new Date()) {
     where: { done: false, dueAt: { gte: now, lte: tomorrow } },
     include: { event: true },
   });
+  const installments = await db.installment.findMany({
+    where: { status: "PENDING", dueAt: { lte: week } },
+  });
+  for (const installment of installments) {
+    const event = await db.event.findUnique({
+      where: { id: installment.eventId },
+    });
+    if (event)
+      await db.notification.upsert({
+        where: { key: `installment:${installment.id}:${day}` },
+        update: {},
+        create: {
+          key: `installment:${installment.id}:${day}`,
+          recipientId: event.hostId,
+          title: "A payment milestone is coming up",
+          body: `${installment.label}: BDT ${(installment.amountMinor / 100).toFixed(2)} due ${installment.dueAt.toISOString().slice(0, 10)}.`,
+        },
+      });
+  }
   for (const task of tasks)
     await db.notification.upsert({
       where: { key: `task:${task.id}:${day}` },

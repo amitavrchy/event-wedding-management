@@ -10,7 +10,7 @@ import {
 } from "@nestjs/common";
 import { AuthGuard } from "./auth";
 import { Database } from "./prisma";
-import { ownEvent } from "./access";
+import { ownEvent, eventAccess } from "./access";
 import { amount, date, parse, z } from "./validation";
 @Controller("events")
 @UseGuards(AuthGuard)
@@ -18,7 +18,7 @@ export class EventsController {
   constructor(private db: Database) {}
   @Get() list(@Req() req: any) {
     return this.db.event.findMany({
-      where: { hostId: req.user.sub },
+      where: eventAccess(req.user.sub),
       include: { days: true, tasks: true },
       orderBy: { createdAt: "desc" },
     });
@@ -39,8 +39,8 @@ export class EventsController {
     return this.db.event.create({ data: { ...data, hostId: req.user.sub } });
   }
   @Get(":id") async get(@Req() req: any, @Param("id") id: string) {
-    await ownEvent(this.db, id, req.user);
-    return this.db.event.findUnique({
+    const access = await ownEvent(this.db, id, req.user, "read");
+    const event = await this.db.event.findUnique({
       where: { id },
       include: {
         days: true,
@@ -51,6 +51,15 @@ export class EventsController {
         expenses: true,
       },
     });
+    return event
+      ? {
+          ...event,
+          access: access.access,
+          guests: event.guests.map((g) =>
+            access.access === "VIEWER" ? { ...g, token: undefined } : g,
+          ),
+        }
+      : null;
   }
   @Patch(":id") async update(
     @Req() req: any,
