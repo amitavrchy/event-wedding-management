@@ -81,7 +81,8 @@ export default function WebsiteEditor() {
             className="form-stack padded"
             onSubmit={async (e) => {
               e.preventDefault();
-              const f = new FormData(e.currentTarget),
+              const form = e.currentTarget;
+              const f = new FormData(form),
                 submitter = (e.nativeEvent as SubmitEvent)
                   .submitter as HTMLButtonElement | null;
               await run(
@@ -102,6 +103,14 @@ export default function WebsiteEditor() {
                     }),
                   });
                   await reload();
+                  const password = form.elements.namedItem(
+                    "password",
+                  ) as HTMLInputElement | null;
+                  if (password) password.value = "";
+                  const clear = form.elements.namedItem(
+                    "clearPassword",
+                  ) as HTMLInputElement | null;
+                  if (clear) clear.checked = false;
                 },
                 submitter?.value === "publish"
                   ? "Your celebration website is published"

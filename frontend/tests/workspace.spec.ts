@@ -7,6 +7,9 @@ async function login(page: Page) {
   await expect(
     page.getByRole("heading", { name: "Hello, Ayesha" }),
   ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Choose event" })
+    .selectOption("event-ayesha-raihan");
   await expect(
     page.getByRole("heading", { name: "Ayesha & Raihan", exact: true }),
   ).toBeVisible();
@@ -119,6 +122,7 @@ test("desktop dashboard and every workspace route are usable with 14px minimum t
   await page.screenshot({
     path: "artifacts/dashboard-desktop.png",
     fullPage: true,
+    animations: "disabled",
   });
   for (const [path, heading] of [
     ["/vendors", "Find your dream team"],
@@ -216,6 +220,7 @@ test("mobile navigation and layouts fit the viewport", async ({ page }) => {
   await page.screenshot({
     path: "artifacts/dashboard-mobile.png",
     fullPage: true,
+    animations: "disabled",
   });
   expect(
     await page.evaluate(

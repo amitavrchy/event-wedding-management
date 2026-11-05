@@ -22,9 +22,11 @@ export default function CheckIn() {
   );
   const { busy, run } = useAction();
   const video = useRef<HTMLVideoElement>(null),
-    controls = useRef<{ stop: () => void } | null>(null);
+    controls = useRef<{ stop: () => void } | null>(null),
+    scanGeneration = useRef(0);
   useEffect(
     () => () => {
+      scanGeneration.current++;
       controls.current?.stop();
     },
     [],
@@ -54,22 +56,31 @@ export default function CheckIn() {
     });
   }
   async function start() {
+    const generation = ++scanGeneration.current;
     setScanning(true);
     try {
       const { BrowserQRCodeReader } = await import("@zxing/browser");
       const reader = new BrowserQRCodeReader();
-      controls.current = await reader.decodeFromVideoDevice(
+      const active = await reader.decodeFromVideoDevice(
         undefined,
         video.current!,
-        (result) => {
+        (result, _error, scanner) => {
+          if (generation !== scanGeneration.current) {
+            scanner.stop();
+            return;
+          }
           if (result) {
-            controls.current?.stop();
+            scanGeneration.current++;
+            scanner.stop();
             setScanning(false);
             setToken(result.getText());
           }
         },
       );
+      if (generation !== scanGeneration.current) active.stop();
+      else controls.current = active;
     } catch (e) {
+      if (generation !== scanGeneration.current) return;
       setScanning(false);
       notify(
         "Camera unavailable. Paste an invitation link or choose a guest below.",
@@ -155,6 +166,7 @@ export default function CheckIn() {
             disabled={!dayId}
             onClick={() => {
               if (scanning) {
+                scanGeneration.current++;
                 controls.current?.stop();
                 setScanning(false);
               } else void start();
