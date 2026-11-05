@@ -59,6 +59,8 @@ export default function Guests() {
             email: f.get("email") || undefined,
             phone: f.get("phone") || undefined,
             maxPartySize: Number(f.get("maxPartySize")),
+            groupName: f.get("groupName") || "Friends",
+            dietaryNotes: f.get("dietaryNotes") || undefined,
           }),
         });
       await refresh();
@@ -325,6 +327,22 @@ export default function Guests() {
                     min="1"
                     max="10"
                     required
+                  />
+                </Field>
+                <Field label="Guest group">
+                  <input
+                    name="groupName"
+                    defaultValue="Friends"
+                    required
+                    maxLength={60}
+                    placeholder="Family / friends / colleagues"
+                  />
+                </Field>
+                <Field label="Dietary notes">
+                  <textarea
+                    name="dietaryNotes"
+                    maxLength={500}
+                    placeholder="Allergies and catering requirements"
                   />
                 </Field>
               </>

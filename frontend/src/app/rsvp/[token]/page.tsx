@@ -5,12 +5,15 @@ import { api, json } from "@/lib/api";
 import { dateLabel } from "@/lib/format";
 import { Day } from "@/lib/types";
 import { Button, Field } from "@/components/ui";
+import { GuestPass } from "@/components/guest-pass";
 type Invitation = {
   name: string;
   rsvpStatus: string;
   partySize: number;
   maxPartySize: number;
   mealPreference?: string;
+  dietaryNotes?: string;
+  responses?: { dayId: string; status: string }[];
   event: { title: string; days: Day[]; rsvpDeadline?: string };
 };
 export default function RSVP({
@@ -91,7 +94,23 @@ export default function RSVP({
                         rsvpStatus: f.get("rsvpStatus"),
                         partySize: Number(f.get("partySize")),
                         mealPreference: f.get("mealPreference"),
+                        dietaryNotes: f.get("dietaryNotes") || undefined,
+                        dayResponses: invitation.event.days.map((d) => ({
+                          dayId: d.id,
+                          status: f.get(`day-${d.id}`) || "ACCEPTED",
+                        })),
                       }),
+                    });
+                    setInvitation({
+                      ...invitation,
+                      rsvpStatus: String(f.get("rsvpStatus")),
+                      partySize: Number(f.get("partySize")),
+                      mealPreference: String(f.get("mealPreference")),
+                      dietaryNotes: String(f.get("dietaryNotes") || ""),
+                      responses: invitation.event.days.map((d) => ({
+                        dayId: d.id,
+                        status: String(f.get(`day-${d.id}`) || "ACCEPTED"),
+                      })),
                     });
                     setSaved(true);
                   } catch (e) {
@@ -137,6 +156,34 @@ export default function RSVP({
                     </select>
                   </Field>
                 </div>
+                <Field label="Allergies or dietary notes">
+                  <textarea
+                    name="dietaryNotes"
+                    defaultValue={invitation.dietaryNotes}
+                    maxLength={500}
+                    placeholder="Anything our catering team should know?"
+                  />
+                </Field>
+                {invitation.event.days.length > 1 && (
+                  <div className="day-rsvp-options">
+                    <h3>A little reply for each celebration</h3>
+                    {invitation.event.days.map((d) => (
+                      <Field key={d.id} label={d.name}>
+                        <select
+                          name={`day-${d.id}`}
+                          defaultValue={
+                            invitation.responses?.find((r) => r.dayId === d.id)
+                              ?.status || "ACCEPTED"
+                          }
+                        >
+                          <option value="ACCEPTED">I’ll be there</option>
+                          <option value="DECLINED">Unable to attend</option>
+                          <option value="MAYBE">Still deciding</option>
+                        </select>
+                      </Field>
+                    ))}
+                  </div>
+                )}
                 <Button busy={busy}>
                   Send with love <ArrowRight size={17} />
                 </Button>
@@ -146,6 +193,9 @@ export default function RSVP({
                   </p>
                 )}
               </form>
+            )}
+            {saved && invitation.rsvpStatus === "ACCEPTED" && (
+              <GuestPass token={token} name={invitation.name} />
             )}
           </>
         ) : (
