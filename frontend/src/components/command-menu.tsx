@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { Search, ArrowUpRight, Command } from "lucide-react";
 import { Modal } from "./ui";
 const commands = [
-  ["Overview", "Your celebration dashboard", "/"],
+  ["Overview", "Your celebration dashboard", "/dashboard"],
   ["Planning studio", "Every advanced planning tool, together", "/planning"],
-  ["Find vendors", "Your local wedding professionals", "/vendors"],
+  ["Find vendors", "Your local event professionals", "/vendors"],
   ["Bookings", "Held dates and confirmed professionals", "/bookings"],
   ["Seating studio", "Floor plan, tables, and guest groups", "/seating"],
   [

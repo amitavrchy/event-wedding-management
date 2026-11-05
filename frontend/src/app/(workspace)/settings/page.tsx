@@ -11,6 +11,7 @@ import {
   PageHeading,
 } from "@/components/ui";
 import { NewEvent } from "@/components/new-event";
+import { eventTypes } from "@/lib/event-types";
 export default function Settings() {
   const { event, user, refresh, notify } = useApp();
   const [busy, setBusy] = useState(false),
@@ -47,6 +48,7 @@ export default function Settings() {
                     method: "PATCH",
                     body: json({
                       title: f.get("title"),
+                      eventType: f.get("eventType"),
                       budgetMinor: Math.round(Number(f.get("budget")) * 100),
                       guestCapacity: Number(f.get("capacity")),
                       rsvpDeadline: f.get("deadline")
@@ -71,6 +73,19 @@ export default function Settings() {
                   maxLength={150}
                   required
                 />
+              </Field>
+              <Field label="Occasion type">
+                <select name="eventType" defaultValue={event.eventType}>
+                  {eventTypes.map((t) => (
+                    <option key={t.type} value={t.type}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  Changing the occasion keeps your existing plans, guests, and
+                  bookings.
+                </small>
               </Field>
               <Field label="Total budget (৳)">
                 <input
@@ -145,6 +160,10 @@ export default function Settings() {
                     "Photography",
                     "Attire",
                     "Makeup",
+                    "Cake & desserts",
+                    "Entertainment",
+                    "AV & production",
+                    "Event planning",
                     "Other",
                   ].map((c) => (
                     <option key={c}>{c}</option>

@@ -142,7 +142,7 @@ export default function Checklist() {
                 required
                 minLength={2}
                 maxLength={200}
-                placeholder="Choose the wedding invitations"
+                placeholder="Send the event invitations"
               />
             </Field>
             <Field label="Due date (optional)">

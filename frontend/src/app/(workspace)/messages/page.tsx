@@ -180,7 +180,7 @@ export default function Messages() {
             </>
           ) : (
             <Empty title="Your ideas belong here">
-              Choose a conversation or say hello to a wedding professional.
+              Choose a conversation or say hello to an event professional.
             </Empty>
           )}
         </div>

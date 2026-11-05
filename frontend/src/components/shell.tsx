@@ -26,7 +26,7 @@ import { useApp } from "@/lib/context";
 import { AuthScreen } from "./auth-screen";
 import { CommandMenu } from "./command-menu";
 const navigation = [
-  ["/", "Overview", LayoutDashboard],
+  ["/dashboard", "Overview", LayoutDashboard],
   ["/planning", "Planning studio", Sparkles],
   ["/vendors", "Find vendors", Store],
   ["/bookings", "My bookings", CalendarDays],

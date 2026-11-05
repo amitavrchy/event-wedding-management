@@ -86,7 +86,7 @@ export default function Packages() {
       <section className="card section-gap">
         <CardHeading
           title="Made just for you"
-          subtitle="Custom quotes from your wedding professionals."
+          subtitle="Custom quotes from your event professionals."
         />
         <div className="quote-list">
           {quotes.map((q) => (

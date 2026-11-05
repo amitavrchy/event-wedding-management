@@ -44,7 +44,7 @@ export default function Studio() {
       .catch((e) => notify(e.message, true));
   }, [vendorId, notify]);
   if (user?.role !== "VENDOR")
-    return <Empty title="This space is for wedding professionals" />;
+    return <Empty title="This space is for event professionals" />;
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;

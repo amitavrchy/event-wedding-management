@@ -15,7 +15,7 @@ export default function Timeline() {
       <PageHeading
         eyebrow="EVERY CHAPTER OF YOUR CELEBRATION"
         title="The moments that make your story"
-        description="From the first splash of holud to the last dance. Every day, together."
+        description="From the first welcome to the last goodbye. Every chapter, together."
         action={
           <Button onClick={() => setAdding(true)}>
             <Plus size={18} />
@@ -65,7 +65,7 @@ export default function Timeline() {
       </div>
       {!event.days?.length && (
         <Empty title="Your story is waiting for its dates">
-          Add a holud, wedding, reception, or any day worth celebrating.
+          Add your birthday, anniversary, team event, or any day worth celebrating.
         </Empty>
       )}
       {adding && (

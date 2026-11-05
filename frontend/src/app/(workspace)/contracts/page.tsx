@@ -263,7 +263,7 @@ export default function Contracts() {
                 minLength={3}
                 maxLength={150}
                 required
-                placeholder="Wedding photography agreement"
+                placeholder="Event photography agreement"
               />
             </Field>
             <Field label="Reference amount (৳)">

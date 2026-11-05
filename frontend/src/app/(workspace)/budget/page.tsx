@@ -252,18 +252,21 @@ export default function Budget() {
                     required
                     minLength={2}
                     maxLength={300}
-                    placeholder="Wedding invitations"
+                    placeholder="Event invitations"
                   />
                 </Field>
                 <Field label="Category">
                   <select name="category">
                     {[
-                      "Venue",
-                      "Catering",
-                      "Decoration",
-                      "Photography",
-                      "Attire",
-                      "Other",
+                      ...new Set([
+                        ...(data?.items || []).map((item) => item.category),
+                        "Venue",
+                        "Catering",
+                        "Decoration",
+                        "Photography",
+                        "Attire",
+                        "Other",
+                      ]),
                     ].map((c) => (
                       <option key={c}>{c}</option>
                     ))}

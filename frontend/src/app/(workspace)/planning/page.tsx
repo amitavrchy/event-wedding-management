@@ -122,7 +122,7 @@ const tools = [
     url: "/timeline",
     title: "Your celebration chapters",
     description:
-      "Holud, wedding, reception, and all the days that make one story.",
+      "Birthdays, weddings, team days, and every chapter worth celebrating.",
     icon: CalendarDays,
     tag: "BRING THE DAYS TOGETHER",
     color: "peach",

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
@@ -17,6 +17,7 @@ import { dateLabel, daysUntil } from "@/lib/format";
 import { Vendor } from "@/lib/types";
 import { Stats } from "@/components/stats";
 import { NewEvent } from "@/components/new-event";
+import { eventType } from "@/lib/event-types";
 import { VendorCard } from "@/components/vendor-card";
 import { BookingModal } from "@/components/booking-modal";
 import { Button, CardHeading, Empty, PageHeading } from "@/components/ui";
@@ -24,6 +25,25 @@ export default function Dashboard() {
   const { event, user, vendors, refresh, notify, loading } = useApp();
   const [creating, setCreating] = useState(false),
     [vendor, setVendor] = useState<Vendor | null>(null);
+  const [initialType, setInitialType] = useState("GENERAL");
+  const occasion = eventType(event?.eventType);
+  useEffect(() => {
+    const query = new URLSearchParams(location.search),
+      intent = query.get("new") || sessionStorage.getItem("utsab-event-intent");
+    if (intent) {
+      setInitialType(eventType(intent).type);
+      setCreating(true);
+      sessionStorage.removeItem("utsab-event-intent");
+      if (query.has("new")) {
+        query.delete("new");
+        history.replaceState(
+          null,
+          "",
+          `${location.pathname}${query.size ? `?${query}` : ""}${location.hash}`,
+        );
+      }
+    }
+  }, []);
   const next = event?.days
     ?.slice()
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
@@ -73,14 +93,19 @@ export default function Dashboard() {
       </Link>
       {event ? (
         <>
-          <section className="celebration-hero">
+          <section
+            className="celebration-hero"
+            style={{
+              backgroundImage: `linear-gradient(90deg,#322c26e8 0%,#332a26bd 40%,#393b3155 75%),url("${occasion.image}")`,
+            }}
+          >
             <div className="hero-text">
               <span className="hero-tag">
                 <span />
-                YOUR FOREVER STARTS HERE
+                {occasion.tagline}
               </span>
               <h2>{event.title}</h2>
-              <p>One love story. A thousand beautiful details.</p>
+              <p>{occasion.description}</p>
               <div className="hero-meta">
                 <span>
                   <CalendarDays size={17} />
@@ -107,7 +132,7 @@ export default function Dashboard() {
           <div className="dashboard-columns">
             <section className="card">
               <CardHeading
-                title="A little closer to ‘I do’"
+                title="A little closer to your big day"
                 subtitle="Small steps. Big, beautiful progress."
                 action={
                   <Link className="text-link" href="/checklist">
@@ -211,7 +236,7 @@ export default function Dashboard() {
             <span className="inspiration-icon">✳</span>
             <div>
               <span className="eyebrow">A FRIENDLY REMINDER</span>
-              <h3>The best part of your wedding is the two of you.</h3>
+              <h3>The best part of every celebration is the people.</h3>
               <p>We’ll help you take care of the rest.</p>
             </div>
             <Link href="/packages">
@@ -238,7 +263,12 @@ export default function Dashboard() {
           </Button>
         </div>
       )}
-      {creating && <NewEvent onClose={() => setCreating(false)} />}{" "}
+      {creating && (
+        <NewEvent
+          initialType={initialType}
+          onClose={() => setCreating(false)}
+        />
+      )}{" "}
       {vendor && (
         <BookingModal vendor={vendor} onClose={() => setVendor(null)} />
       )}

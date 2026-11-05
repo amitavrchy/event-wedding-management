@@ -38,7 +38,7 @@ export default function WebsiteEditor() {
       setSlug(data.slug);
       setFaqs(data.faqs);
     } else if (event) {
-      setHeadline(`The wedding of ${event.title}`);
+      setHeadline(`${event.title} ? a celebration to remember`);
       setStory("");
       setSlug(
         event.title

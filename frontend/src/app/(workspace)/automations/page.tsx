@@ -212,7 +212,7 @@ export default function Automations() {
                 required
                 minLength={3}
                 maxLength={100}
-                placeholder="A week before our wedding"
+                placeholder="A week before our event"
               />
             </Field>
             <Field label="When this happens">
@@ -250,7 +250,7 @@ export default function Automations() {
                 required
                 minLength={3}
                 maxLength={200}
-                placeholder="Confirm arrival times with our wedding professionals."
+                placeholder="Confirm arrival times with our event professionals."
               />
             </Field>
             <Button busy={busy}>Create workflow</Button>

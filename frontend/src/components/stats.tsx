@@ -25,7 +25,7 @@ export function Stats() {
     total = event.tasks?.length || 0;
   const stats = [
     {
-      title: "Wedding budget",
+      title: "Event budget",
       value: taka(event.budgetMinor),
       note: `${taka(committed)} committed`,
       icon: Wallet,

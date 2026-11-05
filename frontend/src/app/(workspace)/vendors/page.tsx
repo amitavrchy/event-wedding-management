@@ -67,13 +67,13 @@ export default function Vendors() {
       <PageHeading
         eyebrow="GOOD PEOPLE. BEAUTIFUL CELEBRATIONS."
         title="Find your dream team"
-        description="Local expertise, thoughtful details, and a little wedding-day magic."
+        description="Local expertise, thoughtful details, and a little event-day magic."
       />
       <div className="catalog-banner">
         <span>✧</span>
         <div>
           <h2>People who bring your vision to life.</h2>
-          <p>Discover Bangladesh’s wedding professionals, all in one place.</p>
+          <p>Discover Bangladesh’s event professionals, all in one place.</p>
         </div>
       </div>
       <div className="filter-bar">

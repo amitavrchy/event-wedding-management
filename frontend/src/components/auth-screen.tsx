@@ -5,9 +5,15 @@ import { api, json } from "@/lib/api";
 import { useApp } from "@/lib/context";
 import { User } from "@/lib/types";
 import { Button, Field } from "./ui";
-export function AuthScreen() {
+export function AuthScreen({
+  initialRegister = false,
+  initialRole = "HOST",
+}: {
+  initialRegister?: boolean;
+  initialRole?: "HOST" | "VENDOR";
+}) {
   const { login } = useApp();
-  const [register, setRegister] = useState(false),
+  const [register, setRegister] = useState(initialRegister),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -93,9 +99,11 @@ export function AuthScreen() {
           </Field>
           {register && (
             <Field label="I am planning as">
-              <select name="role">
+              <select name="role" defaultValue={initialRole}>
                 <option value="HOST">A couple or event host</option>
-                <option value="VENDOR">A wedding professional</option>
+                <option value="VENDOR">
+                  An event professional or business
+                </option>
               </select>
             </Field>
           )}
