@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { randomBytes, createHash } from "node:crypto";
+import { templateFor, allocateBudget } from "../src/event-templates";
 const db = new PrismaClient();
 async function seed() {
   if (process.env.NODE_ENV === "production")
@@ -38,6 +39,38 @@ async function seed() {
     },
   });
   const entries = [
+    [
+      "the-cake-studio",
+      "The Cake Studio",
+      "Cake & desserts",
+      "Development sample: themed birthday cakes, anniversary desserts, and party tables.",
+      1200000,
+      "photo-1513151233558-d860c5398176",
+    ],
+    [
+      "play-and-party",
+      "Play & Party",
+      "Entertainment",
+      "Development sample: games, hosts, music, and family-friendly entertainment.",
+      2500000,
+      "photo-1511988617509-a57c8a288659",
+    ],
+    [
+      "stage-and-sound",
+      "Stage & Sound",
+      "AV & production",
+      "Development sample: microphones, screens, lighting, and conference production.",
+      6000000,
+      "photo-1511578314322-379afb476865",
+    ],
+    [
+      "gathering-planners",
+      "Gathering Planners",
+      "Event planning",
+      "Development sample: company offsites, community gatherings, and celebration coordination.",
+      4000000,
+      "photo-1511795409834-ef04bbd61622",
+    ],
     [
       "the-grand-palace",
       "The Grand Palace",
@@ -93,6 +126,10 @@ async function seed() {
     "Catering",
     "Decoration",
     "Makeup",
+    "Cake & desserts",
+    "Entertainment",
+    "AV & production",
+    "Event planning",
   ])
     await db.category.upsert({ where: { name }, update: {}, create: { name } });
   for (const [
@@ -137,11 +174,45 @@ async function seed() {
       id: "event-ayesha-raihan",
       hostId: host.id,
       title: "Ayesha & Raihan",
+      eventType: "WEDDING",
       budgetMinor: 150000000,
       guestCapacity: 350,
       rsvpDeadline: new Date("2027-02-01T18:00:00+06:00"),
     },
   });
+  for (const [id, type, title, offset] of [
+    ["event-birthday-demo", "BIRTHDAY", "Riya's big 3-0", 60],
+    ["event-anniversary-demo", "ANNIVERSARY", "Ten years together", 90],
+    ["event-corporate-demo", "CORPORATE", "Dhaka Creative team day", 120],
+  ] as const) {
+    const template = templateFor(type),
+      startsAt = new Date(Date.now() + offset * 86400000);
+    await db.event.upsert({
+      where: { id },
+      update: {},
+      create: {
+        id,
+        hostId: host.id,
+        title,
+        eventType: type,
+        city: "Dhaka",
+        budgetMinor: template.budgetMinor,
+        guestCapacity: template.guestCapacity,
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        tasks: { create: template.checklist.map((title) => ({ title })) },
+        budget: {
+          create: allocateBudget(template.budgetMinor, template.allocations),
+        },
+        days: {
+          create: {
+            name: template.dayName,
+            startsAt,
+            endsAt: new Date(+startsAt + template.durationHours * 3600000),
+          },
+        },
+      },
+    });
+  }
   const grand = await db.vendor.findUniqueOrThrow({
     where: { slug: "the-grand-palace" },
   });
