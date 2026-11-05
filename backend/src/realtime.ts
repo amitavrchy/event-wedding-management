@@ -1,6 +1,67 @@
-import { Server } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
-import { Database } from './prisma';
-import { Identity } from './auth';
-import { ownEvent, ownVendor } from './access';
-export function realtime(server:any,db:Database,jwt:JwtService,origins:string[]) {const io=new Server(server,{cors:{origin:origins}});io.use(async(socket,next)=>{try{socket.data.user=await jwt.verifyAsync(socket.handshake.auth.token);next();}catch{next(new Error('Unauthorized'));}});io.on('connection',socket=>{socket.on('join',async(id:string,ack:(value:any)=>void)=>{try{if(typeof id!=='string'||id.length>100)throw new Error('Invalid room');const c=await db.conversation.findUniqueOrThrow({where:{id}});const user=socket.data.user as Identity;if(user.role==='VENDOR')await ownVendor(db,c.vendorId,user);else await ownEvent(db,c.eventId,user);await socket.join(id);ack?.({ok:true});}catch{ack?.({error:'Access denied'});}});socket.on('message',async(data:{conversationId:string;body:string},ack:(value:any)=>void)=>{try{if(!data||!socket.rooms.has(data.conversationId)||typeof data.body!=='string'||!data.body.trim()||data.body.length>4000)throw new Error();const message=await db.message.create({data:{conversationId:data.conversationId,body:data.body.trim(),senderId:socket.data.user.sub}});io.to(data.conversationId).emit('message',message);ack?.({ok:true});}catch{ack?.({error:'Message could not be sent'});}});});return io;}
+import { Server } from "socket.io";
+import { JwtService } from "@nestjs/jwt";
+import { Database } from "./prisma";
+import { Identity } from "./auth";
+import { ownEvent, ownVendor } from "./access";
+export function realtime(
+  server: any,
+  db: Database,
+  jwt: JwtService,
+  origins: string[],
+) {
+  const io = new Server(server, { cors: { origin: origins } });
+  io.use(async (socket, next) => {
+    try {
+      socket.data.user = await jwt.verifyAsync(socket.handshake.auth.token);
+      next();
+    } catch {
+      next(new Error("Unauthorized"));
+    }
+  });
+  io.on("connection", (socket) => {
+    socket.on("join", async (id: string, ack: (value: any) => void) => {
+      try {
+        if (typeof id !== "string" || id.length > 100)
+          throw new Error("Invalid room");
+        const c = await db.conversation.findUniqueOrThrow({ where: { id } });
+        const user = socket.data.user as Identity;
+        if (user.role === "VENDOR") await ownVendor(db, c.vendorId, user);
+        else await ownEvent(db, c.eventId, user);
+        await socket.join(id);
+        ack?.({ ok: true });
+      } catch {
+        ack?.({ error: "Access denied" });
+      }
+    });
+    socket.on(
+      "message",
+      async (
+        data: { conversationId: string; body: string },
+        ack: (value: any) => void,
+      ) => {
+        try {
+          if (
+            !data ||
+            !socket.rooms.has(data.conversationId) ||
+            typeof data.body !== "string" ||
+            !data.body.trim() ||
+            data.body.length > 4000
+          )
+            throw new Error();
+          const message = await db.message.create({
+            data: {
+              conversationId: data.conversationId,
+              body: data.body.trim(),
+              senderId: socket.data.user.sub,
+            },
+          });
+          io.to(data.conversationId).emit("message", message);
+          ack?.({ ok: true });
+        } catch {
+          ack?.({ error: "Message could not be sent" });
+        }
+      },
+    );
+  });
+  return io;
+}

@@ -5,7 +5,7 @@ services:
       POSTGRES_USER: utsab
       POSTGRES_PASSWORD: local-development-only
       POSTGRES_DB: utsab
-    ports: ["5432:5432"]
+    ports: ["${POSTGRES_PORT:-5544}:5432"]
     volumes: ["postgres_data:/var/lib/postgresql/data"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U utsab"]
@@ -13,7 +13,7 @@ services:
       retries: 10
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports: ["${REDIS_PORT:-6388}:6379"]
     volumes: ["redis_data:/data"]
 volumes:
   postgres_data:
