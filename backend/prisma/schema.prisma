@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  fullName String
+  passwordHash String
+  role String @default("HOST")
+  createdAt DateTime @default(now())
+}
+model Vendor {
+  id String @id @default(cuid())
+  ownerId String
+  slug String @unique
+  businessName String
+  category String
+  city String @default("Dhaka")
+  description String
+  image String
+  status String @default("APPLIED")
+  commissionBps Int @default(1000)
+  services VendorService[]
+}
+model VendorService {
+  id String @id @default(cuid())
+  vendorId String
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+  title String
+  basePriceMinor Int
+  durationHours Int @default(4)
+  bufferHours Int @default(1)
+  capacity Int?
+  bookings Booking[]
+  blocks AvailabilityBlock[]
+}
+model AvailabilityBlock {
+  id String @id @default(cuid())
+  serviceId String
+  service VendorService @relation(fields: [serviceId], references: [id])
+  startAt DateTime
+  endAt DateTime
+  reason String?
+}
+model Event {
+  id String @id @default(cuid())
+  hostId String
+  title String
+  eventType String @default("WEDDING")
+  city String @default("Dhaka")
+  status String @default("PLANNING")
+  budgetMinor Int @default(150000000)
+  guestCapacity Int @default(300)
+  rsvpDeadline DateTime?
+  createdAt DateTime @default(now())
+  days EventDay[]
+  tasks ChecklistItem[]
+  budget BudgetItem[]
+  expenses Expense[]
+  guests Guest[]
+  bookings Booking[]
+}
+model EventDay {
+  id String @id @default(cuid())
+  eventId String
+  event Event @relation(fields:[eventId],references:[id])
+  name String
+  startsAt DateTime
+  endsAt DateTime
+  venueName String?
+}
+model ChecklistItem {
+  id String @id @default(cuid())
+  eventId String
+  event Event @relation(fields:[eventId],references:[id])
+  title String
+  done Boolean @default(false)
+  dueAt DateTime?
+}
+model Booking {
+  id String @id @default(cuid())
+  eventId String
+  event Event @relation(fields:[eventId],references:[id])
+  serviceId String
+  service VendorService @relation(fields:[serviceId],references:[id])
+  vendorId String
+  status String @default("HELD")
+  startAt DateTime
+  endAt DateTime
+  reservedUntil DateTime
+  holdExpiresAt DateTime
+  priceMinor Int
+  advanceMinor Int
+  category String
+  policyFlags String[] @default([])
+  createdAt DateTime @default(now())
+  @@index([serviceId,startAt,reservedUntil])
+}
+model BudgetItem {
+  id String @id @default(cuid())
+  eventId String
+  event Event @relation(fields:[eventId],references:[id])
+  category String
+  plannedMinor Int
+  @@unique([eventId,category])
+}
+model Expense {
+  id String @id @default(cuid())
+  eventId String
+  event Event @relation(fields:[eventId],references:[id])
+  category String
+  amountMinor Int
+  note String
+  createdAt DateTime @default(now())
+}
+model Guest {
+  id String @id @default(cuid())
+  eventId String
+  event Event @relation(fields:[eventId],references:[id])
+  name String
+  email String?
+  phone String?
+  partySize Int @default(1)
+  maxPartySize Int @default(2)
+  rsvpStatus String @default("INVITED")
+  token String @unique
+  mealPreference String?
+  tableLabel String?
+}
+model Package {
+  id String @id @default(cuid())
+  vendorId String?
+  title String
+  description String
+  serviceIds String[]
+  discountBps Int @default(500)
+}
+model Quote {
+  id String @id @default(cuid())
+  eventId String
+  vendorId String
+  status String @default("SENT")
+  amountMinor Int
+  breakdown Json
+  expiresAt DateTime
+}
+model Payment {
+  id String @id @default(cuid())
+  bookingId String
+  eventId String
+  provider String
+  status String @default("PENDING")
+  amountMinor Int
+  kind String
+  idempotencyKey String @unique
+  createdAt DateTime @default(now())
+}
+model LedgerEntry {
+  id String @id @default(cuid())
+  paymentId String @unique
+  vendorId String
+  grossMinor Int
+  commissionMinor Int
+  netMinor Int
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+}
+model Review {
+  id String @id @default(cuid())
+  bookingId String @unique
+  vendorId String
+  hostId String
+  rating Int
+  body String
+  createdAt DateTime @default(now())
+}
+model Conversation {
+  id String @id @default(cuid())
+  eventId String
+  vendorId String
+  messages Message[]
+  @@unique([eventId,vendorId])
+}
+model Message {
+  id String @id @default(cuid())
+  conversationId String
+  conversation Conversation @relation(fields:[conversationId],references:[id])
+  senderId String
+  body String
+  createdAt DateTime @default(now())
+}
