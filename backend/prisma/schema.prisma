@@ -193,3 +193,13 @@ model Message {
   body String
   createdAt DateTime @default(now())
 }
+model Notification {
+  id String @id @default(cuid())
+  key String @unique
+  recipientId String
+  title String
+  body String
+  read Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([recipientId,createdAt])
+}
