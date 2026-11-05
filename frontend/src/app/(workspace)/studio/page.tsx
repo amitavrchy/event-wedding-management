@@ -6,6 +6,7 @@ import { useApp } from "@/lib/context";
 import { api, json } from "@/lib/api";
 import { localDateToISO } from "@/lib/format";
 import { Vendor } from "@/lib/types";
+import { useResource } from "@/lib/use-resource";
 import {
   Button,
   CardHeading,
@@ -15,6 +16,10 @@ import {
 } from "@/components/ui";
 export default function Studio() {
   const { user, notify, refresh, vendors } = useApp();
+  const { data: categories } = useResource<{ id: string; name: string }[]>(
+    "categories",
+    [],
+  );
   const [tab, setTab] = useState("business"),
     [busy, setBusy] = useState(false),
     [vendorId, setVendorId] = useState("");
@@ -181,14 +186,10 @@ export default function Studio() {
               </Field>
               <Field label="Category">
                 <select name="category">
-                  {[
-                    "Venue",
-                    "Photography",
-                    "Catering",
-                    "Decoration",
-                    "Makeup",
-                  ].map((c) => (
-                    <option key={c}>{c}</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </Field>

@@ -4,6 +4,7 @@ import { useApp } from "@/lib/context";
 import { api, json } from "@/lib/api";
 import { Vendor } from "@/lib/types";
 import { taka } from "@/lib/format";
+import { CategoryManager } from "@/components/category-manager";
 import {
   Badge,
   Button,
@@ -69,6 +70,7 @@ export default function Admin() {
         title="Platform administration"
         description="Review businesses, manage commission rates, and reconcile vendor payouts."
       />
+      <CategoryManager />
       <section className="card section-gap">
         <CardHeading
           title="Cancellation & refund reviews"

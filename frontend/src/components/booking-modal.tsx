@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
+import { CalendarDays, MapPin, ShieldCheck, Heart } from "lucide-react";
 import { api, json } from "@/lib/api";
 import { useApp } from "@/lib/context";
 import { localDateToISO, taka } from "@/lib/format";
@@ -69,6 +69,20 @@ export function BookingModal({
         {vendor.city} · {vendor.category}
       </span>
       <p className="detail-description">{vendor.description}</p>
+      <Button
+        variant="secondary"
+        onClick={async () => {
+          try {
+            await api(`favorites/${vendor.id}`, { method: "POST" });
+            notify("Saved to your dream-team shortlist");
+          } catch (e) {
+            notify((e as Error).message, true);
+          }
+        }}
+      >
+        <Heart size={17} />
+        Save to shortlist
+      </Button>
       <div className="info-note">
         <ShieldCheck size={20} />
         <span>

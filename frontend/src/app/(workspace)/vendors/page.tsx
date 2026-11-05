@@ -17,6 +17,10 @@ const categories = [
 ];
 export default function Vendors() {
   const { vendors, notify } = useApp();
+  const categories = [
+    "All vendors",
+    ...new Set(vendors.map((v) => v.category)),
+  ];
   const [date, setDate] = useState(""),
     [available, setAvailable] = useState<Vendor[] | null>(null);
   useEffect(() => {
