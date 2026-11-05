@@ -23,7 +23,7 @@ export class CheckInController {
     @Param("id") id: string,
     @Param("dayId") dayId: string,
   ) {
-    const event=await ownEvent(this.db, id, req.user, "read");
+    const event = await ownEvent(this.db, id, req.user, "read");
     await this.db.eventDay.findFirstOrThrow({
       where: { id: dayId, eventId: id },
     });
@@ -36,7 +36,11 @@ export class CheckInController {
     ]);
     return entries.map((e) => ({
       ...e,
-      guest: guests.map(g=>event.access==='VIEWER'?{...g,token:undefined}:g).find((g) => g.id === e.guestId),
+      guest: guests
+        .map((g) =>
+          event.access === "VIEWER" ? { ...g, token: undefined } : g,
+        )
+        .find((g) => g.id === e.guestId),
     }));
   }
   @Post(":dayId") async arrive(

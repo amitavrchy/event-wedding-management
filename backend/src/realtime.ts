@@ -4,6 +4,9 @@ import { Database } from "./prisma";
 import { Identity } from "./auth";
 import { ownEvent, ownVendor } from "./access";
 let broadcast: Server | undefined;
+export function disconnectUser(userId: string) {
+  broadcast?.in(`user:${userId}`).disconnectSockets(true);
+}
 export function publishMessage(room: string, message: unknown) {
   broadcast?.to(room).emit("message", message);
 }
@@ -36,6 +39,16 @@ export function realtime(
     }
   });
   io.on("connection", (socket) => {
+    const roomTimers = new Map<string, ReturnType<typeof setTimeout>>();
+    socket.on("disconnect", () => {
+      for (const timer of roomTimers.values()) clearTimeout(timer);
+    });
+    const expiry = setTimeout(
+      () => socket.disconnect(true),
+      Math.max(0, (socket.data.user.exp || 0) * 1000 - Date.now()),
+    );
+    expiry.unref();
+    socket.on("disconnect", () => clearTimeout(expiry));
     void socket.join(`user:${socket.data.user.sub}`);
     let count = 0,
       reset = Date.now() + 60000;
@@ -48,6 +61,9 @@ export function realtime(
       next();
     });
     socket.on("leave", (id: string) => {
+      const timer = roomTimers.get(id);
+      if (timer) clearTimeout(timer);
+      roomTimers.delete(id);
       if (typeof id === "string" && !id.startsWith("user:"))
         void socket.leave(id);
     });
@@ -57,12 +73,27 @@ export function realtime(
           throw new Error("Invalid room");
         const c = await db.conversation.findUniqueOrThrow({ where: { id } });
         const user = socket.data.user as Identity;
-        if (user.role === "VENDOR") await ownVendor(db, c.vendorId, user);
-        else await ownEvent(db, c.eventId, user);
+        const grant =
+          user.role === "VENDOR"
+            ? await ownVendor(db, c.vendorId, user, "read")
+            : await ownEvent(db, c.eventId, user, "read");
         await socket.join(id);
-        ack?.({ ok: true });
+        const previous = roomTimers.get(id);
+        if (previous) clearTimeout(previous);
+        if (grant.accessExpiresAt) {
+          const timer = setTimeout(
+            () => void socket.leave(id),
+            Math.max(
+              0,
+              Math.min(2147483647, +grant.accessExpiresAt - Date.now()),
+            ),
+          );
+          timer.unref();
+          roomTimers.set(id, timer);
+        }
+        typeof ack === "function" && ack({ ok: true });
       } catch {
-        ack?.({ error: "Access denied" });
+        typeof ack === "function" && ack({ error: "Access denied" });
       }
     });
     socket.on(
@@ -80,6 +111,13 @@ export function realtime(
             data.body.length > 4000
           )
             throw new Error();
+          const conversation = await db.conversation.findUniqueOrThrow({
+            where: { id: data.conversationId },
+          });
+          const user = socket.data.user as Identity;
+          if (user.role === "VENDOR")
+            await ownVendor(db, conversation.vendorId, user);
+          else await ownEvent(db, conversation.eventId, user);
           const message = await db.message.create({
             data: {
               conversationId: data.conversationId,
@@ -88,9 +126,10 @@ export function realtime(
             },
           });
           io.to(data.conversationId).emit("message", message);
-          ack?.({ ok: true });
+          typeof ack === "function" && ack({ ok: true });
         } catch {
-          ack?.({ error: "Message could not be sent" });
+          typeof ack === "function" &&
+            ack({ error: "Message could not be sent" });
         }
       },
     );

@@ -59,7 +59,7 @@ export class MessagesController {
     @Req() req: any,
     @Param("id") id: string,
   ) {
-    await this.access(id, req.user);
+    await this.access(id, req.user, "read");
     return (
       await this.db.message.findMany({
         where: { conversationId: id },
@@ -84,10 +84,15 @@ export class MessagesController {
     publishMessage(id, message);
     return message;
   }
-  async access(id: string, user: Identity) {
+  async access(
+    id: string,
+    user: Identity,
+    permission: "read" | "write" = "write",
+  ) {
     const c = await this.db.conversation.findUniqueOrThrow({ where: { id } });
-    if (user.role === "VENDOR") await ownVendor(this.db, c.vendorId, user);
-    else await ownEvent(this.db, c.eventId, user);
+    if (user.role === "VENDOR")
+      await ownVendor(this.db, c.vendorId, user, permission);
+    else await ownEvent(this.db, c.eventId, user, permission);
     return c;
   }
 }

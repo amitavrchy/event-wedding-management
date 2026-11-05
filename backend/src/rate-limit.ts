@@ -10,7 +10,7 @@ export class RateLimit implements CanActivate {
   canActivate(ctx: ExecutionContext) {
     const req = ctx.switchToHttp().getRequest();
     const bucket = req.path?.split("/")[2] || "api";
-    const key = `${req.ip || req.socket.remoteAddress}:${bucket}`;
+    const key = `${req.ip || req.socket.remoteAddress}:${bucket === "auth" ? "auth" : req.route?.path || bucket}`;
     const now = Date.now();
     if (this.hits.size > 10000)
       for (const [key, value] of this.hits)

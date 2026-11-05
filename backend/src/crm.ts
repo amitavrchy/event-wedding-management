@@ -17,10 +17,10 @@ import { audit } from "./activity";
 const fields = z.object({
   name: z.string().min(2).max(100),
   email: z.email().optional(),
-  estimatedMinor: amount.default(0),
+  estimatedMinor: amount,
   eventDate: date.optional(),
   followUpAt: date.optional(),
-  notes: z.string().max(5000).default(""),
+  notes: z.string().max(5000),
 });
 @Controller("vendors/:id/leads")
 @UseGuards(AuthGuard)
@@ -40,7 +40,16 @@ export class CrmController {
   ) {
     await ownVendor(this.db, id, req.user);
     return this.db.lead.create({
-      data: { ...parse(fields, body), vendorId: id },
+      data: {
+        ...parse(
+          fields.extend({
+            estimatedMinor: amount.default(0),
+            notes: z.string().max(5000).default(""),
+          }),
+          body,
+        ),
+        vendorId: id,
+      },
     });
   }
   @Patch(":leadId") async update(
@@ -51,13 +60,11 @@ export class CrmController {
   ) {
     await ownVendor(this.db, id, req.user);
     const data = parse(
-      fields
-        .partial()
-        .extend({
-          stage: z
-            .enum(["NEW", "QUALIFIED", "PROPOSAL", "WON", "LOST"])
-            .optional(),
-        }),
+      fields.partial().extend({
+        stage: z
+          .enum(["NEW", "QUALIFIED", "PROPOSAL", "WON", "LOST"])
+          .optional(),
+      }),
       body,
     );
     return this.db.$transaction(async (tx) => {

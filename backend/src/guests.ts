@@ -27,12 +27,14 @@ const guestSchema = z.object({
 export class GuestsController {
   constructor(private db: Database) {}
   @Get() async list(@Req() req: any, @Param("id") id: string) {
-    const event=await ownEvent(this.db, id, req.user, "read");
-    const guests=await this.db.guest.findMany({
+    const event = await ownEvent(this.db, id, req.user, "read");
+    const guests = await this.db.guest.findMany({
       where: { eventId: id },
       orderBy: { name: "asc" },
     });
-    return guests.map(g=>event.access==='VIEWER'?{...g,token:undefined}:g);
+    return guests.map((g) =>
+      event.access === "VIEWER" ? { ...g, token: undefined } : g,
+    );
   }
   @Post() async add(
     @Req() req: any,

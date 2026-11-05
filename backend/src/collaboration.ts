@@ -16,6 +16,7 @@ import { AuthGuard } from "./auth";
 import { ownEvent, ownVendor } from "./access";
 import { parse, z } from "./validation";
 import { audit } from "./activity";
+import { disconnectUser } from "./realtime";
 @Controller("collaboration")
 @UseGuards(AuthGuard)
 export class CollaborationController {
@@ -184,11 +185,24 @@ export class CollaborationController {
   ) {
     parse(z.enum(["EVENT", "VENDOR"]), scope);
     await this.owner(scope, id, req);
-    return scope === "EVENT"
-      ? this.db.eventMember.deleteMany({ where: { id: memberId, eventId: id } })
-      : this.db.vendorMember.deleteMany({
-          where: { id: memberId, vendorId: id },
-        });
+    const member =
+      scope === "EVENT"
+        ? await this.db.eventMember.findFirst({
+            where: { id: memberId, eventId: id },
+          })
+        : await this.db.vendorMember.findFirst({
+            where: { id: memberId, vendorId: id },
+          });
+    const result =
+      scope === "EVENT"
+        ? await this.db.eventMember.deleteMany({
+            where: { id: memberId, eventId: id },
+          })
+        : await this.db.vendorMember.deleteMany({
+            where: { id: memberId, vendorId: id },
+          });
+    if (member) disconnectUser(member.userId);
+    return result;
   }
   @Delete(":scope/:id/invites/:inviteId") async cancel(
     @Req() req: any,

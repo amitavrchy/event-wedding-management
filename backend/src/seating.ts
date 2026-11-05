@@ -27,10 +27,16 @@ export class SeatingController {
         where: { eventId: id },
         orderBy: { label: "asc" },
       }),
-      guests: await this.db.guest.findMany({
-        where: { eventId: id },
-        orderBy: { name: "asc" },
-      }).then(guests=>guests.map(g=>event.access==='VIEWER'?{...g,token:undefined}:g)),
+      guests: await this.db.guest
+        .findMany({
+          where: { eventId: id },
+          orderBy: { name: "asc" },
+        })
+        .then((guests) =>
+          guests.map((g) =>
+            event.access === "VIEWER" ? { ...g, token: undefined } : g,
+          ),
+        ),
       capacity: event.guestCapacity,
     };
   }

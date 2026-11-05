@@ -9,6 +9,7 @@ export async function ownEvent(
 ) {
   const event = await db.event.findUnique({ where: { id } });
   let access = "OWNER";
+  let accessExpiresAt: Date | undefined;
   if (!event) throw new NotFoundException("Event not found");
   if (event.hostId !== user.sub && user.role !== "PLATFORM_ADMIN") {
     const member = await db.eventMember.findUnique({
@@ -23,8 +24,9 @@ export async function ownEvent(
         "This workspace is outside your permissions",
       );
     access = member.permission;
+    accessExpiresAt = member.expiresAt;
   }
-  return { ...event, access };
+  return { ...event, access, accessExpiresAt };
 }
 export async function ownVendor(
   db: Database,
@@ -33,6 +35,7 @@ export async function ownVendor(
   permission: "read" | "write" = "write",
 ) {
   const vendor = await db.vendor.findUnique({ where: { id } });
+  let accessExpiresAt: Date | undefined;
   if (!vendor) throw new NotFoundException("Vendor not found");
   if (vendor.ownerId !== user.sub && user.role !== "PLATFORM_ADMIN") {
     const member = await db.vendorMember.findUnique({
@@ -44,8 +47,9 @@ export async function ownVendor(
       (permission === "write" && member.permission !== "MANAGER")
     )
       throw new ForbiddenException("This business is outside your permissions");
+    accessExpiresAt = member.expiresAt;
   }
-  return vendor;
+  return { ...vendor, accessExpiresAt };
 }
 export const eventAccess = (userId: string) => ({
   OR: [
