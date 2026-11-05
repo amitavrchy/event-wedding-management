@@ -6,6 +6,7 @@ Base URL: `http://localhost:4000/api`. Requests and responses are JSON. Protecte
 | --------- | ------------------------------- | --------------------------------------------------------- |
 | POST      | `/auth/register`                | `email,password,fullName,role` (HOST or VENDOR)           |
 | POST      | `/auth/login`                   | `email,password` → token and user                         |
+| GET       | `/event-types`                  | Public occasion templates, suggested defaults and allocations |
 | GET/POST  | `/events`                       | Owned event list / create                                 |
 | GET/PATCH | `/events/:id`                   | Owned event details / settings                            |
 | POST      | `/events/:id/days`              | Add `name,startsAt,endsAt,venueName`                      |

@@ -34,4 +34,6 @@ The retained GitHub Actions template is [ci/workflows/ci.yml](ci/workflows/ci.ym
 
 Read [docs/OPERATIONS.md](docs/OPERATIONS.md), [docs/API.md](docs/API.md), and [Project_spec.md](Project_spec.md). Seed accounts are for local development only and seeding refuses `NODE_ENV=production`.
 
+The [general event templates](docs/EVENT_TYPES.md) cover 13 occasions, including birthdays, anniversaries, corporate events and conferences. New event creation can atomically add a checklist, budget allocations, and a dated schedule. Seeded examples also include cake, entertainment, AV and planning professionals.
+
 The advanced suite is documented in [docs/ADVANCED_SCOPE.md](docs/ADVANCED_SCOPE.md). It includes capacity-safe seating, live run sheets, QR check-in, expiring event/vendor collaboration, account-signed agreements, actual installment capture, lead CRM, recurring blackout calendars, moderated celebration websites, inspiration, recommendations, automations, and financial/activity analytics. The demo planner account is `planner@utsab.local` with the same local seed password.

@@ -23,7 +23,7 @@ async function session(page: Page, identity: any) {
     sessionStorage.setItem("utsab-token", token);
     sessionStorage.setItem("utsab-user", JSON.stringify(user));
   }, identity);
-  await page.goto("/");
+  await page.goto("/dashboard");
   await expect(
     page.getByRole("combobox", { name: "Choose event" }),
   ).toBeVisible();

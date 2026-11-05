@@ -1,6 +1,6 @@
 import { test, expect, Page } from "@playwright/test";
 async function login(page: Page) {
-  await page.goto("/");
+  await page.goto("/login");
   await page.getByLabel("Email address").fill("host@utsab.local");
   await page.getByLabel("Password", { exact: true }).fill("UtsabDemo2027!");
   await page.getByRole("button", { name: "Sign in to your workspace" }).click();
@@ -44,11 +44,11 @@ test("vendor studio creates a quote that the host can accept; admin ledger is ac
   page,
   browser,
 }) => {
-  await page.goto("/");
+  await page.goto("/login");
   await page.getByLabel("Email address").fill("vendor@utsab.local");
   await page.getByLabel("Password", { exact: true }).fill("UtsabDemo2027!");
   await page.getByRole("button", { name: "Sign in to your workspace" }).click();
-  await page.getByRole("link", { name: "Vendor studio" }).click();
+  await page.getByRole("link", { name: "Vendor studio", exact: true }).click();
   await page.getByRole("button", { name: "Send a quote", exact: true }).click();
   await page
     .getByLabel("Your business")

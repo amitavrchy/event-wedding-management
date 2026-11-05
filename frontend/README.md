@@ -14,6 +14,10 @@ npm run dev
 
 Open http://localhost:3000. The API proxy uses `API_URL`; realtime connections use `NEXT_PUBLIC_SOCKET_URL`. Both default to http://localhost:4000 locally.
 
+The public landing page is `/`. Sign in at `/login`, create an account at `/signup`, and open the host workspace at `/dashboard`. The professional landing CTA opens vendor registration. Occasion links carry the selected type through sign-in and open the matching event creation form. Signed-in users can return home using the Utsab logo.
+
+Wedding, birthday, anniversary, corporate, conference, engagement, Gaye Holud, reception, baby shower, graduation, reunion, community, and general events have editable budget/guest defaults. New workspaces can include an occasion-specific checklist, exact budget allocations, and an optional schedule in Asia/Dhaka time. Changing an existing event's occasion preserves its plans. See [event templates](../backend/docs/EVENT_TYPES.md).
+
 Demo host: `host@utsab.local`, vendor: `vendor@utsab.local`, administrator: `admin@utsab.local`. All use `UtsabDemo2027!`. Demo data is only for local/disposable environments.
 
 ```powershell
