@@ -1,0 +1,55 @@
+# Production stack for Utsab on the shared EC2 host.
+# Deployed by .github/workflows/deploy.yml to /opt/apps/utsab/docker-compose.yml.
+# Runtime env comes from /opt/apps/utsab/.env (see deploy/.env.example). Never commit real secrets.
+# Requires the external network `apps-net` and the `shared-postgres` container on it.
+name: utsab
+
+services:
+  backend:
+    image: ghcr.io/amitavrchy/utsab-backend:${IMAGE_TAG:-latest}
+    container_name: utsab-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: "4003"
+      NODE_OPTIONS: --max-old-space-size=320
+    ports:
+      - "127.0.0.1:4003:4003"
+    mem_limit: 448m
+    memswap_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4003/api/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks: [apps-net]
+
+  frontend:
+    image: ghcr.io/amitavrchy/utsab-frontend:${IMAGE_TAG:-latest}
+    container_name: utsab-frontend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3003"
+      NODE_OPTIONS: --max-old-space-size=256
+    ports:
+      - "127.0.0.1:3003:3003"
+    mem_limit: 384m
+    memswap_limit: 640m
+    depends_on:
+      - backend
+    logging: *logging
+    networks: [apps-net]
+
+networks:
+  apps-net:
+    external: true
