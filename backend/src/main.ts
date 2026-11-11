@@ -2,6 +2,7 @@ import "reflect-metadata";
 import "dotenv/config";
 import { Module, Controller, Get } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { APP_GUARD } from "@nestjs/core";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import helmet from "helmet";
@@ -106,12 +107,16 @@ class HealthController {
 })
 class AppModule {}
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Behind a reverse proxy (Nginx / the Next.js /api rewrite) set TRUST_PROXY
+  // (e.g. "loopback,linklocal,uniquelocal") so req.ip is the real client IP for rate limiting.
+  if (process.env.TRUST_PROXY) app.set("trust proxy", process.env.TRUST_PROXY);
   app.use(helmet());
   app.useGlobalFilters(new ApiErrors());
-  const origins = (process.env.CORS_ORIGINS || "http://localhost:3000").split(
-    ",",
-  );
+  const origins = (process.env.CORS_ORIGINS || "http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
   app.enableCors({ origin: origins });
   app.setGlobalPrefix("api");
   app.enableShutdownHooks();
