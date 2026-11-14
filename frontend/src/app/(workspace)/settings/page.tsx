@@ -10,7 +10,8 @@ import {
   Field,
   PageHeading,
 } from "@/components/ui";
-import { NewEvent } from "@/components/new-event";
+import { OccasionPicker } from "@/components/occasion-picker";
+import { ToolSettings } from "@/components/tool-settings";
 import { eventTypes } from "@/lib/event-types";
 export default function Settings() {
   const { event, user, refresh, notify } = useApp();
@@ -196,13 +197,14 @@ export default function Settings() {
               </p>
             </div>
           </section>
+          <ToolSettings />
         </div>
       ) : (
         <Empty title="Begin with a celebration">
           Create a workspace to personalize your event settings.
         </Empty>
       )}
-      {adding && <NewEvent onClose={() => setAdding(false)} />}
+      {adding && <OccasionPicker onClose={() => setAdding(false)} />}
     </>
   );
 }

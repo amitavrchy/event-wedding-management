@@ -86,12 +86,14 @@ export function Modal({
 export function Field({
   label,
   children,
+  className,
 }: {
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <label className="field">
+    <label className={`field ${className || ""}`}>
       <span>{label}</span>
       {children}
     </label>

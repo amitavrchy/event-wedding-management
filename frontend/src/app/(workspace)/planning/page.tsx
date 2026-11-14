@@ -17,6 +17,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useApp } from "@/lib/context";
+import { pathAllowed } from "@/lib/features";
 import { PageHeading } from "@/components/ui";
 const tools = [
   {
@@ -129,7 +130,7 @@ const tools = [
   },
 ];
 export default function Planning() {
-  const { event } = useApp();
+  const { event, user, catalog } = useApp();
   const total = event?.tasks.length || 0,
     done = event?.tasks.filter((t) => t.done).length || 0;
   return (
@@ -170,24 +171,26 @@ export default function Planning() {
         </div>
       </section>
       <div className="studio-tool-grid">
-        {tools.map((tool, i) => (
-          <Link className="card studio-tool" key={tool.url} href={tool.url}>
-            <div className="studio-tool-top">
-              <span className={`stat-icon ${tool.color}`}>
-                <tool.icon size={22} />
+        {tools
+          .filter((tool) => pathAllowed(tool.url, user, event, catalog))
+          .map((tool, i) => (
+            <Link className="card studio-tool" key={tool.url} href={tool.url}>
+              <div className="studio-tool-top">
+                <span className={`stat-icon ${tool.color}`}>
+                  <tool.icon size={22} />
+                </span>
+                <span className="tool-number">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+              </div>
+              <span className="eyebrow">{tool.tag}</span>
+              <h2>{tool.title}</h2>
+              <p>{tool.description}</p>
+              <span className="studio-tool-link">
+                Open workspace <ArrowUpRight size={18} />
               </span>
-              <span className="tool-number">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-            </div>
-            <span className="eyebrow">{tool.tag}</span>
-            <h2>{tool.title}</h2>
-            <p>{tool.description}</p>
-            <span className="studio-tool-link">
-              Open workspace <ArrowUpRight size={18} />
-            </span>
-          </Link>
-        ))}
+            </Link>
+          ))}
       </div>
     </>
   );

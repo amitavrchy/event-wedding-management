@@ -2,6 +2,27 @@ export type User = {
   id: string;
   fullName: string;
   role: "HOST" | "VENDOR" | "PLATFORM_ADMIN";
+  email?: string;
+  phone?: string | null;
+  locale?: "en" | "bn";
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+  twoFactorEnabled?: boolean;
+};
+export type FeatureGroup = { key: string; label: string; labelBn: string };
+export type Feature = {
+  key: string;
+  group: string;
+  label: string;
+  labelBn: string;
+  description: string;
+  path: string;
+  core?: boolean;
+};
+export type FeatureCatalog = {
+  groups: FeatureGroup[];
+  features: Feature[];
+  occasionDefaults: Record<string, string[]>;
 };
 export type Vendor = {
   id: string;
@@ -80,6 +101,10 @@ export type Event = {
   budgetMinor: number;
   guestCapacity: number;
   rsvpDeadline?: string;
+  features?: string[];
+  enabledFeatures?: string[];
+  disabledFeatures?: string[];
+  archivedAt?: string | null;
   days: Day[];
   tasks: Task[];
   guests: Guest[];

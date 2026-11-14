@@ -18,6 +18,7 @@ export type EventType = (typeof eventTypes)[number];
 type Template = {
   type: EventType;
   label: string;
+  labelBn: string;
   description: string;
   budgetMinor: number;
   guestCapacity: number;
@@ -44,6 +45,7 @@ export const eventTemplates: Template[] = [
   {
     type: "GENERAL",
     label: "General celebration",
+    labelBn: "অন্যান্য অনুষ্ঠান",
     description:
       "A flexible starting point for any gathering worth bringing together.",
     budgetMinor: 20000000,
@@ -62,6 +64,7 @@ export const eventTemplates: Template[] = [
   {
     type: "WEDDING",
     label: "Wedding",
+    labelBn: "বিয়ে",
     description:
       "Bring your people, traditions, and every beautiful wedding detail together.",
     budgetMinor: 150000000,
@@ -88,6 +91,7 @@ export const eventTemplates: Template[] = [
   {
     type: "BIRTHDAY",
     label: "Birthday",
+    labelBn: "জন্মদিন",
     description:
       "From first candles to big milestones: a personal, joyful birthday plan.",
     budgetMinor: 10000000,
@@ -113,6 +117,7 @@ export const eventTemplates: Template[] = [
   {
     type: "ANNIVERSARY",
     label: "Anniversary",
+    labelBn: "বিবাহবার্ষিকী",
     description:
       "An intimate dinner or a room full of memories—celebrate your next chapter.",
     budgetMinor: 15000000,
@@ -138,6 +143,7 @@ export const eventTemplates: Template[] = [
   {
     type: "CORPORATE",
     label: "Corporate event",
+    labelBn: "কর্পোরেট ইভেন্ট",
     description:
       "Team days, launches, offsites, and company celebrations with a clear plan.",
     budgetMinor: 75000000,
@@ -157,6 +163,7 @@ export const eventTemplates: Template[] = [
   {
     type: "CONFERENCE",
     label: "Conference & seminar",
+    labelBn: "সম্মেলন ও সেমিনার",
     description:
       "Coordinate speakers, sessions, delegates, and venue operations.",
     budgetMinor: 150000000,
@@ -176,6 +183,7 @@ export const eventTemplates: Template[] = [
   {
     type: "ENGAGEMENT",
     label: "Engagement",
+    labelBn: "বাগদান / আংটি বদল",
     description: "A beautiful beginning for your people and your next chapter.",
     budgetMinor: 40000000,
     guestCapacity: 120,
@@ -194,6 +202,7 @@ export const eventTemplates: Template[] = [
   {
     type: "HOLUD",
     label: "Gaye Holud",
+    labelBn: "গায়ে হলুদ",
     description:
       "Color, music, and the traditions that bring everyone together.",
     budgetMinor: 50000000,
@@ -212,6 +221,7 @@ export const eventTemplates: Template[] = [
   {
     type: "RECEPTION",
     label: "Reception",
+    labelBn: "বৌভাত / রিসেপশন",
     description:
       "A warm welcome, a thoughtful dinner, and a celebration to remember.",
     budgetMinor: 80000000,
@@ -230,6 +240,7 @@ export const eventTemplates: Template[] = [
   {
     type: "BABY_SHOWER",
     label: "Baby shower",
+    labelBn: "সাধ / বেবি শাওয়ার",
     description: "A sweet, thoughtful gathering for a new little beginning.",
     budgetMinor: 8000000,
     guestCapacity: 40,
@@ -247,6 +258,7 @@ export const eventTemplates: Template[] = [
   {
     type: "GRADUATION",
     label: "Graduation",
+    labelBn: "গ্র্যাজুয়েশন",
     description: "Mark a well-earned milestone with your proudest people.",
     budgetMinor: 12000000,
     guestCapacity: 70,
@@ -264,6 +276,7 @@ export const eventTemplates: Template[] = [
   {
     type: "REUNION",
     label: "Family & friends reunion",
+    labelBn: "পুনর্মিলনী",
     description:
       "Good stories, familiar faces, and a little room to reconnect.",
     budgetMinor: 18000000,
@@ -282,6 +295,7 @@ export const eventTemplates: Template[] = [
   {
     type: "COMMUNITY",
     label: "Community gathering",
+    labelBn: "কমিউনিটি অনুষ্ঠান",
     description: "Bring your neighborhood, club, or cause together with care.",
     budgetMinor: 30000000,
     guestCapacity: 200,
