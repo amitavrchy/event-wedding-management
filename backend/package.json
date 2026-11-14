@@ -9,7 +9,6 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "test": "tsc -p tsconfig.json && tsx --test test/*.test.ts",
     "db:migrate": "prisma migrate deploy"

@@ -14,6 +14,7 @@ import {
 } from "@nestjs/common";
 import { hash, compare } from "bcryptjs";
 import { Database } from "./prisma";
+import { limiter } from "./rate-limit";
 import { AuthGuard } from "./auth";
 import { ownEvent } from "./access";
 import { parse, z } from "./validation";
@@ -159,20 +160,27 @@ export class PublicWebsitesController {
   @Get(":slug") get(@Param("slug") slug: string) {
     return this.read(slug);
   }
-  @Post(":slug/access") access(
+  @Post(":slug/access") async access(
     @Param("slug") slug: string,
     @Body() body: unknown,
+    @Req() req: any,
   ) {
     const { password } = parse(
       z.object({ password: z.string().max(72) }),
       body,
     );
+    // Per-site and per-visitor attempt limits stop password guessing.
+    await limiter.check(`site-pw:${slug}`, { limit: 60, windowSeconds: 600 }, "Too many attempts. Try again in a few minutes.");
+    await limiter.check(`site-pw:${slug}:${req?.ip}`, { limit: 10, windowSeconds: 600 }, "Too many attempts. Try again in a few minutes.");
     return this.read(slug, password);
   }
   @Post(":slug/guestbook") async message(
     @Param("slug") slug: string,
     @Body() body: unknown,
+    @Req() req: any,
   ) {
+    await limiter.check(`guestbook:${slug}:${req?.ip}`, { limit: 5, windowSeconds: 3600 }, "Thank you! Please wait a while before writing again.");
+    await limiter.check(`guestbook:${slug}`, { limit: 200, windowSeconds: 3600 }, "The guestbook is busy. Please try again later.");
     const data = parse(
       z.object({
         name: z.string().min(2).max(100),

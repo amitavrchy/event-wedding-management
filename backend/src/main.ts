@@ -13,7 +13,7 @@ import { EventsController } from "./events";
 import { VendorsController } from "./vendors";
 import { BookingsController } from "./bookings";
 import { BudgetController } from "./budget";
-import { GuestsController, RsvpController } from "./guests";
+import { GuestsController, HouseholdsController, RsvpController } from "./guests";
 import { PaymentsController } from "./payments";
 import { PackagesController, QuotesController } from "./packages";
 import { MessagesController } from "./messages";
@@ -45,6 +45,16 @@ import { AvailabilityController } from "./availability";
 import { RecommendationsController } from "./recommendations";
 import { EventTypesController, FeaturesController } from "./event-types";
 import { UploadsController } from "./storage";
+import { PlansController, SubscriptionsController } from "./subscriptions";
+import { InquiriesController, VerificationController } from "./marketplace";
+import { OccasionController } from "./occasion";
+import {
+  InvitationsController,
+  LogisticsController,
+  PhotoWallController,
+  PublicPhotoWallController,
+} from "./guest-experience";
+import { PublicDayOfController, VendorLinksController, VendorReportController } from "./day-of";
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   throw new Error("JWT_SECRET must have at least 32 characters");
 if (process.env.NODE_ENV === "production" && process.env.PAYMENT_MODE === "sandbox")
@@ -109,6 +119,19 @@ class HealthController {
     EventTypesController,
     FeaturesController,
     UploadsController,
+    PlansController,
+    SubscriptionsController,
+    VerificationController,
+    InquiriesController,
+    HouseholdsController,
+    OccasionController,
+    LogisticsController,
+    InvitationsController,
+    PhotoWallController,
+    PublicPhotoWallController,
+    VendorLinksController,
+    PublicDayOfController,
+    VendorReportController,
   ],
   providers: [
     Database,

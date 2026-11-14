@@ -13,10 +13,16 @@ import { AuthGuard, Identity } from "./auth";
 import { ownEvent, ownVendor, eventAccess, vendorAccess } from "./access";
 import { parse, z } from "./validation";
 import { publishMessage } from "./realtime";
+import { Notifier } from "./notify/notifier";
+import { link } from "./notify/templates";
+import { markResponded } from "./marketplace";
 @Controller("conversations")
 @UseGuards(AuthGuard)
 export class MessagesController {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private notifier: Notifier,
+  ) {}
   @Get() async list(@Req() req: any) {
     const vendor = req.user.role === "VENDOR";
     const ids = vendor
@@ -73,7 +79,7 @@ export class MessagesController {
     @Param("id") id: string,
     @Body() body: unknown,
   ) {
-    await this.access(id, req.user);
+    const conversation = await this.access(id, req.user);
     const data = parse(
       z.object({ body: z.string().trim().min(1).max(4000) }),
       body,
@@ -82,6 +88,19 @@ export class MessagesController {
       data: { ...data, conversationId: id, senderId: req.user.sub },
     });
     publishMessage(id, message);
+    const fromVendor = req.user.role === "VENDOR";
+    if (fromVendor) await markResponded(this.db, conversation.vendorId, undefined, conversation.eventId);
+    const recipient = fromVendor
+      ? (await this.db.event.findUnique({ where: { id: conversation.eventId } }))?.hostId
+      : (await this.db.vendor.findUnique({ where: { id: conversation.vendorId } }))?.ownerId;
+    if (recipient && recipient !== req.user.sub)
+      await this.notifier.notifyTemplate(
+        recipient,
+        "newMessage",
+        { name: req.user.fullName, preview: data.body.slice(0, 80) },
+        // One push per conversation per 10 minutes keeps chat from flooding phones.
+        { link: link(`/messages?c=${id}`), kind: "MESSAGE", key: `msg:${id}:${recipient}:${Math.floor(Date.now() / 600000)}` },
+      );
     return message;
   }
   async access(
@@ -93,6 +112,7 @@ export class MessagesController {
     if (user.role === "VENDOR")
       await ownVendor(this.db, c.vendorId, user, permission);
     else await ownEvent(this.db, c.eventId, user, permission);
+    return c;
     return c;
   }
 }

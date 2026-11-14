@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { activeStatuses } from "./domain";
+import { sandboxPaymentsEnabled } from "./config";
 export async function reserve(
   tx: Prisma.TransactionClient,
   data: {
@@ -82,7 +83,8 @@ export async function reserve(
       reservedUntil,
       priceMinor,
       advanceMinor: Math.ceil(priceMinor * 0.3),
-      holdExpiresAt: new Date(Date.now() + 15 * 60000),
+      // Online advance: 15 minute hold. Payments off: the vendor has 48 hours to confirm.
+      holdExpiresAt: new Date(Date.now() + (sandboxPaymentsEnabled() ? 15 : 48 * 60) * 60000),
     },
   });
 }

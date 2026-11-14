@@ -5,6 +5,9 @@ import { Database } from "./prisma";
 import { createReminders } from "./reminders";
 import { executeAutomations } from "./automations";
 import { deliverPending } from "./notify/delivery";
+import { maintainSubscriptions } from "./subscriptions";
+import { inquiryFollowUps } from "./marketplace";
+import { sendMonthlyReports } from "./day-of";
 
 import { HEARTBEAT_FILE } from "./config";
 import { redisConnection } from "./redis";
@@ -25,6 +28,9 @@ export async function maintenance(db: Database) {
   });
   await createReminders(db);
   await executeAutomations(db);
+  await maintainSubscriptions(db);
+  await inquiryFollowUps(db);
+  await sendMonthlyReports(db);
 }
 
 /**

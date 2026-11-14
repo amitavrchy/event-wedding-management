@@ -107,8 +107,112 @@ model Vendor {
   image String
   status String @default("APPLIED")
   commissionBps Int @default(1000)
+  phone String?
+  logo String?
+  gallery String[] @default([])
+  serviceAreas String[] @default([])
+  attributes Json?
+  priceFromMinor Int?
+  verifiedAt DateTime?
+  featuredUntil DateTime?
+  planCode String?
+  ratingAvg Float @default(0)
+  ratingCount Int @default(0)
+  responseMinutes Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   services VendorService[]
   members VendorMember[]
+  @@index([status, category, city])
+  @@index([ownerId])
+}
+model Plan {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  priceMinor Int
+  periodDays Int
+  /// { maxPhotos, maxServices, featured, verifiedBadgeEligible, priority }
+  entitlements Json
+  active Boolean @default(true)
+  sortOrder Int @default(0)
+}
+model Subscription {
+  id String @id @default(cuid())
+  vendorId String
+  planCode String
+  status String @default("PENDING_PAYMENT")
+  startsAt DateTime?
+  endsAt DateTime?
+  createdAt DateTime @default(now())
+  payments SubscriptionPayment[]
+  @@index([vendorId, status])
+  @@index([status, endsAt])
+}
+model SubscriptionPayment {
+  id String @id @default(cuid())
+  subscriptionId String
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amountMinor Int
+  method String
+  reference String
+  proofMediaId String?
+  status String @default("SUBMITTED")
+  receiptNumber String? @unique
+  note String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt DateTime @default(now())
+  @@unique([method, reference])
+  @@index([status, createdAt])
+}
+model VerificationRequest {
+  id String @id @default(cuid())
+  vendorId String
+  documentType String
+  mediaIds String[]
+  status String @default("SUBMITTED")
+  note String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([status, createdAt])
+  @@index([vendorId])
+}
+model Inquiry {
+  id String @id @default(cuid())
+  vendorId String
+  hostId String
+  eventId String?
+  serviceId String?
+  name String
+  phone String?
+  email String?
+  eventDate DateTime?
+  guestCount Int?
+  budgetMinor Int?
+  message String
+  status String @default("NEW")
+  leadId String?
+  conversationId String?
+  respondedAt DateTime?
+  followUpSentAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([vendorId, status, createdAt])
+  @@index([hostId, createdAt])
+}
+model AuditLog {
+  id String @id @default(cuid())
+  actorId String
+  actorRole String
+  action String
+  targetType String
+  targetId String
+  detail Json?
+  ip String?
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+  @@index([targetType, targetId])
 }
 model VendorService {
   id String @id @default(cuid())
@@ -119,6 +223,8 @@ model VendorService {
   durationHours Int @default(4)
   bufferHours Int @default(1)
   capacity Int?
+  description String?
+  active Boolean @default(true)
   bookings Booking[]
   blocks AvailabilityBlock[]
 }
@@ -142,6 +248,11 @@ model Event {
   rsvpDeadline DateTime?
   enabledFeatures String[] @default([])
   disabledFeatures String[] @default([])
+  /// { "BRIDE": { "label": "Konne poksho", "quota": 300, "share": 50 }, "GROOM": {...} }
+  sides Json?
+  livestreamUrl String?
+  photoWallToken String? @unique
+  photoWallModeration Boolean @default(true)
   archivedAt DateTime?
   createdAt DateTime @default(now())
   days EventDay[]
@@ -151,6 +262,10 @@ model Event {
   guests Guest[]
   bookings Booking[]
   members EventMember[]
+  quotes Quote[]
+  contracts Contract[]
+  conversations Conversation[]
+  @@index([hostId])
 }
 model EventDay {
   id String @id @default(cuid())
@@ -160,6 +275,7 @@ model EventDay {
   startsAt DateTime
   endsAt DateTime
   venueName String?
+  @@index([eventId])
 }
 model ChecklistItem {
   id String @id @default(cuid())
@@ -168,6 +284,8 @@ model ChecklistItem {
   title String
   done Boolean @default(false)
   dueAt DateTime?
+  @@index([eventId])
+  @@index([done, dueAt])
 }
 model Booking {
   id String @id @default(cuid())
@@ -186,8 +304,14 @@ model Booking {
   category String
   quoteId String? @unique
   policyFlags String[] @default([])
+  payments Payment[]
+  installments Installment[]
+  review Review?
   createdAt DateTime @default(now())
   @@index([serviceId,startAt,reservedUntil])
+  @@index([eventId])
+  @@index([vendorId])
+  @@index([status, holdExpiresAt])
 }
 model BudgetItem {
   id String @id @default(cuid())
@@ -204,7 +328,11 @@ model Expense {
   category String
   amountMinor Int
   note String
+  /// Who paid: BRIDE | GROOM | SHARED (split by the event's share) | null
+  paidBy String?
+  receiptMediaId String?
   createdAt DateTime @default(now())
+  @@index([eventId])
 }
 model Guest {
   id String @id @default(cuid())
@@ -222,6 +350,121 @@ model Guest {
   seatingTableId String?
   groupName String @default("Friends")
   dietaryNotes String?
+  /// BRIDE | GROOM | BOTH (wedding-family occasions only)
+  side String?
+  householdId String?
+  relationship String?
+  invitationSentAt DateTime?
+  invitationOpenedAt DateTime?
+  respondedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([eventId])
+  @@index([householdId])
+}
+/// One invitation for a whole family ("Rahman poribar, 5 jon").
+model Household {
+  id String @id @default(cuid())
+  eventId String
+  name String
+  side String?
+  phone String?
+  address String?
+  token String @unique
+  invitationSentAt DateTime?
+  invitationOpenedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([eventId])
+}
+/// Upohar / salami register.
+model Gift {
+  id String @id @default(cuid())
+  eventId String
+  guestId String?
+  householdId String?
+  giverName String
+  side String?
+  kind String @default("CASH")
+  amountMinor Int?
+  description String?
+  dayId String?
+  receivedAt DateTime @default(now())
+  thankYouSentAt DateTime?
+  recordedBy String
+  createdAt DateTime @default(now())
+  @@index([eventId, receivedAt])
+}
+model Accommodation {
+  id String @id @default(cuid())
+  eventId String
+  name String
+  address String?
+  rooms Int @default(1)
+  capacity Int @default(2)
+  checkIn DateTime?
+  checkOut DateTime?
+  contact String?
+  notes String?
+  @@index([eventId])
+}
+model Transport {
+  id String @id @default(cuid())
+  eventId String
+  label String
+  capacity Int @default(4)
+  driverName String?
+  driverPhone String?
+  departAt DateTime?
+  route String?
+  @@index([eventId])
+}
+model GuestTravel {
+  id String @id @default(cuid())
+  eventId String
+  guestId String
+  accommodationId String?
+  transportId String?
+  arrivalAt DateTime?
+  departureAt DateTime?
+  fromCity String?
+  notes String?
+  @@unique([eventId, guestId])
+  @@index([accommodationId])
+  @@index([transportId])
+}
+model InvitationCard {
+  id String @id @default(cuid())
+  eventId String
+  dayId String?
+  template String @default("MARIGOLD")
+  language String @default("bn")
+  headline String
+  hostLine String?
+  message String
+  version Int @default(1)
+  updatedAt DateTime @default(now()) @updatedAt
+  @@index([eventId])
+}
+model GuestPhoto {
+  id String @id @default(cuid())
+  eventId String
+  mediaId String @unique
+  url String
+  uploaderName String?
+  caption String?
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  @@index([eventId, status, createdAt])
+}
+/// Private link a vendor uses on the day: their cues, arrival check-in.
+model VendorDayLink {
+  id String @id @default(cuid())
+  eventId String
+  vendorId String
+  token String @unique
+  arrivedAt DateTime?
+  arrivedDayId String?
+  createdAt DateTime @default(now())
+  @@unique([eventId, vendorId])
 }
 model Package {
   id String @id @default(cuid())
@@ -234,15 +477,19 @@ model Package {
 model Quote {
   id String @id @default(cuid())
   eventId String
+  event Event @relation(fields: [eventId], references: [id])
   vendorId String
   status String @default("SENT")
   amountMinor Int
   breakdown Json
   expiresAt DateTime
+  @@index([eventId])
+  @@index([status, expiresAt])
 }
 model Payment {
   id String @id @default(cuid())
   bookingId String
+  booking Booking @relation(fields: [bookingId], references: [id])
   eventId String
   provider String
   status String @default("PENDING")
@@ -251,29 +498,41 @@ model Payment {
   installmentId String?
   idempotencyKey String @unique
   createdAt DateTime @default(now())
+  ledger LedgerEntry?
+  @@index([bookingId, status])
+  @@index([eventId])
 }
 model LedgerEntry {
   id String @id @default(cuid())
   paymentId String @unique
+  payment Payment @relation(fields: [paymentId], references: [id])
   vendorId String
   grossMinor Int
   commissionMinor Int
   netMinor Int
   status String @default("PENDING")
   createdAt DateTime @default(now())
+  @@index([vendorId])
 }
 model Review {
   id String @id @default(cuid())
   bookingId String @unique
+  booking Booking @relation(fields: [bookingId], references: [id])
   vendorId String
   hostId String
   rating Int
   body String
+  status String @default("PUBLISHED")
+  reply String?
+  repliedAt DateTime?
+  reportReason String?
   createdAt DateTime @default(now())
+  @@index([vendorId, status, createdAt])
 }
 model Conversation {
   id String @id @default(cuid())
   eventId String
+  event Event @relation(fields: [eventId], references: [id])
   vendorId String
   messages Message[]
   @@unique([eventId,vendorId])
@@ -285,6 +544,7 @@ model Message {
   senderId String
   body String
   createdAt DateTime @default(now())
+  @@index([conversationId, createdAt])
 }
 model Notification {
   id String @id @default(cuid())
@@ -314,6 +574,7 @@ model EventMember {
  permission String @default("EDITOR")
  expiresAt DateTime
  @@unique([eventId,userId])
+  @@index([userId])
 }
 model VendorMember {
  id String @id @default(cuid())
@@ -323,6 +584,7 @@ model VendorMember {
  permission String @default("MANAGER")
  expiresAt DateTime
  @@unique([vendorId,userId])
+  @@index([userId])
 }
 model WorkspaceInvite {
  id String @id @default(cuid())
@@ -335,6 +597,7 @@ model WorkspaceInvite {
  memberExpiresAt DateTime
  acceptedBy String?
  createdAt DateTime @default(now())
+  @@index([scope, scopeId])
 }
 model SeatTable {
  id String @id @default(cuid())
@@ -355,6 +618,7 @@ model RunSheetItem {
  startsAt DateTime
  durationMinutes Int
  owner String
+ vendorId String?
  location String?
  notes String?
  status String @default("PLANNED")
@@ -364,6 +628,7 @@ model RunSheetItem {
 model Contract {
  id String @id @default(cuid())
  eventId String
+ event Event @relation(fields: [eventId], references: [id])
  vendorId String
  title String
  body String
@@ -374,16 +639,21 @@ model Contract {
  signerName String?
  signedAt DateTime?
  createdAt DateTime @default(now())
+  @@index([vendorId])
+  @@index([eventId])
 }
 model Installment {
  id String @id @default(cuid())
  bookingId String
+ booking Booking @relation(fields: [bookingId], references: [id])
  eventId String
  label String
  amountMinor Int
  dueAt DateTime
  status String @default("PENDING")
  @@index([eventId,dueAt])
+  @@index([bookingId])
+  @@index([status, dueAt])
 }
 model Lead {
  id String @id @default(cuid())
@@ -409,6 +679,7 @@ model AutomationRule {
  enabled Boolean @default(true)
  createdBy String
  createdAt DateTime @default(now())
+  @@index([enabled, eventId])
 }
 model AutomationRun {
  id String @id @default(cuid())
@@ -449,6 +720,7 @@ model MoodItem {
  value String
  tag String @default("Inspiration")
  createdAt DateTime @default(now())
+  @@index([eventId])
 }
 model Favorite {
  id String @id @default(cuid())
@@ -477,6 +749,7 @@ model GuestCheckin {
  checkedInBy String
  createdAt DateTime @default(now())
  @@unique([dayId,guestId])
+  @@index([eventId, dayId])
 }
 model GuestResponse {
  id String @id @default(cuid())

@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { Database } from "./prisma";
 import { AuthGuard } from "./auth";
-import { ownEvent, ownVendor } from "./access";
+import { eventAccess, ownEvent, ownVendor, vendorAccess } from "./access";
 import { parse, z } from "./validation";
 import { publishBooking } from "./realtime";
 @Controller("disputes")
@@ -22,8 +22,19 @@ export class DisputesController {
   @Get() async list(@Req() req: any) {
     if (req.user.role === "PLATFORM_ADMIN")
       return this.db.dispute.findMany({ orderBy: { createdAt: "desc" } });
+    if (req.user.role === "VENDOR") {
+      const vendors = await this.db.vendor.findMany({ where: vendorAccess(req.user.sub), select: { id: true } });
+      const bookings = await this.db.booking.findMany({
+        where: { vendorId: { in: vendors.map((v) => v.id) } },
+        select: { id: true },
+      });
+      return this.db.dispute.findMany({
+        where: { bookingId: { in: bookings.map((b) => b.id) } },
+        orderBy: { createdAt: "desc" },
+      });
+    }
     const events = await this.db.event.findMany({
-      where: { hostId: req.user.sub },
+      where: eventAccess(req.user.sub),
       select: { id: true },
     });
     return this.db.dispute.findMany({

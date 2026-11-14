@@ -53,6 +53,8 @@ const enabled = Boolean(process.env.TEST_DATABASE_URL);
 let base = "";
 let app: any;
 let outbox: { channel: string; to: string; body: string }[] = [];
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const testDb = new (require("@prisma/client").PrismaClient)({ datasourceUrl: process.env.TEST_DATABASE_URL });
 
 before(async () => {
   if (!enabled) return;
@@ -76,6 +78,7 @@ before(async () => {
 });
 after(async () => {
   await app?.close();
+  await testDb.$disconnect();
 });
 
 type Jar = Map<string, string>;
@@ -109,11 +112,18 @@ async function poll<T>(fn: () => T | undefined, ms = 10000): Promise<T> {
   throw new Error("Timed out waiting");
 }
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
-const codeFor = (to: string) =>
-  poll(() => {
-    const message = [...outbox].reverse().find((m) => m.to === to && /\b\d{6}\b/.test(m.body));
-    return message?.body.match(/\b(\d{6})\b/)?.[1];
-  });
+// Read queued messages from the outbox table: another test process may deliver them.
+async function latestMessage(to: string, contains: RegExp) {
+  const until = Date.now() + 10000;
+  while (Date.now() < until) {
+    const rows = await testDb.outboundMessage.findMany({ where: { recipient: to }, orderBy: { createdAt: "desc" }, take: 5 });
+    const found = rows.find((r) => contains.test(r.body));
+    if (found) return found.body;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  throw new Error(`No message to ${to}`);
+}
+const codeFor = async (to: string) => (await latestMessage(to, /\b\d{6}\b/)).match(/\b(\d{6})\b/)![1];
 
 test("mobile sessions: refresh rotates, reuse of an old token revokes the session", { skip: !enabled }, async () => {
   const email = `mobile-${unique()}@test.local`;
@@ -191,10 +201,9 @@ test("email verification, password reset and lockout", { skip: !enabled }, async
   // Forgot password never reveals whether an account exists.
   const missing = await call("auth/password/forgot", { body: { email: `nobody-${unique()}@test.local` } });
   assert.equal(missing.status, 200);
-  outbox.length = 0;
   assert.equal((await call("auth/password/forgot", { body: { email } })).status, 200);
-  const resetMail = await poll(() => outbox.find((m) => m.to === email && m.body.includes("reset-password?token=")));
-  const resetToken = resetMail.body.match(/token=([\w-]+)/)![1];
+  const resetMail = await latestMessage(email, /reset-password\?token=/);
+  const resetToken = resetMail.match(/token=([\w-]+)/)![1];
   assert.equal((await call("auth/password/reset", { body: { token: resetToken, password: "second-password-2" } })).status, 200);
   assert.equal((await call("auth/password/reset", { body: { token: resetToken, password: "third-password-3" } })).status, 400);
   // Reset signs out every device.
