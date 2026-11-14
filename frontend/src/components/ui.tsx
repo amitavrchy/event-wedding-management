@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useRef } from "react";
 import { X, ArrowUpRight, LoaderCircle } from "lucide-react";
 export function Button({
   children,
@@ -49,12 +49,16 @@ export function Modal({
   title,
   onClose,
   children,
+  dismissible = true,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** When false, Escape, backdrop clicks and the close button are disabled. */
+  dismissible?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     ref.current?.showModal();
     const previous = document.activeElement as HTMLElement;
@@ -64,20 +68,27 @@ export function Modal({
     <dialog
       ref={ref}
       className="modal"
-      onCancel={onClose}
+      aria-labelledby={titleId}
+      onCancel={(e) => {
+        // The parent decides whether the dialog closes (it unmounts it).
+        e.preventDefault();
+        if (dismissible) onClose();
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (dismissible && e.target === e.currentTarget) onClose();
       }}
     >
       <div className="modal-title">
-        <h2>{title}</h2>
-        <button
-          aria-label="Close dialog"
-          className="icon-button"
-          onClick={onClose}
-        >
-          <X />
-        </button>
+        <h2 id={titleId}>{title}</h2>
+        {dismissible && (
+          <button
+            aria-label="Close dialog"
+            className="icon-button"
+            onClick={onClose}
+          >
+            <X />
+          </button>
+        )}
       </div>
       {children}
     </dialog>
@@ -86,14 +97,24 @@ export function Modal({
 export function Field({
   label,
   children,
+  className,
 }: {
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
+  // Name the control by the label text only (a wrapping label would also
+  // include a select's option text in its accessible name).
+  const id = useId();
+  const control = isValidElement<{ "aria-labelledby"?: string; "aria-label"?: string }>(children)
+    ? cloneElement(children, {
+        "aria-labelledby": children.props["aria-labelledby"] || (children.props["aria-label"] ? undefined : id),
+      })
+    : children;
   return (
-    <label className="field">
-      <span>{label}</span>
-      {children}
+    <label className={`field ${className || ""}`}>
+      <span id={id}>{label}</span>
+      {control}
     </label>
   );
 }

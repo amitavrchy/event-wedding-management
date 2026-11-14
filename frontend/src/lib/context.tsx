@@ -9,21 +9,31 @@ import {
 } from "react";
 import { api } from "./api";
 import { socket, disconnect } from "./socket";
-import type { Event, User, Vendor } from "./types";
+import type { Event, FeatureCatalog, User, Vendor } from "./types";
 type AppState = {
   user: User | null;
   ready: boolean;
   events: Event[];
   event: Event | null;
   vendors: Vendor[];
+  catalog: FeatureCatalog | null;
   error: string;
   loading: boolean;
   refresh: () => Promise<void>;
   selectEvent: (id: string) => void;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
+  setUser: (user: User) => void;
   notify: (message: string, error?: boolean) => void;
 };
+const eventKey = (userId: string) => `utsab-event-${userId}`;
+function remembered(userId: string) {
+  try {
+    return localStorage.getItem(eventKey(userId)) || "";
+  } catch {
+    return "";
+  }
+}
 const Context = createContext<AppState | null>(null);
 export function Provider({ children }: { children: React.ReactNode }) {
   const generation = useRef(0);
@@ -32,6 +42,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
     [events, setEvents] = useState<Event[]>([]),
     [event, setEvent] = useState<Event | null>(null),
     [vendors, setVendors] = useState<Vendor[]>([]),
+    [catalog, setCatalog] = useState<FeatureCatalog | null>(null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(false),
     [selected, setSelected] = useState(""),
@@ -39,15 +50,24 @@ export function Provider({ children }: { children: React.ReactNode }) {
       null,
     );
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem("utsab-user");
-      if (saved && sessionStorage.getItem("utsab-token")) {
-        const restored = JSON.parse(saved) as User;
+    // The session is an httpOnly cookie; ask the API who we are.
+    api<User>("auth/me")
+      .catch(async () => {
+        const refreshed = await api<{ user: User }>("auth/refresh", {
+          method: "POST",
+          body: "{}",
+        });
+        return refreshed.user;
+      })
+      .then((restored) => {
         setUser(restored);
-        setSelected(sessionStorage.getItem(`utsab-event-${restored.id}`) || "");
-      }
-    } catch {}
-    setReady(true);
+        setSelected(remembered(restored.id));
+      })
+      .catch(() => undefined)
+      .finally(() => setReady(true));
+    api<FeatureCatalog>("features")
+      .then(setCatalog)
+      .catch(() => undefined);
     const expire = () => {
       generation.current++;
       setUser(null);
@@ -63,15 +83,11 @@ export function Provider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError("");
     try {
-      const [all, v] = await Promise.all([
-        api<Event[]>("events"),
-        api<Vendor[]>("vendors"),
-      ]);
+      const all = await api<Event[]>("events");
       const id = all.find((e) => e.id === selected)?.id || all[0]?.id;
       const detail = id ? await api<Event>(`events/${id}`) : null;
       if (request !== generation.current) return;
       setEvents(all);
-      setVendors(v);
       setEvent(detail);
     } catch (e) {
       if (request === generation.current) setError((e as Error).message);
@@ -82,6 +98,13 @@ export function Provider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+  // The marketplace list does not change with planning edits; load it once per session.
+  useEffect(() => {
+    if (!user) return;
+    api<Vendor[] | { items: Vendor[] }>("vendors?limit=24")
+      .then((v) => setVendors(Array.isArray(v) ? v : v.items))
+      .catch(() => undefined);
+  }, [user]);
   useEffect(() => {
     if (!user) return;
     const connection = socket();
@@ -98,19 +121,20 @@ export function Provider({ children }: { children: React.ReactNode }) {
     const timer = setTimeout(() => setToast(null), 4500);
     return () => clearTimeout(timer);
   }, [toast]);
-  function login(token: string, u: User) {
-    sessionStorage.setItem("utsab-token", token);
-    sessionStorage.setItem("utsab-user", JSON.stringify(u));
+  function login(u: User) {
     setUser(u);
-    setSelected(sessionStorage.getItem(`utsab-event-${u.id}`) || "");
+    setSelected(remembered(u.id));
   }
-  function logout() {
+  async function logout() {
     generation.current++;
-    sessionStorage.removeItem("utsab-token");
-    sessionStorage.removeItem("utsab-user");
+    try {
+      await api("auth/logout", { method: "POST", body: "{}" });
+    } catch {}
+    disconnect();
     setUser(null);
     setEvents([]);
     setEvent(null);
+    setVendors([]);
   }
   const notify = useCallback(
     (message: string, error = false) => setToast({ message, error }),
@@ -124,11 +148,16 @@ export function Provider({ children }: { children: React.ReactNode }) {
         events,
         event,
         vendors,
+        catalog,
+        setUser,
         error,
         loading,
         refresh,
         selectEvent: (id) => {
-          if (user) sessionStorage.setItem(`utsab-event-${user.id}`, id);
+          if (user)
+            try {
+              localStorage.setItem(eventKey(user.id), id);
+            } catch {}
           setSelected(id);
         },
         login,

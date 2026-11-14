@@ -65,7 +65,8 @@ export default function Timeline() {
       </div>
       {!event.days?.length && (
         <Empty title="Your story is waiting for its dates">
-          Add your birthday, anniversary, team event, or any day worth celebrating.
+          Add your birthday, anniversary, team event, or any day worth
+          celebrating.
         </Empty>
       )}
       {adding && (

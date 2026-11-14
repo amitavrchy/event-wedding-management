@@ -1,2 +1,33 @@
-config.bat
-node_modules
+# Dependencies and build output
+node_modules/
+dist/
+.next/
+out/
+coverage/
+
+# Local environment files (examples are committed)
+.env
+.env.*
+!.env.example
+
+# Test and tooling artefacts
+frontend/artifacts/
+frontend/test-results/
+frontend/playwright-report/
+*.log
+.DS_Store
+
+# Flutter / mobile
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/ios/Pods/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
+*.jks
+*.keystore
+uploads/

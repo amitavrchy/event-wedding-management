@@ -48,21 +48,21 @@ test("vendor studio creates a quote that the host can accept; admin ledger is ac
   await page.getByLabel("Email address").fill("vendor@utsab.local");
   await page.getByLabel("Password", { exact: true }).fill("UtsabDemo2027!");
   await page.getByRole("button", { name: "Sign in to your workspace" }).click();
-  await page.getByRole("link", { name: "Vendor studio", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Profile & services", exact: true })
+    .click();
+  await page
+    .getByLabel("Business", { exact: true })
+    .selectOption({ label: "The Grand Palace" });
   await page.getByRole("button", { name: "Send a quote", exact: true }).click();
   await page
-    .getByLabel("Your business")
-    .selectOption({ label: "The Grand Palace · active" });
-  await page
-    .getByLabel("Client celebration")
+    .getByLabel("Event", { exact: true })
     .selectOption({ label: "Ayesha & Raihan" });
-  await page
-    .getByLabel("Quote description")
-    .fill("Personalized ceremony flowers");
-  await page.getByLabel("Total amount").fill("50000");
+  await page.getByLabel("Item 1").fill("Personalized ceremony flowers");
+  await page.getByLabel("Amount (৳)").fill("50000");
   await page.getByLabel("Valid until").fill("2027-12-01T18:00");
-  await page.getByRole("button", { name: "Save quote" }).click();
-  await expect(page.getByRole("status")).toContainText("saved");
+  await page.getByRole("button", { name: "Send quotation" }).click();
+  await expect(page.getByRole("status")).toContainText("Quotation sent");
   const ctx = await browser.newContext();
   const host = await ctx.newPage();
   await login(host);
@@ -80,8 +80,9 @@ test("vendor studio creates a quote that the host can accept; admin ledger is ac
   await page.getByRole("button", { name: "Sign in to your workspace" }).click();
   await page.getByRole("link", { name: "Administration", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Platform administration" }),
+    page.getByRole("heading", { name: "Administration", exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Ledger", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Vendor payout ledger" }),
   ).toBeVisible();
@@ -102,6 +103,11 @@ test("two signed-in sessions exchange a message in real time", async ({
   const ctx = await browser.newContext();
   const other = await ctx.newPage();
   await login(other);
+  // A first message makes this the most recent conversation for the other session.
+  await page
+    .getByRole("textbox", { name: "Your message" })
+    .fill(`Opening ${Date.now()}`);
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
   await other.goto("/messages");
   await other.locator(".conversation").first().click();
   const text = `A lovely hello ${Date.now()}`;
@@ -202,7 +208,9 @@ test("budget expenses and checklist tasks persist after reload", async ({
   await page.getByRole("button", { name: "Save expense" }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.reload();
-  await expect(page.getByRole("cell", { name: title })).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: title, exact: true }),
+  ).toBeVisible();
   await page.goto("/checklist");
   await page.getByRole("button", { name: "Add a task" }).click();
   await page.getByLabel("What needs a little love?").fill(title);
@@ -233,8 +241,15 @@ test("mobile navigation and layouts fit the viewport", async ({ page }) => {
     page.getByRole("heading", { name: "Find your dream team" }),
   ).toBeVisible();
   await expect(page.locator(".mobile-scrim")).not.toBeVisible();
-  await page.getByRole("button", { name: "Venue", exact: true }).click();
-  await expect(page.locator(".vendor-card")).toHaveCount(2);
+  const filtered = page.waitForResponse((r) => r.url().includes("category=Venue"));
+  await page.getByLabel("Category").selectOption("Venue");
+  await filtered;
+  await page.waitForTimeout(200);
+  await expect(page.locator(".vendor-card").first()).toBeVisible();
+  for (const pill of await page
+    .locator(".vendor-card .image-pill:not(.sponsored-pill)")
+    .allTextContents())
+    expect(pill).toBe("Venue");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -246,8 +261,10 @@ test("vendor reservations and sandbox advance confirm a booking", async ({
 }) => {
   await login(page);
   await page.goto("/vendors");
-  await page.getByRole("button", { name: "Photography", exact: true }).click();
+  await page.getByLabel("Category").selectOption("Photography");
+  await expect(page.locator(".results-count")).not.toContainText("Searching");
   await page.locator(".vendor-card").first().click();
+  await page.getByRole("button", { name: "Check a date" }).click();
   const start = new Date(
     Date.now() + 86400000 * (30 + Math.floor(Math.random() * 300)),
   )

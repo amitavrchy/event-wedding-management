@@ -101,6 +101,47 @@ export class CheckInController {
       };
     });
   }
+  /** Roster for offline scanning on the mobile app (tokens of accepted guests for this day). */
+  @Get(":dayId/roster") async roster(@Req() req: any, @Param("id") id: string, @Param("dayId") dayId: string) {
+    await ownEvent(this.db, id, req.user);
+    await this.db.eventDay.findFirstOrThrow({ where: { id: dayId, eventId: id } });
+    const [guests, declined, arrived] = await Promise.all([
+      this.db.guest.findMany({
+        where: { eventId: id, rsvpStatus: "ACCEPTED" },
+        select: { id: true, name: true, token: true, partySize: true, side: true, tableLabel: true },
+      }),
+      this.db.guestResponse.findMany({ where: { dayId, status: { not: "ACCEPTED" } }, select: { guestId: true } }),
+      this.db.guestCheckin.findMany({ where: { dayId }, select: { guestId: true, createdAt: true } }),
+    ]);
+    const skip = new Set(declined.map((d) => d.guestId));
+    return {
+      generatedAt: new Date(),
+      guests: guests
+        .filter((g) => !skip.has(g.id))
+        .map((g) => ({ ...g, arrivedAt: arrived.find((a) => a.guestId === g.id)?.createdAt ?? null })),
+    };
+  }
+  /**
+   * Uploads arrivals scanned offline. Each item is applied idempotently, so a
+   * retried sync never double-counts a guest.
+   */
+  @Post(":dayId/sync") async sync(@Req() req: any, @Param("id") id: string, @Param("dayId") dayId: string, @Body() body: unknown) {
+    await ownEvent(this.db, id, req.user);
+    const { items } = parse(
+      z.object({ items: z.array(z.object({ clientId: z.string().max(100), token: z.string().min(16).max(200) })).min(1).max(500) }),
+      body,
+    );
+    const results = [];
+    for (const item of items) {
+      try {
+        const result = await this.arrive(req, id, dayId, { token: item.token });
+        results.push({ clientId: item.clientId, ok: true, duplicate: result.duplicate, guestId: result.guest.id });
+      } catch (error) {
+        results.push({ clientId: item.clientId, ok: false, error: (error as Error).message });
+      }
+    }
+    return { results };
+  }
   @Delete(":entryId") async undo(
     @Req() req: any,
     @Param("id") id: string,

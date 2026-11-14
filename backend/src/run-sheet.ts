@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -39,6 +40,7 @@ export class RunSheetController {
         startsAt: date,
         durationMinutes: z.number().int().min(1).max(1440),
         owner: z.string().min(1).max(100),
+        vendorId: z.string().optional(),
         location: z.string().max(150).optional(),
         notes: z.string().max(3000).optional(),
       }),
@@ -47,6 +49,7 @@ export class RunSheetController {
     await this.db.eventDay.findFirstOrThrow({
       where: { id: data.dayId, eventId: id },
     });
+    await assertBookedVendor(this.db, id, data.vendorId);
     return this.db.runSheetItem.create({ data: { ...data, eventId: id } });
   }
   @Patch(":itemId") async update(
@@ -62,10 +65,12 @@ export class RunSheetController {
         status: z.enum(["PLANNED", "READY", "LIVE", "DONE"]).optional(),
         startsAt: date.optional(),
         owner: z.string().min(1).max(100).optional(),
+        vendorId: z.string().nullable().optional(),
         notes: z.string().max(3000).optional(),
       }),
       body,
     );
+    await assertBookedVendor(this.db, id, data.vendorId);
     return this.db.$transaction(async (tx) => {
       const item = await tx.runSheetItem.findFirstOrThrow({
         where: { id: itemId, eventId: id },
@@ -109,4 +114,13 @@ export class RunSheetController {
       where: { id: itemId, eventId: id, status: { not: "LIVE" } },
     });
   }
+}
+
+/** A cue can only be assigned to a vendor booked for this event. */
+async function assertBookedVendor(db: Database, eventId: string, vendorId?: string | null) {
+  if (!vendorId) return;
+  const booked = await db.booking.findFirst({
+    where: { eventId, vendorId, status: { in: ["CONFIRMED", "COMPLETED"] } },
+  });
+  if (!booked) throw new BadRequestException("Assign cues to a vendor booked for this event");
 }

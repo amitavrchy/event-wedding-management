@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api, json } from "@/lib/api";
 import { useBusiness } from "@/lib/use-business";
+import { InquiryInbox } from "@/components/inquiry-inbox";
 import { useAction, useResource } from "@/lib/use-resource";
 import { Lead } from "@/lib/advanced";
 import { taka, dateLabel, localDateToISO } from "@/lib/format";
@@ -68,6 +69,7 @@ export default function Business() {
           </Button>
         }
       />
+      <InquiryInbox vendorId={business.id} />
       <div className="business-switch">
         <Field label="Your business">
           <select value={business.id} onChange={(e) => choose(e.target.value)}>

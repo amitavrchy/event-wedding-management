@@ -19,11 +19,18 @@ async function request(
   return response.json();
 }
 async function session(page: Page, identity: any) {
-  await page.addInitScript(({ token, user }) => {
-    sessionStorage.setItem("utsab-token", token);
-    sessionStorage.setItem("utsab-user", JSON.stringify(user));
-  }, identity);
-  await page.goto("/dashboard");
+  // Web sessions are httpOnly cookies; page.request shares the page's cookie jar.
+  const login = await page.request.post("/api/auth/login", {
+    data: { email: identity.email, password: "UtsabDemo2027!", client: "web" },
+  });
+  expect(login.ok()).toBeTruthy();
+  await page.goto(identity.user.role === "VENDOR" ? "/business" : "/dashboard");
+  if (identity.user.role === "VENDOR") {
+    await expect(
+      page.getByRole("navigation", { name: "Workspace" }),
+    ).toBeVisible();
+    return;
+  }
   await expect(
     page.getByRole("combobox", { name: "Choose event" }),
   ).toBeVisible();
@@ -35,14 +42,24 @@ async function session(page: Page, identity: any) {
 test.beforeAll(async ({ request: api }) => {
   host = await api
     .post("/api/auth/login", {
-      data: { email: "host@utsab.local", password: "UtsabDemo2027!" },
+      data: {
+        email: "host@utsab.local",
+        password: "UtsabDemo2027!",
+        client: "mobile",
+      },
     })
-    .then((r) => r.json());
+    .then((r) => r.json())
+    .then((r) => ({ ...r, token: r.accessToken, email: "host@utsab.local" }));
   vendor = await api
     .post("/api/auth/login", {
-      data: { email: "vendor@utsab.local", password: "UtsabDemo2027!" },
+      data: {
+        email: "vendor@utsab.local",
+        password: "UtsabDemo2027!",
+        client: "mobile",
+      },
     })
-    .then((r) => r.json());
+    .then((r) => r.json())
+    .then((r) => ({ ...r, token: r.accessToken, email: "vendor@utsab.local" }));
   event = await request(api, host, "events", {
     title,
     eventType: "WEDDING",
@@ -92,7 +109,8 @@ test("planning studio exposes all tools on desktop and mobile without tiny text 
   await expect(
     page.getByRole("heading", { name: "The planning studio" }),
   ).toBeVisible();
-  await expect(page.locator(".studio-tool")).toHaveCount(12);
+  // The studio lists the tools of this wedding event (occasion-driven).
+  await expect(page.locator(".studio-tool").nth(11)).toBeVisible();
   await page.screenshot({
     path: "artifacts/planning-studio-desktop.png",
     fullPage: true,
@@ -383,6 +401,14 @@ test("invoice installments and workflow retries do not duplicate effects", async
     title: "Overdue test task",
     dueAt: new Date(Date.now() - 86400000).toISOString(),
   });
+  // Automations are not a wedding default; switch the tool on for this event first.
+  await request(
+    api,
+    host,
+    `events/${event.id}`,
+    { enabledFeatures: ["automations"] },
+    "PATCH",
+  );
   await page.goto("/automations");
   await page.getByRole("button", { name: "Create a workflow" }).click();
   await page.getByLabel("Workflow name").fill(`Our helpful workflow ${suffix}`);

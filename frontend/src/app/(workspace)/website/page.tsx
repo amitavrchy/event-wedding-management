@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api, json } from "@/lib/api";
 import { useApp } from "@/lib/context";
+import { LivestreamCard } from "@/components/livestream-card";
 import { useAction, useResource } from "@/lib/use-resource";
 import { Website } from "@/lib/advanced";
 import { Badge, Button, Empty, Field, PageHeading } from "@/components/ui";
@@ -75,6 +76,7 @@ export default function WebsiteEditor() {
           ) : undefined
         }
       />
+      <LivestreamCard />
       <div className="website-editor">
         <section className="card website-form">
           <form

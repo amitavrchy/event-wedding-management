@@ -1,3 +1,4 @@
+import { notifierFor } from "./helpers";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PrismaClient } from "@prisma/client";
@@ -116,7 +117,7 @@ test(
       await t.test(
         "email-bound invitations enforce viewer writes, revocation and expiry",
         async () => {
-          const collaboration = new CollaborationController(database);
+          const collaboration = new CollaborationController(database, notifierFor(database));
           const editorInvite = await collaboration.invite(
             host,
             "EVENT",
@@ -172,7 +173,7 @@ test(
         "business team permissions can be promoted, expired, and revoked",
         async () => {
           const teammate = identities[5],
-            collaboration = new CollaborationController(database);
+            collaboration = new CollaborationController(database, notifierFor(database));
           const email = `${suffix}-assistant@example.com`;
           const view = await collaboration.invite(
             professional,
@@ -449,7 +450,7 @@ test(
         "installment capture is race-safe and settles the exact booking balance",
         async () => {
           process.env.PAYMENT_MODE = "sandbox";
-          const booking = await new BookingsController(database).hold(host, {
+          const booking = await new BookingsController(database, notifierFor(database)).hold(host, {
             eventId,
             serviceId,
             startAt,

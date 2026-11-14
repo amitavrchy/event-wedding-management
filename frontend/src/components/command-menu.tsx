@@ -3,7 +3,29 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ArrowUpRight, Command } from "lucide-react";
 import { Modal } from "./ui";
+import { useApp } from "@/lib/context";
+import { pathAllowed } from "@/lib/features";
 const commands = [
+  [
+    "Invitation cards",
+    "Design a card and send WhatsApp invitations",
+    "/invitations",
+  ],
+  ["Gift register", "উপহার খাতা: gifts, salami and thank-yous", "/gifts"],
+  [
+    "Family cost split",
+    "Who paid what between the two families",
+    "/cost-split",
+  ],
+  ["Catering headcount", "Plates per day and meal", "/catering"],
+  ["Guest travel & stay", "Rooms and vehicles for guests", "/logistics"],
+  ["Photo wall", "QR photo sharing and live slideshow", "/photo-wall"],
+  [
+    "Date planner",
+    "Holidays, Ramadan and vendor availability",
+    "/date-planner",
+  ],
+  ["Account & security", "Password, two-step sign-in and devices", "/account"],
   ["Overview", "Your celebration dashboard", "/dashboard"],
   ["Planning studio", "Every advanced planning tool, together", "/planning"],
   ["Find vendors", "Your local event professionals", "/vendors"],
@@ -48,6 +70,7 @@ export function CommandMenu() {
   const [open, setOpen] = useState(false),
     [search, setSearch] = useState("");
   const router = useRouter();
+  const { user, event, catalog } = useApp();
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -90,6 +113,7 @@ export function CommandMenu() {
           </div>
           <div className="command-results">
             {commands
+              .filter((c) => pathAllowed(c[2], user, event, catalog))
               .filter((c) =>
                 `${c[0]} ${c[1]}`.toLowerCase().includes(search.toLowerCase()),
               )

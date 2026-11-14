@@ -2,6 +2,27 @@ export type User = {
   id: string;
   fullName: string;
   role: "HOST" | "VENDOR" | "PLATFORM_ADMIN";
+  email?: string;
+  phone?: string | null;
+  locale?: "en" | "bn";
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+  twoFactorEnabled?: boolean;
+};
+export type FeatureGroup = { key: string; label: string; labelBn: string };
+export type Feature = {
+  key: string;
+  group: string;
+  label: string;
+  labelBn: string;
+  description: string;
+  path: string;
+  core?: boolean;
+};
+export type FeatureCatalog = {
+  groups: FeatureGroup[];
+  features: Feature[];
+  occasionDefaults: Record<string, string[]>;
 };
 export type Vendor = {
   id: string;
@@ -11,8 +32,21 @@ export type Vendor = {
   city: string;
   description: string;
   image: string;
-  status: string;
-  commissionBps: number;
+  status?: string;
+  commissionBps?: number;
+  logo?: string | null;
+  gallery?: string[];
+  serviceAreas?: string[];
+  priceFromMinor?: number | null;
+  verified?: boolean;
+  verifiedAt?: string | null;
+  sponsored?: boolean;
+  ratingAvg?: number;
+  ratingCount?: number;
+  responseMinutes?: number | null;
+  phone?: string | null;
+  planCode?: string | null;
+  attributes?: Record<string, string | number | boolean> | null;
   services: Service[];
 };
 export type Service = {
@@ -23,6 +57,8 @@ export type Service = {
   durationHours: number;
   bufferHours: number;
   capacity?: number;
+  description?: string | null;
+  active?: boolean;
   vendor?: Vendor;
 };
 export type Day = {
@@ -47,6 +83,42 @@ export type Guest = {
   seatingTableId?: string;
   groupName?: string;
   dietaryNotes?: string;
+  side?: "BRIDE" | "GROOM" | "BOTH" | null;
+  householdId?: string | null;
+  relationship?: string | null;
+  invitationSentAt?: string | null;
+  invitationOpenedAt?: string | null;
+};
+export type Household = {
+  id: string;
+  name: string;
+  side?: "BRIDE" | "GROOM" | "BOTH" | null;
+  phone?: string | null;
+  token?: string;
+  invitationSentAt?: string | null;
+  invitationOpenedAt?: string | null;
+  members: {
+    id: string;
+    name: string;
+    rsvpStatus: string;
+    partySize: number;
+    maxPartySize: number;
+  }[];
+};
+export type SideSummary = {
+  side: "BRIDE" | "GROOM" | "BOTH" | null;
+  label: string;
+  quota: number | null;
+  invitations: number;
+  invitedPeople: number;
+  acceptedPeople: number;
+};
+export type Paged<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 };
 export type Booking = {
   id: string;
@@ -69,6 +141,8 @@ export type Expense = {
   category: string;
   amountMinor: number;
   note: string;
+  paidBy?: "BRIDE" | "GROOM" | "SHARED" | null;
+  receiptMediaId?: string | null;
 };
 export type Event = {
   id: string;
@@ -80,6 +154,15 @@ export type Event = {
   budgetMinor: number;
   guestCapacity: number;
   rsvpDeadline?: string;
+  sides?: Record<
+    string,
+    { label?: string; quota?: number | null; share?: number }
+  > | null;
+  livestreamUrl?: string | null;
+  features?: string[];
+  enabledFeatures?: string[];
+  disabledFeatures?: string[];
+  archivedAt?: string | null;
   days: Day[];
   tasks: Task[];
   guests: Guest[];
@@ -104,7 +187,13 @@ export type Bundle = {
   discountBps: number;
   services: Service[];
 };
-export type Conversation = { id: string; eventId: string; vendorId: string };
+export type Conversation = {
+  id: string;
+  eventId: string;
+  vendorId: string;
+  vendorName?: string;
+  eventTitle?: string;
+};
 export type Message = {
   id: string;
   senderId: string;

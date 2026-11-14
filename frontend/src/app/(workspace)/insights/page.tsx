@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/context";
 import { useBusiness } from "@/lib/use-business";
+import { MonthlyReport } from "@/components/monthly-report";
 import { useResource } from "@/lib/use-resource";
 import { Activity } from "@/lib/advanced";
 import { taka, dateLabel, statusLabel } from "@/lib/format";
@@ -80,6 +81,7 @@ export default function Insights() {
         }
         description="Real activity, clear numbers, and the little signals that help you decide what comes next."
       />
+      {vendor && business && <MonthlyReport vendorId={business.id} />}
       {vendor && business && (
         <div className="workspace-filter">
           <Field label="Business insights">
