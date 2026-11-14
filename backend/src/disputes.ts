@@ -1,3 +1,4 @@
+import { sandboxPaymentsEnabled } from "./config";
 import {
   BadRequestException,
   Body,
@@ -74,7 +75,7 @@ export class DisputesController {
           where: { bookingId: booking.id, status: "CAPTURED" },
         });
         if (
-          process.env.PAYMENT_MODE !== "sandbox" ||
+          !sandboxPaymentsEnabled() ||
           payments.some((p) => p.provider !== "SANDBOX")
         )
           throw new BadRequestException("Only sandbox refunds are supported");

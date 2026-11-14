@@ -11,7 +11,90 @@ model User {
   fullName String
   passwordHash String
   role String @default("HOST")
+  phone String? @unique
+  locale String @default("en")
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  totpSecret String?
+  totpEnabledAt DateTime?
+  failedLogins Int @default(0)
+  lockedUntil DateTime?
+  deletedAt DateTime?
   createdAt DateTime @default(now())
+  sessions Session[]
+  devices DeviceToken[]
+}
+/// One signed-in device or browser. Refresh tokens rotate; reuse of an old one revokes the family.
+model Session {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshHash String @unique
+  previousHash String?
+  rotatedAt DateTime?
+  client String @default("web")
+  deviceName String?
+  userAgent String?
+  ip String?
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  @@index([userId, revokedAt])
+  @@index([previousHash])
+}
+/// Single-use codes: email verification, password reset, phone OTP.
+model AuthCode {
+  id String @id @default(cuid())
+  userId String
+  purpose String
+  target String
+  codeHash String
+  attempts Int @default(0)
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, purpose, createdAt])
+  @@index([codeHash])
+}
+model DeviceToken {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform String
+  token String @unique
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  @@index([userId])
+}
+/// Outbox for email / SMS / push. The worker delivers and retries.
+model OutboundMessage {
+  id String @id @default(cuid())
+  userId String?
+  channel String
+  recipient String
+  subject String?
+  body String
+  data Json?
+  status String @default("PENDING")
+  attempts Int @default(0)
+  lastError String?
+  nextAttemptAt DateTime @default(now())
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([status, nextAttemptAt])
+}
+model Media {
+  id String @id @default(cuid())
+  ownerId String
+  key String @unique
+  purpose String
+  contentType String
+  sizeBytes Int
+  fileName String?
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  @@index([ownerId, purpose])
 }
 model Vendor {
   id String @id @default(cuid())
@@ -57,6 +140,9 @@ model Event {
   budgetMinor Int @default(150000000)
   guestCapacity Int @default(300)
   rsvpDeadline DateTime?
+  enabledFeatures String[] @default([])
+  disabledFeatures String[] @default([])
+  archivedAt DateTime?
   createdAt DateTime @default(now())
   days EventDay[]
   tasks ChecklistItem[]
@@ -207,6 +293,8 @@ model Notification {
   title String
   body String
   read Boolean @default(false)
+  kind String @default("REMINDER")
+  link String?
   createdAt DateTime @default(now())
   @@index([recipientId,createdAt])
 }

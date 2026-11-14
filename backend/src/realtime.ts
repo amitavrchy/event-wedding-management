@@ -7,6 +7,9 @@ let broadcast: Server | undefined;
 export function disconnectUser(userId: string) {
   broadcast?.in(`user:${userId}`).disconnectSockets(true);
 }
+export function publishToUser(userId: string, event: string, payload: unknown) {
+  broadcast?.to(`user:${userId}`).emit(event, payload);
+}
 export function publishMessage(room: string, message: unknown) {
   broadcast?.to(room).emit("message", message);
 }
@@ -32,7 +35,12 @@ export function realtime(
   broadcast = io;
   io.use(async (socket, next) => {
     try {
-      socket.data.user = await jwt.verifyAsync(socket.handshake.auth.token);
+      const identity = await jwt.verifyAsync(socket.handshake.auth.token);
+      // Web clients use a two-minute socket token; mobile clients use their access token.
+      if (!["socket", "access"].includes(identity.typ) || !identity.sid) throw new Error();
+      const session = await db.session.findUnique({ where: { id: identity.sid } });
+      if (!session || session.revokedAt || session.expiresAt < new Date()) throw new Error();
+      socket.data.user = { ...identity, exp: Math.floor(+session.expiresAt / 1000) };
       next();
     } catch {
       next(new Error("Unauthorized"));
@@ -45,7 +53,7 @@ export function realtime(
     });
     const expiry = setTimeout(
       () => socket.disconnect(true),
-      Math.max(0, (socket.data.user.exp || 0) * 1000 - Date.now()),
+      Math.min(2147483647, Math.max(0, (socket.data.user.exp || 0) * 1000 - Date.now())),
     );
     expiry.unref();
     socket.on("disconnect", () => clearTimeout(expiry));
