@@ -45,6 +45,7 @@ import { AvailabilityController } from "./availability";
 import { RecommendationsController } from "./recommendations";
 import { EventTypesController, FeaturesController } from "./event-types";
 import { UploadsController } from "./storage";
+import { AppConfigController } from "./app-config";
 import { PlansController, SubscriptionsController } from "./subscriptions";
 import { InquiriesController, VerificationController } from "./marketplace";
 import { OccasionController } from "./occasion";
@@ -119,6 +120,7 @@ class HealthController {
     EventTypesController,
     FeaturesController,
     UploadsController,
+    AppConfigController,
     PlansController,
     SubscriptionsController,
     VerificationController,
