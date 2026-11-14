@@ -668,6 +668,12 @@ export function LandingPage() {
           <Link href="/signup?role=VENDOR">For event professionals</Link>
           <Link href={user ? workspace : "/login"}>Your workspace</Link>
         </nav>
+        <nav aria-label="Policies">
+          <strong>Policies</strong>
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/refund-policy">Refunds</Link>
+        </nav>
         <div className="landing-footer-note">
           <span>EVERY KIND OF TOGETHER.</span>
           <p>

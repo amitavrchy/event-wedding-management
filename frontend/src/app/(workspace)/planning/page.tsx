@@ -21,6 +21,66 @@ import { pathAllowed } from "@/lib/features";
 import { PageHeading } from "@/components/ui";
 const tools = [
   {
+    url: "/invitations",
+    title: "Invitation cards",
+    description:
+      "Bangla and English cards, personal WhatsApp links and open tracking.",
+    icon: Heart,
+    tag: "দাওয়াত",
+    color: "rose",
+  },
+  {
+    url: "/gifts",
+    title: "Gift register",
+    description:
+      "Record gifts and salami as they arrive and keep track of thank-yous.",
+    icon: Heart,
+    tag: "উপহার খাতা",
+    color: "peach",
+  },
+  {
+    url: "/cost-split",
+    title: "Family cost split",
+    description:
+      "What each family has paid, their agreed share, and what settles it.",
+    icon: Receipt,
+    tag: "খরচ ভাগাভাগি",
+    color: "sage",
+  },
+  {
+    url: "/catering",
+    title: "Catering headcount",
+    description: "Plates per day and meal from RSVPs, ready for your caterer.",
+    icon: Users,
+    tag: "খাবারের হিসাব",
+    color: "lavender",
+  },
+  {
+    url: "/logistics",
+    title: "Guest travel & stay",
+    description: "Rooms and vehicles for guests coming from outside the city.",
+    icon: Users,
+    tag: "যাতায়াত ও থাকা",
+    color: "sage",
+  },
+  {
+    url: "/photo-wall",
+    title: "Photo wall",
+    description: "Guests upload by QR; approved photos play live on a screen.",
+    icon: Palette,
+    tag: "ফটো ওয়াল",
+    color: "peach",
+  },
+  {
+    url: "/date-planner",
+    title: "Date planner",
+    description:
+      "Holidays, Ramadan and your shortlisted vendors' availability.",
+    icon: CalendarDays,
+    tag: "তারিখ",
+    color: "rose",
+  },
+  {
     url: "/seating",
     title: "Seating & floor plan",
     description:

@@ -6,6 +6,26 @@ import { Modal } from "./ui";
 import { useApp } from "@/lib/context";
 import { pathAllowed } from "@/lib/features";
 const commands = [
+  [
+    "Invitation cards",
+    "Design a card and send WhatsApp invitations",
+    "/invitations",
+  ],
+  ["Gift register", "উপহার খাতা: gifts, salami and thank-yous", "/gifts"],
+  [
+    "Family cost split",
+    "Who paid what between the two families",
+    "/cost-split",
+  ],
+  ["Catering headcount", "Plates per day and meal", "/catering"],
+  ["Guest travel & stay", "Rooms and vehicles for guests", "/logistics"],
+  ["Photo wall", "QR photo sharing and live slideshow", "/photo-wall"],
+  [
+    "Date planner",
+    "Holidays, Ramadan and vendor availability",
+    "/date-planner",
+  ],
+  ["Account & security", "Password, two-step sign-in and devices", "/account"],
   ["Overview", "Your celebration dashboard", "/dashboard"],
   ["Planning studio", "Every advanced planning tool, together", "/planning"],
   ["Find vendors", "Your local event professionals", "/vendors"],

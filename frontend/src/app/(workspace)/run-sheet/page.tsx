@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useApp } from "@/lib/context";
+import { VendorLinks } from "@/components/vendor-links";
 import { api, json } from "@/lib/api";
 import { Cue } from "@/lib/advanced";
 import { useAction, useResource } from "@/lib/use-resource";
@@ -24,6 +25,17 @@ import {
 } from "@/components/ui";
 export default function RunSheet() {
   const { event } = useApp();
+  const vendorPortal = Boolean(event?.features?.includes("vendorPortal"));
+  const booked = Array.from(
+    new Map(
+      (event?.bookings || [])
+        .filter(
+          (b) =>
+            ["CONFIRMED", "COMPLETED"].includes(b.status) && b.service?.vendor,
+        )
+        .map((b) => [b.vendorId, b.service.vendor!.businessName]),
+    ),
+  );
   const { data, reload } = useResource<Cue[]>(
     event ? `events/${event.id}/run-sheet` : null,
     [],
@@ -69,6 +81,7 @@ export default function RunSheet() {
           </div>
         }
       />
+      {vendorPortal && event && <VendorLinks eventId={event.id} />}
       <div className="tabs">
         {event.days.map((d) => (
           <button
@@ -230,6 +243,7 @@ export default function RunSheet() {
                       startsAt: localDateToISO(String(f.get("startsAt"))),
                       durationMinutes: Number(f.get("duration")),
                       owner: f.get("owner"),
+                      vendorId: f.get("vendorId") || undefined,
                       location: f.get("location"),
                       notes: f.get("notes"),
                     }),
@@ -281,6 +295,18 @@ export default function RunSheet() {
                 placeholder="Photography team"
               />
             </Field>
+            {vendorPortal && booked.length > 0 && (
+              <Field label="Vendor (shows on their day-of page)">
+                <select name="vendorId" defaultValue="">
+                  <option value="">No vendor</option>
+                  {booked.map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
             <Field label="Location">
               <input name="location" maxLength={150} />
             </Field>

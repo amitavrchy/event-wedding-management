@@ -38,10 +38,29 @@ export class MessagesController {
             select: { id: true },
           })
         ).map((e) => e.id);
-    return this.db.conversation.findMany({
+    const conversations = await this.db.conversation.findMany({
       where: vendor ? { vendorId: { in: ids } } : { eventId: { in: ids } },
+      include: {
+        event: { select: { title: true } },
+        messages: { orderBy: { createdAt: "desc" }, take: 1, select: { body: true, createdAt: true } },
+      },
+      orderBy: { id: "desc" },
       take: 100,
     });
+    // Most recent activity first; new conversations without messages follow creation order.
+    conversations.sort((a, b) => +(b.messages[0]?.createdAt || 0) - +(a.messages[0]?.createdAt || 0));
+    const vendors = await this.db.vendor.findMany({
+      where: { id: { in: conversations.map((c) => c.vendorId) } },
+      select: { id: true, businessName: true },
+    });
+    return conversations.map((c) => ({
+      ...c,
+      vendorName: vendors.find((v) => v.id === c.vendorId)?.businessName,
+      eventTitle: c.event.title,
+      lastMessage: c.messages[0] || null,
+      messages: undefined,
+      event: undefined,
+    }));
   }
   @Post() async open(@Req() req: any, @Body() body: unknown) {
     const data = parse(
