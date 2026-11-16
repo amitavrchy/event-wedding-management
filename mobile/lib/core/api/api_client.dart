@@ -31,6 +31,9 @@ class ApiClient {
           onError: (error, handler) async {
             final request = error.requestOptions;
             final unauthorized = error.response?.statusCode == 401;
+            if (unauthorized && request.extra['retried'] == true) {
+              onSessionExpired?.call();
+            }
             if (!unauthorized || request.path.startsWith('auth/') || request.extra['retried'] == true) {
               return handler.next(error);
             }

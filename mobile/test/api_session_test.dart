@@ -58,6 +58,20 @@ void main() {
     expect(expired, isTrue);
   });
 
+  test('a retried request still unauthorized expires the session', () async {
+    final tokens = MemoryTokens();
+    final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/'));
+    dio.httpClientAdapter = TestAdapter((request) async {
+      if (request.path == 'auth/refresh') return reply(200, {'accessToken': 'new', 'refreshToken': 'next'});
+      return reply(401, {'message': 'expired'});
+    });
+    final client = ApiClient(tokens, dio: dio);
+    var expired = false;
+    client.onSessionExpired = () => expired = true;
+    await expectLater(client.get('events'), throwsA(isA<ApiError>()));
+    expect(expired, isTrue);
+  });
+
   test('offline refresh reports network error without expiring session', () async {
     final tokens = MemoryTokens();
     final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/'));
