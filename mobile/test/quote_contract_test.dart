@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:ayojon/core/api/api_client.dart';
 import 'package:ayojon/core/auth/token_store.dart';
 import 'package:ayojon/core/providers.dart';
+import 'package:ayojon/core/strings.dart';
 import 'package:ayojon/features/tools/more_tools.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +36,7 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/'))..httpClientAdapter = adapter;
     final client = ApiClient(_Tokens(), dio: dio);
     await tester.pumpWidget(ProviderScope(
-      overrides: [apiProvider.overrideWithValue(client)],
+      overrides: [apiProvider.overrideWithValue(client), stringsProvider.overrideWithValue(S.of('en'))],
       child: MaterialApp(home: Scaffold(body: Consumer(builder: (context, ref, _) =>
         TextButton(onPressed: () => acceptQuote(context, ref, {'id': 'quote-1', 'vendorId': 'vendor-1'}), child: const Text('Open'))))),
     ));

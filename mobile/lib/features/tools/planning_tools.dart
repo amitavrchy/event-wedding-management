@@ -33,10 +33,10 @@ class ChecklistScreen extends ConsumerWidget {
     final s = ref.watch(stringsProvider);
     final event = ref.watch(currentEventProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'চেকলিস্ট' : 'Checklist')),
+      appBar: AppBar(title: Text(s.t('textChecklist'))),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final title = await _prompt(context, s.bn ? 'নতুন কাজ' : 'New task');
+          final title = await _prompt(context, s.t('textNewTask'));
           final e = event.value;
           if (title == null || title.length < 2 || e == null || !context.mounted) return;
           await attempt(context, () async {
@@ -89,8 +89,8 @@ Future<String?> _prompt(BuildContext context, String title, {String? initial, Te
       title: Text(title),
       content: TextField(controller: controller, autofocus: true, keyboardType: keyboard),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-        TextButton(onPressed: () => Navigator.pop(c, controller.text.trim()), child: const Text('OK')),
+        TextButton(onPressed: () => Navigator.pop(c), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('cancel'))),
+        TextButton(onPressed: () => Navigator.pop(c, controller.text.trim()), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('ok'))),
       ],
     ),
   );
@@ -121,12 +121,12 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             TextField(controller: nameC, decoration: InputDecoration(labelText: s.t('fullName')), textCapitalization: TextCapitalization.words),
             const SizedBox(height: 10),
-            TextField(controller: phoneC, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone')),
+            TextField(controller: phoneC, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: s.t('phone'))),
             const SizedBox(height: 10),
             Row(children: [
-              Expanded(child: TextField(controller: partyC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: s.bn ? 'সর্বোচ্চ সদস্য' : 'Max party size'))),
+              Expanded(child: TextField(controller: partyC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: s.t('textMaxPartySize')))),
               const SizedBox(width: 10),
-              Expanded(child: TextField(controller: relC, decoration: InputDecoration(labelText: s.bn ? 'সম্পর্ক' : 'Relationship'))),
+              Expanded(child: TextField(controller: relC, decoration: InputDecoration(labelText: s.t('textRelationship')))),
             ]),
             if (e.has('sides')) ...[
               const SizedBox(height: 10),
@@ -188,7 +188,7 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
     final s = ref.watch(stringsProvider);
     final event = ref.watch(currentEventProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'অতিথি তালিকা' : 'Guest list')),
+      appBar: AppBar(title: Text(s.t('textGuestList'))),
       floatingActionButton: event.value?.readOnly == false
           ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
               FloatingActionButton.small(heroTag: 'contacts', onPressed: () => fromContacts(event.value!), tooltip: s.t('fromContacts'), child: const Icon(Icons.contacts_outlined)),
@@ -217,7 +217,7 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
                   for (final option in [null, 'BRIDE', 'GROOM', 'BOTH'])
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(label: Text(option == null ? (s.bn ? 'সবাই' : 'All') : sideLabel(s, e, option)), selected: side == option, onSelected: (_) => setState(() => side = option)),
+                      child: ChoiceChip(label: Text(option == null ? (s.t('textAll')) : sideLabel(s, e, option)), selected: side == option, onSelected: (_) => setState(() => side = option)),
                     ),
                 ]),
               ),
@@ -281,7 +281,7 @@ class BudgetScreen extends ConsumerWidget {
           builder: (c, set) => Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.viewInsetsOf(c).bottom + 16),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: noteC, decoration: InputDecoration(labelText: s.bn ? 'কী খরচ' : 'What for')),
+              TextField(controller: noteC, decoration: InputDecoration(labelText: s.t('textWhatFor'))),
               const SizedBox(height: 10),
               TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: '৳')),
               const SizedBox(height: 10),
@@ -293,12 +293,12 @@ class BudgetScreen extends ConsumerWidget {
               if (event.has('costSplit'))
                 DropdownButtonFormField<String?>(
                   initialValue: paidBy,
-                  decoration: InputDecoration(labelText: s.bn ? 'কে দিলেন' : 'Paid by'),
+                  decoration: InputDecoration(labelText: s.t('textPaidBy')),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('—')),
                     DropdownMenuItem(value: 'BRIDE', child: Text(sideLabel(s, event, 'BRIDE'))),
                     DropdownMenuItem(value: 'GROOM', child: Text(sideLabel(s, event, 'GROOM'))),
-                    DropdownMenuItem(value: 'SHARED', child: Text(s.bn ? 'যৌথ' : 'Shared')),
+                    DropdownMenuItem(value: 'SHARED', child: Text(s.t('textShared'))),
                   ],
                   onChanged: (v) => set(() => paidBy = v),
                 ),
@@ -308,7 +308,7 @@ class BudgetScreen extends ConsumerWidget {
                   if (picked != null) set(() => receipt = picked);
                 },
                 icon: const Icon(Icons.receipt_long_outlined),
-                label: Text(receipt == null ? (s.bn ? 'রসিদের ছবি' : 'Photo of receipt') : (s.bn ? 'রসিদ যুক্ত হয়েছে' : 'Receipt attached')),
+                label: Text(receipt == null ? (s.t('textPhotoOfReceipt')) : (s.t('textReceiptAttached'))),
               ),
               FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(s.t('save'))),
             ]),
@@ -333,7 +333,7 @@ class BudgetScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'বাজেট' : 'Budget')),
+      appBar: AppBar(title: Text(s.t('textBudget'))),
       floatingActionButton: event?.readOnly == false ? FloatingActionButton(onPressed: add, child: const Icon(Icons.add)) : null,
       body: AsyncView(
         value: budget,
@@ -343,17 +343,17 @@ class BudgetScreen extends ConsumerWidget {
           final expenses = List<Map>.from(data['expenses'] as List);
           return ListView(padding: const EdgeInsets.all(16), children: [
             Row(children: [
-              StatTile(value: taka(data['plannedMinor'] as int, compact: true), label: s.bn ? 'পরিকল্পিত' : 'Planned', icon: Icons.flag_outlined),
-              StatTile(value: taka(data['committedMinor'] as int, compact: true), label: s.bn ? 'বুক করা' : 'Committed', icon: Icons.event_available_outlined),
+              StatTile(value: taka(data['plannedMinor'] as int, compact: true), label: s.t('textPlanned'), icon: Icons.flag_outlined),
+              StatTile(value: taka(data['committedMinor'] as int, compact: true), label: s.t('textCommitted'), icon: Icons.event_available_outlined),
               StatTile(value: taka(data['actualMinor'] as int, compact: true), label: s.t('spent'), icon: Icons.payments_outlined),
             ]),
-            if (data['alert'] == true) Card(color: Colors.red.shade50, child: ListTile(leading: const Icon(Icons.warning_amber), title: Text(s.bn ? 'বাজেট ছাড়িয়ে গেছে' : 'Bookings exceed your budget'))),
+            if (data['alert'] == true) Card(color: Colors.red.shade50, child: ListTile(leading: const Icon(Icons.warning_amber), title: Text(s.t('textBookingsExceedYourBudget')))),
             const SizedBox(height: 8),
             for (final x in expenses)
               Card(
                 child: ListTile(
                   title: Text(x['note'] as String),
-                  subtitle: Text('${x['category']}${x['paidBy'] != null && event != null ? ' · ${x['paidBy'] == 'SHARED' ? (s.bn ? 'যৌথ' : 'Shared') : sideLabel(s, event, x['paidBy'] as String)}' : ''}'),
+                  subtitle: Text('${x['category']}${x['paidBy'] != null && event != null ? ' · ${x['paidBy'] == 'SHARED' ? (s.t('textShared')) : sideLabel(s, event, x['paidBy'] as String)}' : ''}'),
                   trailing: Text(taka(x['amountMinor'] as int)),
                   onLongPress: event == null || event.readOnly
                       ? null
@@ -394,13 +394,13 @@ class GiftsScreen extends ConsumerWidget {
           builder: (c, set) => Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.viewInsetsOf(c).bottom + 16),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: nameC, autofocus: true, decoration: InputDecoration(labelText: s.bn ? 'কার কাছ থেকে' : 'From')),
+              TextField(controller: nameC, autofocus: true, decoration: InputDecoration(labelText: s.t('textFrom'))),
               const SizedBox(height: 10),
               SegmentedButton<String>(
                 segments: [
-                  ButtonSegment(value: 'CASH', label: Text(s.bn ? 'নগদ' : 'Cash')),
-                  ButtonSegment(value: 'GIFT', label: Text(s.bn ? 'উপহার' : 'Gift')),
-                  ButtonSegment(value: 'GOLD', label: Text(s.bn ? 'স্বর্ণ' : 'Gold')),
+                  ButtonSegment(value: 'CASH', label: Text(s.t('textCash'))),
+                  ButtonSegment(value: 'GIFT', label: Text(s.t('textGift'))),
+                  ButtonSegment(value: 'GOLD', label: Text(s.t('textGold'))),
                 ],
                 selected: {kind},
                 onSelectionChanged: (v) => set(() => kind = v.first),
@@ -408,7 +408,7 @@ class GiftsScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: '৳')),
               const SizedBox(height: 10),
-              TextField(controller: descC, decoration: InputDecoration(labelText: s.bn ? 'বিবরণ' : 'Description')),
+              TextField(controller: descC, decoration: InputDecoration(labelText: s.t('textDescription'))),
               const SizedBox(height: 16),
               FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(s.t('save'))),
             ]),
@@ -428,7 +428,7 @@ class GiftsScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'উপহার খাতা' : 'Gift register')),
+      appBar: AppBar(title: Text(s.t('textGiftRegister'))),
       floatingActionButton: event?.readOnly == false ? FloatingActionButton(onPressed: add, child: const Icon(Icons.add)) : null,
       body: AsyncView(
         value: gifts,
@@ -439,9 +439,9 @@ class GiftsScreen extends ConsumerWidget {
           final summary = data['summary'] as Map;
           return ListView(padding: const EdgeInsets.all(16), children: [
             Row(children: [
-              StatTile(value: '${summary['count']}', label: s.bn ? 'উপহার' : 'Gifts', icon: Icons.redeem_outlined),
-              StatTile(value: taka(summary['cashMinor'] as int, compact: true), label: s.bn ? 'নগদ' : 'Cash', icon: Icons.payments_outlined),
-              StatTile(value: '${summary['thankYouPending']}', label: s.bn ? 'ধন্যবাদ বাকি' : 'Thank-yous', icon: Icons.mark_email_unread_outlined),
+              StatTile(value: '${summary['count']}', label: s.t('textGifts'), icon: Icons.redeem_outlined),
+              StatTile(value: taka(summary['cashMinor'] as int, compact: true), label: s.t('textCash'), icon: Icons.payments_outlined),
+              StatTile(value: '${summary['thankYouPending']}', label: s.t('textThankYous'), icon: Icons.mark_email_unread_outlined),
             ]),
             for (final g in items)
               Card(

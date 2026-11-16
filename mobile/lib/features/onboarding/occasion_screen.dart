@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/ui/spacing.dart';
 import '../../core/widgets/common.dart';
 import '../../models/models.dart';
 
@@ -72,7 +73,7 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
             setState(() => searching = !searching);
           }),
           TextButton(
-            onPressed: () => ref.read(localeProvider.notifier).set(s.bn ? 'en' : 'bn'),
+            onPressed: () => ref.read(localeProvider.notifier).set(s.t('textBn')),
             child: Text(s.bn ? 'English' : 'বাংলা'),
           ),
         ],
@@ -85,7 +86,7 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
           final visible = list.where((t) => [t.label, t.labelBn, t.description, t.descriptionBn].any((v) => v.toLowerCase().contains(term))).toList();
           return ListView(
             controller: scrollController,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.page),
             children: [
               Text(s.t('whatPlanning'), style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 6),
@@ -96,14 +97,14 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
                 crossAxisCount: MediaQuery.sizeOf(context).width > 600 ? 3 : 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
+                mainAxisSpacing: AppSpacing.sm,
+                crossAxisSpacing: AppSpacing.sm,
                 mainAxisExtent: 200 + (MediaQuery.textScalerOf(context).scale(1) - 1).clamp(0, double.infinity) * 140,
                 children: [
                   for (final t in visible)
                     Semantics(
                       button: true,
-                      label: t.label,
+                      label: s.bn ? (t.labelBn.isNotEmpty ? t.labelBn : t.label) : t.label,
                       child: Card(
                         clipBehavior: Clip.antiAlias,
                         child: InkWell(
@@ -113,10 +114,9 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
                             child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.center, children: [
                               Icon(occasionIcons[t.iconKey] ?? Icons.celebration_outlined, size: 44, color: Theme.of(context).colorScheme.primary),
                               const SizedBox(height: 6),
-                              Text(s.bn ? t.labelBn : t.label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
-                              Text(s.bn ? t.label : t.labelBn, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+                              Text(s.bn && t.labelBn.isNotEmpty ? t.labelBn : t.label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
                               const SizedBox(height: 6),
-                              Text(s.bn ? t.descriptionBn : t.description, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall),
+                              Text(s.bn && t.descriptionBn.isNotEmpty ? t.descriptionBn : t.description, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall),
                             ]),
                           ),
                         ),
@@ -125,9 +125,13 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
                 ],
               ),
               if (!widget.forNewEvent && ref.watch(currentUserProvider) == null) ...[
-                const Divider(height: 32),
+                const SizedBox(height: AppSpacing.lg),
+                const Divider(),
+                const SizedBox(height: AppSpacing.md),
                 OutlinedButton(onPressed: () => context.push('/register?role=VENDOR'), child: Text(s.t('imVendor'))),
-                TextButton(onPressed: () => context.push('/login'), child: Text(s.t('haveAccount'))),
+                const SizedBox(height: AppSpacing.sm),
+                TextButton(onPressed: () => context.push('/login'), child: Text(s.t('haveAccount'), textAlign: TextAlign.center)),
+                const SizedBox(height: AppSpacing.page),
               ],
             ],
           );

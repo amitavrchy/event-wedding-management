@@ -30,7 +30,7 @@ class ConversationsScreen extends ConsumerWidget {
           value: list,
           onRetry: () => ref.invalidate(conversationsProvider),
           builder: (items) => items.isEmpty
-              ? ListView(children: [EmptyState(s.t('empty'), subtitle: s.bn ? 'ভেন্ডরকে জিজ্ঞাসা পাঠালে কথোপকথন এখানে আসবে' : 'Send a vendor an inquiry to start a conversation')])
+              ? ListView(children: [EmptyState(s.t('empty'), subtitle: s.t('textSendAVendorAnInquiry'))])
               : ListView(children: [
                   for (final c in items)
                     ListTile(

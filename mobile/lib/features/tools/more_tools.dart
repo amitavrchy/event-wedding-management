@@ -36,15 +36,15 @@ class _CateringScreenState extends ConsumerState<CateringScreen> {
           ),
         );
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'খাবারের হিসাব' : 'Catering headcount')),
+      appBar: AppBar(title: Text(s.t('textCateringHeadcount'))),
       body: AsyncView(
         value: data,
         builder: (d) {
           if (d == null) return const SizedBox();
           return ListView(padding: const EdgeInsets.all(16), children: [
-            Text('${s.bn ? 'বাড়তি' : 'Buffer'}: $buffer%'),
+            Text('${s.t('textBuffer')}: $buffer%'),
             Slider(value: buffer.toDouble(), min: 0, max: 30, divisions: 6, label: '$buffer%', onChanged: (v) => setState(() => buffer = v.round())),
-            plan(s.bn ? 'পুরো অনুষ্ঠান' : 'Whole event', d['overall'] as Map),
+            plan(s.t('textWholeEvent'), d['overall'] as Map),
             for (final day in d['days'] as List) plan('${day['name']}', day as Map),
             OutlinedButton.icon(
               onPressed: () {
@@ -52,7 +52,7 @@ class _CateringScreenState extends ConsumerState<CateringScreen> {
                 SharePlus.instance.share(ShareParams(text: lines.join('\n')));
               },
               icon: const Icon(Icons.share_outlined),
-              label: Text(s.bn ? 'ক্যাটারারকে পাঠান' : 'Send to caterer'),
+              label: Text(s.t('textSendToCaterer')),
             ),
           ]);
         },
@@ -69,7 +69,7 @@ class CostSplitScreen extends ConsumerWidget {
     final s = ref.watch(stringsProvider);
     final data = ref.watch(eventResource('events/:id/cost-split'));
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'খরচ ভাগাভাগি' : 'Family cost split')),
+      appBar: AppBar(title: Text(s.t('textFamilyCostSplit'))),
       body: AsyncView(
         value: data,
         builder: (d) {
@@ -84,7 +84,7 @@ class CostSplitScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     settlement == null
-                        ? (s.bn ? 'দুই পরিবার সমান' : 'Both families are even')
+                        ? (s.t('textBothFamiliesAreEven'))
                         : '${labels[settlement['from']]} → ${labels[settlement['to']]}: ${taka(settlement['amountMinor'] as int)}',
                     style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
@@ -97,7 +97,7 @@ class CostSplitScreen extends ConsumerWidget {
               Card(
                 child: ListTile(
                   title: Text('${labels[side]}'),
-                  subtitle: Text('${s.bn ? 'নিজে দিয়েছেন' : 'Paid'} ${taka((d['paidMinor'] as Map)[side] as int)} · ${s.bn ? 'ন্যায্য অংশ' : 'Fair share'} ${taka((d['fairShareMinor'] as Map)[side] as int)}'),
+                  subtitle: Text('${s.t('textPaid')} ${taka((d['paidMinor'] as Map)[side] as int)} · ${s.t('textFairShare')} ${taka((d['fairShareMinor'] as Map)[side] as int)}'),
                 ),
               ),
           ]);
@@ -161,7 +161,7 @@ class _VendorsScreenState extends ConsumerState<VendorsScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'ভেন্ডর খুঁজুন' : 'Find vendors')),
+      appBar: AppBar(title: Text(s.t('textFindVendors'))),
       body: NotificationListener<ScrollNotification>(
         onNotification: (n) {
           if (n.metrics.extentAfter < 400 && items.length < total) load();
@@ -177,7 +177,7 @@ class _VendorsScreenState extends ConsumerState<VendorsScreen> {
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(s.bn ? 'আমার তারিখ ও অতিথি সংখ্যায় মেলে' : 'Free on my date, fits my guests'),
+            title: Text(s.t('textFreeOnMyDateFits')),
             value: matchEvent,
             onChanged: (v) {
               setState(() => matchEvent = v);
@@ -196,7 +196,7 @@ class _VendorsScreenState extends ConsumerState<VendorsScreen> {
                       Flexible(child: Text(v.businessName)),
                       if (v.verified) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.verified, size: 16, color: Colors.green)),
                     ]),
-                    subtitle: Text('${v.category} · ${v.city}${v.ratingCount > 0 ? ' · ★ ${v.ratingAvg.toStringAsFixed(1)}' : ''}${v.sponsored ? ' · Sponsored' : ''}'),
+                    subtitle: Text('${v.category} · ${v.city}${v.ratingCount > 0 ? ' · ★ ${v.ratingAvg.toStringAsFixed(1)}' : ''}${v.sponsored ? ' · ${s.t('sponsored')}' : ''}'),
                     trailing: v.priceFromMinor != null ? Text(taka(v.priceFromMinor!, compact: true)) : null,
                   ),
                 ]),
@@ -234,9 +234,9 @@ class _VendorSheetState extends ConsumerState<VendorSheet> {
           const SizedBox(height: 8),
           Text(v.description, maxLines: 6, overflow: TextOverflow.ellipsis),
           for (final svc in v.services) ListTile(dense: true, contentPadding: EdgeInsets.zero, title: Text('${svc['title']}'), trailing: Text(taka(svc['basePriceMinor'] as int))),
-          TextField(controller: message, maxLines: 3, decoration: InputDecoration(labelText: s.t('message'), hintText: s.bn ? 'আপনার অনুষ্ঠান ও প্রয়োজন লিখুন' : 'Tell them about your event')),
+          TextField(controller: message, maxLines: 3, decoration: InputDecoration(labelText: s.t('message'), hintText: s.t('textTellThemAboutYourEvent'))),
           const SizedBox(height: 8),
-          TextField(controller: phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: s.bn ? 'আপনার ফোন (ঐচ্ছিক)' : 'Your phone (optional)')),
+          TextField(controller: phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: s.t('textYourPhoneOptional'))),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: busy
@@ -249,14 +249,14 @@ class _VendorSheetState extends ConsumerState<VendorSheet> {
                           if (event != null) 'guestCount': event.guestCapacity,
                           if (phone.text.isNotEmpty) 'phone': phone.text.trim(),
                           'message': message.text.trim(),
-                        }), success: s.bn ? 'জিজ্ঞাসা পাঠানো হয়েছে' : 'Inquiry sent');
+                        }), success: s.t('textInquirySent'));
                     if (!context.mounted) return;
                     setState(() => busy = false);
                     if (ok) Navigator.pop(context);
                   },
             child: Text(s.t('sendInquiry')),
           ),
-          TextButton(onPressed: () => launchUrl(Uri.parse('${AppConfig.webUrl}/v/${v.slug}'), mode: LaunchMode.externalApplication), child: Text(s.bn ? 'পুরো প্রোফাইল' : 'Full profile')),
+          TextButton(onPressed: () => launchUrl(Uri.parse('${AppConfig.webUrl}/v/${v.slug}'), mode: LaunchMode.externalApplication), child: Text(s.t('textFullProfile'))),
         ]),
       ),
     );
@@ -298,7 +298,7 @@ class BookingsScreen extends ConsumerWidget {
                                 onPressed: () => attempt(context, () async {
                                   await ref.read(apiProvider).post('bookings/${b['id']}/confirm');
                                   ref.invalidate(bookingsProvider);
-                                }, success: s.bn ? 'বুকিং নিশ্চিত' : 'Booking confirmed'),
+                                }, success: s.t('textBookingConfirmed')),
                                 child: Text(s.t('confirm')),
                               ),
                             if (b['status'] == 'CONFIRMED')
@@ -313,7 +313,7 @@ class BookingsScreen extends ConsumerWidget {
                                       'idempotencyKey': '${b['id']}-${DateTime.now().microsecondsSinceEpoch}',
                                     });
                                     ref.invalidate(bookingsProvider);
-                                  }, success: s.bn ? 'পেমেন্ট লেখা হয়েছে' : 'Payment recorded');
+                                  }, success: s.t('textPaymentRecorded'));
                                 },
                                 child: Text(s.t('recordPayment')),
                               ),
@@ -335,7 +335,7 @@ Future<double?> _askAmount(BuildContext context, String title) async {
     builder: (d) => AlertDialog(
       title: Text(title),
       content: TextField(controller: c, keyboardType: TextInputType.number, decoration: const InputDecoration(prefixText: '৳ ')),
-      actions: [TextButton(onPressed: () => Navigator.pop(d), child: const Text('Cancel')), TextButton(onPressed: () => Navigator.pop(d, c.text), child: const Text('OK'))],
+      actions: [TextButton(onPressed: () => Navigator.pop(d), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('cancel'))), TextButton(onPressed: () => Navigator.pop(d, c.text), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('ok')))],
     ),
   );
   return double.tryParse(value ?? '');
@@ -344,6 +344,7 @@ Future<double?> _askAmount(BuildContext context, String title) async {
 // ---------------------------------------------------------------------------
 Future<void> acceptQuote(BuildContext context, WidgetRef ref, Json quote) async {
   final api = ref.read(apiProvider);
+  final s = ref.read(stringsProvider);
   Json vendor;
   try {
     vendor = await api.get<Json>('vendors/${quote['vendorId']}');
@@ -354,7 +355,7 @@ Future<void> acceptQuote(BuildContext context, WidgetRef ref, Json quote) async 
   if (!context.mounted) return;
   final services = List<Json>.from(vendor['services'] as List);
   if (services.isEmpty) {
-    showError(context, StateError('This vendor has no available services'));
+    showMessage(context, s.t('noServices'));
     return;
   }
   String serviceId = services.first['id'] as String;
@@ -363,7 +364,7 @@ Future<void> acceptQuote(BuildContext context, WidgetRef ref, Json quote) async 
   final selection = await showDialog<({String serviceId, DateTime startAt})>(
     context: context,
     builder: (dialog) => StatefulBuilder(builder: (dialog, setDialog) => AlertDialog(
-      title: const Text('Accept quote and book'),
+      title: Text(s.t('acceptQuote')),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         DropdownButtonFormField<String>(
           initialValue: serviceId,
@@ -375,24 +376,24 @@ Future<void> acceptQuote(BuildContext context, WidgetRef ref, Json quote) async 
             final chosen = await showDatePicker(context: dialog, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 1095)));
             if (chosen != null) setDialog(() => date = chosen);
           },
-          child: Text(date == null ? 'Choose date' : MaterialLocalizations.of(dialog).formatFullDate(date!)),
+          child: Text(date == null ? s.t('chooseDate') : MaterialLocalizations.of(dialog).formatFullDate(date!)),
         ),
         TextButton(
           onPressed: () async {
             final chosen = await showTimePicker(context: dialog, initialTime: TimeOfDay.now());
             if (chosen != null) setDialog(() => time = chosen);
           },
-          child: Text(time == null ? 'Choose time (Dhaka)' : time!.format(dialog)),
+          child: Text(time == null ? s.t('chooseTime') : time!.format(dialog)),
         ),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(dialog), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(dialog), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('cancel'))),
         FilledButton(
           onPressed: date == null || time == null ? null : () {
             final utc = DateTime.utc(date!.year, date!.month, date!.day, time!.hour - 6, time!.minute);
             Navigator.pop(dialog, (serviceId: serviceId, startAt: utc));
           },
-          child: const Text('Accept'),
+          child: Text(s.t('accept')),
         ),
       ],
     )),
@@ -416,7 +417,7 @@ class QuotesScreen extends ConsumerWidget {
     final quotes = ref.watch(eventResource('quotes/event/:id'));
     final event = ref.watch(currentEventProvider).value;
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'কোটেশন' : 'Quotations')),
+      appBar: AppBar(title: Text(s.t('textQuotations'))),
       body: AsyncView(
         value: quotes,
         builder: (list) {
@@ -462,18 +463,18 @@ class InvitationsScreen extends ConsumerWidget {
     final share = ref.watch(eventResource('events/:id/invitations/share?language=${s.locale}'));
     final event = ref.watch(currentEventProvider).value;
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'দাওয়াত পাঠান' : 'Send invitations')),
+      appBar: AppBar(title: Text(s.t('textSendInvitations'))),
       body: AsyncView(
         value: share,
         builder: (list) {
           final items = List<Json>.from((list ?? const []) as List);
-          if (items.isEmpty) return EmptyState(s.t('empty'), subtitle: s.bn ? 'আগে অতিথি যোগ করুন' : 'Add guests first');
+          if (items.isEmpty) return EmptyState(s.t('empty'), subtitle: s.t('textAddGuestsFirst'));
           return ListView(children: [
             for (final i in items)
               ListTile(
                 leading: Icon(i['type'] == 'household' ? Icons.home_outlined : Icons.person_outline),
                 title: Text(i['name'] as String),
-                subtitle: Text(i['openedAt'] != null ? (s.bn ? 'দেখেছেন' : 'Opened') : i['sentAt'] != null ? (s.bn ? 'পাঠানো হয়েছে' : 'Sent') : (s.bn ? 'পাঠানো হয়নি' : 'Not sent')),
+                subtitle: Text(i['openedAt'] != null ? (s.t('textOpened')) : i['sentAt'] != null ? (s.t('textSent')) : (s.t('textNotSent'))),
                 trailing: IconButton(
                   icon: const Icon(Icons.send_outlined),
                   tooltip: s.t('whatsapp'),

@@ -90,7 +90,7 @@ class ToolsScreen extends ConsumerWidget {
               }(),
               const SizedBox(height: 12),
               if (!e.readOnly)
-                OutlinedButton.icon(onPressed: () => context.push('/tool-settings'), icon: const Icon(Icons.tune), label: Text(s.bn ? 'আরও টুল যোগ করুন' : 'Add more tools')),
+                OutlinedButton.icon(onPressed: () => context.push('/tool-settings'), icon: const Icon(Icons.tune), label: Text(s.t('textAddMoreTools'))),
             ]);
           },
         ),
@@ -128,13 +128,13 @@ class ToolSettingsScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'এই অনুষ্ঠানের টুল' : 'Tools for this event')),
+      appBar: AppBar(title: Text(s.t('textToolsForThisEvent'))),
       body: ListView(children: [
         for (final f in catalog.features.where((f) => !f.core))
           SwitchListTile(
             value: event.has(f.key),
             title: Text(s.bn ? f.labelBn : f.label),
-            subtitle: Text(f.description + (defaults.contains(f.key) ? (s.bn ? ' · প্রস্তাবিত' : ' · suggested') : '')),
+            subtitle: Text(f.description + (defaults.contains(f.key) ? (s.t('textSuggested')) : '')),
             onChanged: (on) => toggle(f.key, on),
           ),
       ]),

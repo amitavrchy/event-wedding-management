@@ -90,7 +90,7 @@ Future<bool> confirmDialog(BuildContext context, String title, String message, {
       title: Text(title),
       content: Text(message),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('cancel'))),
         FilledButton(
           style: destructive ? FilledButton.styleFrom(backgroundColor: Colors.red.shade700, minimumSize: const Size(0, 40)) : FilledButton.styleFrom(minimumSize: const Size(0, 40)),
           onPressed: () => Navigator.pop(c, true),

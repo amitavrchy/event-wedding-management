@@ -158,13 +158,13 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     final arrived = roster.values.where((g) => g['arrivedAt'] != null).fold<int>(0, (n, g) => n + ((g['partySize'] ?? 1) as int));
     final expected = roster.values.fold<int>(0, (n, g) => n + ((g['partySize'] ?? 1) as int));
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'স্বাগত ডেস্ক' : 'Welcome desk'), actions: [
+      appBar: AppBar(title: Text(s.t('textWelcomeDesk')), actions: [
         if (!online) Padding(padding: const EdgeInsets.only(right: 12), child: Chip(label: Text(s.t('offline')))),
       ]),
       body: day == null
           ? ListView(children: [
               for (final d in event.days) ListTile(leading: const Icon(Icons.event), title: Text(d.name), subtitle: Text(dateTimeLabel(d.startsAt, locale: s.locale)), onTap: () => _open(event, d)),
-              if (event.days.isEmpty) EmptyState(s.bn ? 'আগে অনুষ্ঠানের দিন যোগ করুন' : 'Add an event day first'),
+              if (event.days.isEmpty) EmptyState(s.t('textAddAnEventDayFirst')),
             ])
           : Column(children: [
               SizedBox(
@@ -177,7 +177,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               if (last != null) Container(width: double.infinity, color: Colors.green.shade50, padding: const EdgeInsets.all(12), child: Text(last!, style: Theme.of(context).textTheme.titleMedium)),
               ListTile(
                 title: Text('$arrived / $expected ${s.t('arrived').toLowerCase()}'),
-                subtitle: Text('${queue.length} ${s.t('pendingSync')} · ${rosterAt == null ? '' : (s.bn ? 'তালিকা ' : 'List ') + dateTimeLabel(rosterAt!, locale: s.locale)}'),
+                subtitle: Text('${queue.length} ${s.t('pendingSync')} · ${rosterAt == null ? '' : (s.t('textList')) + dateTimeLabel(rosterAt!, locale: s.locale)}'),
                 trailing: queue.isEmpty ? IconButton(icon: const Icon(Icons.download_outlined), tooltip: s.t('downloadRoster'), onPressed: () => download(event)) : TextButton(onPressed: syncing ? null : sync, child: Text(s.t('syncNow'))),
               ),
               Expanded(
@@ -213,7 +213,7 @@ class _PhotoWallScreenState extends ConsumerState<PhotoWallScreen> {
     final event = ref.watch(currentEventProvider).value;
     final api = ref.read(apiProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'ফটো ওয়াল' : 'Photo wall')),
+      appBar: AppBar(title: Text(s.t('textPhotoWall'))),
       body: AsyncView(
         value: wall,
         builder: (w) {
@@ -226,22 +226,22 @@ class _PhotoWallScreenState extends ConsumerState<PhotoWallScreen> {
                   await api.post('events/${event.id}/photo-wall/settings', {'enabled': true, 'moderation': true});
                   ref.invalidate(eventResource(path));
                 }),
-                child: Text(s.bn ? 'ফটো ওয়াল চালু করুন' : 'Open the photo wall'),
+                child: Text(s.t('textOpenThePhotoWall')),
               )
             else
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.qr_code_2),
-                  title: Text(s.bn ? 'অতিথিদের এই লিংক/QR দিন' : 'Share this link or its QR with guests'),
+                  title: Text(s.t('textShareThisLinkOrIts')),
                   subtitle: Text('${w['uploadUrl']}'),
                   trailing: IconButton(icon: const Icon(Icons.share_outlined), onPressed: () => SharePlus.instance.share(ShareParams(text: '${w['uploadUrl']}'))),
                 ),
               ),
             SegmentedButton<String>(
               segments: [
-                ButtonSegment(value: 'PENDING', label: Text(s.bn ? 'অপেক্ষমাণ' : 'Waiting')),
-                ButtonSegment(value: 'APPROVED', label: Text(s.bn ? 'ওয়ালে' : 'On wall')),
-                ButtonSegment(value: 'HIDDEN', label: Text(s.bn ? 'লুকানো' : 'Hidden')),
+                ButtonSegment(value: 'PENDING', label: Text(s.t('textWaiting'))),
+                ButtonSegment(value: 'APPROVED', label: Text(s.t('textOnWall'))),
+                ButtonSegment(value: 'HIDDEN', label: Text(s.t('textHidden'))),
               ],
               selected: {status},
               onSelectionChanged: (v) => setState(() => status = v.first),
@@ -263,8 +263,8 @@ class _PhotoWallScreenState extends ConsumerState<PhotoWallScreen> {
                               builder: (c) => SafeArea(
                                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                                   Image.network(api.absoluteUrl(p['url'] as String), height: 260, fit: BoxFit.contain),
-                                  ListTile(leading: const Icon(Icons.check), title: Text(s.bn ? 'অনুমোদন' : 'Approve'), onTap: () => _moderate(c, event, p, 'APPROVED')),
-                                  ListTile(leading: const Icon(Icons.visibility_off_outlined), title: Text(s.bn ? 'লুকান' : 'Hide'), onTap: () => _moderate(c, event, p, 'HIDDEN')),
+                                  ListTile(leading: const Icon(Icons.check), title: Text(s.t('textApprove')), onTap: () => _moderate(c, event, p, 'APPROVED')),
+                                  ListTile(leading: const Icon(Icons.visibility_off_outlined), title: Text(s.t('textHide')), onTap: () => _moderate(c, event, p, 'HIDDEN')),
                                 ]),
                               ),
                             ),
@@ -297,7 +297,7 @@ class RunSheetScreen extends ConsumerWidget {
     final cues = ref.watch(eventResource('events/:id/run-sheet'));
     final event = ref.watch(currentEventProvider).value;
     return Scaffold(
-      appBar: AppBar(title: Text(s.bn ? 'রান শিট' : 'Run sheet')),
+      appBar: AppBar(title: Text(s.t('textRunSheet'))),
       body: AsyncView(
         value: cues,
         builder: (list) {
@@ -308,7 +308,7 @@ class RunSheetScreen extends ConsumerWidget {
               ListTile(
                 leading: Text(TimeOfDay.fromDateTime(DateTime.parse(c['startsAt'] as String).toLocal()).format(context)),
                 title: Text(c['title'] as String),
-                subtitle: Text('${c['owner']} · ${c['durationMinutes']} min'),
+                subtitle: Text('${c['owner']} · ${c['durationMinutes']} ${s.t('minutes')}'),
                 trailing: event?.readOnly == false
                     ? PopupMenuButton<String>(
                         child: Chip(label: Text((c['status'] as String).toLowerCase())),

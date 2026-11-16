@@ -36,7 +36,7 @@ class DashboardScreen extends ConsumerWidget {
             final next = e.days.where((d) => d.startsAt.isAfter(DateTime.now())).firstOrNull;
             final open = tasks.where((t) => t['done'] != true).take(5).toList();
             return ListView(padding: const EdgeInsets.all(16), children: [
-              Text('${s.bn ? 'শুভেচ্ছা' : 'Hello'}, ${user?.fullName.split(' ').first ?? ''}', style: Theme.of(context).textTheme.headlineSmall),
+              Text('${s.t('textHello')}, ${user?.fullName.split(' ').first ?? ''}', style: Theme.of(context).textTheme.headlineSmall),
               if (next != null)
                 Card(
                   child: ListTile(
@@ -66,8 +66,8 @@ class DashboardScreen extends ConsumerWidget {
                             }),
                   ),
                 ),
-              if (open.isEmpty) EmptyState(s.bn ? 'সব কাজ শেষ!' : 'All caught up!'),
-              TextButton(onPressed: () => context.push('/tool/checklist'), child: Text(s.bn ? 'পুরো চেকলিস্ট' : 'Full checklist')),
+              if (open.isEmpty) EmptyState(s.t('textAllCaughtUp')),
+              TextButton(onPressed: () => context.push('/tool/checklist'), child: Text(s.t('textFullChecklist'))),
             ]);
           },
         ),

@@ -45,7 +45,7 @@ class _VendorHomeState extends ConsumerState<VendorHome> {
           NavigationDestination(icon: const Icon(Icons.inbox_outlined), label: s.t('inquiries')),
           NavigationDestination(icon: const Icon(Icons.event_note_outlined), label: s.t('bookings')),
           NavigationDestination(icon: const Icon(Icons.chat_bubble_outline), label: s.t('messages')),
-          NavigationDestination(icon: const Icon(Icons.storefront_outlined), label: s.bn ? 'ব্যবসা' : 'Business'),
+          NavigationDestination(icon: const Icon(Icons.storefront_outlined), label: s.t('textBusiness')),
           NavigationDestination(icon: const Icon(Icons.person_outline), label: s.t('account')),
         ],
       ),
@@ -70,7 +70,7 @@ class _InquiriesTab extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(s.t('inquiries'))),
       body: business == null
-          ? AsyncView(value: ref.watch(myBusinessesProvider), builder: (_) => EmptyState(s.bn ? 'ওয়েবসাইট থেকে ব্যবসা যোগ করুন' : 'Add your business on the website'))
+          ? AsyncView(value: ref.watch(myBusinessesProvider), builder: (_) => EmptyState(s.t('textAddYourBusinessOnThe')))
           : RefreshIndicator(
               onRefresh: () async => ref.invalidate(_inquiriesProvider(business['id'] as String)),
               child: AsyncView(
@@ -93,7 +93,7 @@ class _InquiriesTab extends ConsumerWidget {
                             const SizedBox(height: 6),
                             Text(i['message'] as String),
                             Wrap(spacing: 8, children: [
-                              if (i['conversationId'] != null) TextButton.icon(onPressed: () => context.push('/chat/${i['conversationId']}'), icon: const Icon(Icons.reply), label: Text(s.bn ? 'উত্তর দিন' : 'Reply')),
+                              if (i['conversationId'] != null) TextButton.icon(onPressed: () => context.push('/chat/${i['conversationId']}'), icon: const Icon(Icons.reply), label: Text(s.t('textReply'))),
                               if (i['phone'] != null) TextButton.icon(onPressed: () => launchUrl(Uri.parse('tel:${i['phone']}')), icon: const Icon(Icons.call_outlined), label: Text('${i['phone']}')),
                             ]),
                           ]),
@@ -138,16 +138,16 @@ class _BusinessTab extends ConsumerWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('${s.t('report')} (${r['month']})', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                Text('${s.t('inquiries')}: ${r['inquiries']} · ${s.bn ? 'উত্তরের হার' : 'reply rate'} ${r['responseRate'] ?? '—'}%'),
+                Text('${s.t('inquiries')}: ${r['inquiries']} · ${s.t('textReplyRate')} ${r['responseRate'] ?? '—'}%'),
                 Text('${s.t('bookings')}: ${r['bookings']} · ${taka(r['bookedValueMinor'] as int)}'),
-                if (r['averageResponseMinutes'] != null) Text('${s.bn ? 'গড় উত্তর' : 'Average reply'}: ${r['averageResponseMinutes']} min'),
+                if (r['averageResponseMinutes'] != null) Text('${s.t('textAverageReply')}: ${r['averageResponseMinutes']} ${s.t('minutes')}'),
               ]),
             ),
           ),
         ),
         ListTile(
           leading: const Icon(Icons.add_a_photo_outlined),
-          title: Text(s.bn ? 'পোর্টফোলিওতে ছবি যোগ' : 'Add portfolio photos'),
+          title: Text(s.t('textAddPortfolioPhotos')),
           onTap: () async {
             final files = await ImagePicker().pickMultiImage(maxWidth: 2400, imageQuality: 85);
             if (files.isEmpty || !context.mounted) return;
@@ -159,7 +159,7 @@ class _BusinessTab extends ConsumerWidget {
               }
               await api.patch('vendors/${business['id']}', {'gallery': [...List<String>.from((business['gallery'] ?? const []) as List), ...ids]});
               ref.invalidate(myBusinessesProvider);
-            }, success: s.bn ? 'ছবি যোগ হয়েছে' : 'Photos added');
+            }, success: s.t('textPhotosAdded'));
           },
         ),
         ListTile(
@@ -169,7 +169,7 @@ class _BusinessTab extends ConsumerWidget {
         ),
         ListTile(
           leading: const Icon(Icons.open_in_new),
-          title: Text(s.bn ? 'প্রোফাইল, সার্ভিস ও ক্যালেন্ডার' : 'Profile, services and calendar'),
+          title: Text(s.t('textProfileServicesAndCalendar')),
           subtitle: Text(s.t('webOnly')),
           onTap: () => launchUrl(Uri.parse('${AppConfig.webUrl}/studio'), mode: LaunchMode.externalApplication),
         ),

@@ -31,14 +31,14 @@ void main() {
     expect(extra.last.type, 'NEW');
   });
   testWidgets('ordered cards, bilingual search, empty state and centered icon', (tester) async {
-    tester.view.physicalSize = const Size(360, 640);
+    tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     SharedPreferences.setMockInitialValues({'locale': 'en'});
     final prefs = await SharedPreferences.getInstance();
     final list = (jsonDecode(occasionCatalogJson) as List).map((j) => OccasionType.fromJson(j as Map<String, dynamic>)).toList();
-    await tester.pumpWidget(ProviderScope(overrides: [sharedPrefsProvider.overrideWithValue(prefs), authProvider.overrideWith(_SignedOutAuth.new), eventTypesProvider.overrideWith((ref) async => list)], child: const MaterialApp(home: OccasionScreen())));
+    await tester.pumpWidget(ProviderScope(overrides: [sharedPrefsProvider.overrideWithValue(prefs), authProvider.overrideWith(_SignedOutAuth.new), eventTypesProvider.overrideWith((ref) async => list)], child: MaterialApp(builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.4)), child: child!), home: const OccasionScreen())));
     await tester.pumpAndSettle();
     expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.pixels, 0);
     expect(find.text('Wedding').hitTestable(), findsOneWidget);
@@ -48,10 +48,10 @@ void main() {
     final iconCenter = tester.getCenter(find.byIcon(Icons.favorite_outline).first);
     final cardCenter = tester.getCenter(find.ancestor(of: find.byIcon(Icons.favorite_outline).first, matching: find.byType(Card)).first);
     expect((iconCenter.dx - cardCenter.dx).abs(), lessThan(2));
-    expect(tester.getSize(find.byType(Card).first).height, lessThanOrEqualTo(200));
+    expect(tester.getSize(find.byType(Card).first).height, lessThanOrEqualTo(256));
     expect(tester.takeException(), isNull);
-    expect(tester.getBottomLeft(find.text('Wedding')).dy, lessThanOrEqualTo(tester.getTopLeft(find.text('বিয়ে')).dy));
-    expect(tester.getBottomLeft(find.text('বিয়ে')).dy, lessThanOrEqualTo(tester.getTopLeft(find.text('Celebrate your wedding together')).dy));
+    expect(find.text('বিয়ে'), findsNothing);
+    expect(tester.getBottomLeft(find.text('Wedding')).dy, lessThanOrEqualTo(tester.getTopLeft(find.text('Celebrate your wedding together')).dy));
     await tester.tap(find.byTooltip('Search occasions'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'birthday');
@@ -77,17 +77,17 @@ void main() {
     expect(scrollable.position.pixels, 0);
     expect(find.text('Wedding').hitTestable(), findsOneWidget);
   });
-  testWidgets('Bangla cards fit at 1.3 text scale', (tester) async {
-    tester.view.physicalSize = const Size(360, 640);
+  testWidgets('Bangla cards fit at 1.4 text scale', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     SharedPreferences.setMockInitialValues({'locale': 'bn'});
     final prefs = await SharedPreferences.getInstance();
     final list = (jsonDecode(occasionCatalogJson) as List).map((j) => OccasionType.fromJson(j as Map<String, dynamic>)).toList();
-    await tester.pumpWidget(ProviderScope(overrides: [sharedPrefsProvider.overrideWithValue(prefs), authProvider.overrideWith(_SignedOutAuth.new), eventTypesProvider.overrideWith((ref) async => list)], child: MaterialApp(builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.3)), child: child!), home: const OccasionScreen())));
+    await tester.pumpWidget(ProviderScope(overrides: [sharedPrefsProvider.overrideWithValue(prefs), authProvider.overrideWith(_SignedOutAuth.new), eventTypesProvider.overrideWith((ref) async => list)], child: MaterialApp(builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.4)), child: child!), home: const OccasionScreen())));
     await tester.pumpAndSettle();
-    expect(tester.getSize(find.byType(Card).first).height, lessThanOrEqualTo(242));
+    expect(tester.getSize(find.byType(Card).first).height, lessThanOrEqualTo(256));
     expect(find.text('বিয়ে').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

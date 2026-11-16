@@ -37,7 +37,7 @@ class EventSwitcher extends ConsumerWidget {
     final current = ref.watch(currentEventProvider).value;
     final s = ref.watch(stringsProvider);
     return PopupMenuButton<String>(
-      tooltip: s.bn ? 'অনুষ্ঠান বদলান' : 'Switch event',
+      tooltip: s.t('textSwitchEvent'),
       onSelected: (id) {
         if (id == '__new') {
           context.push('/new-occasion');
@@ -47,7 +47,7 @@ class EventSwitcher extends ConsumerWidget {
       },
       itemBuilder: (_) => [
         for (final e in events) PopupMenuItem(value: e.id, child: Text(e.title)),
-        PopupMenuItem(value: '__new', child: Text(s.bn ? '+ নতুন অনুষ্ঠান' : '+ Plan another occasion')),
+        PopupMenuItem(value: '__new', child: Text(s.t('textPlanAnotherOccasion'))),
       ],
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Flexible(child: Text(current?.title ?? s.t('appName'), overflow: TextOverflow.ellipsis)),

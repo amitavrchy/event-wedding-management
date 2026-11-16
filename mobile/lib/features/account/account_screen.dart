@@ -24,10 +24,10 @@ class AccountScreen extends ConsumerWidget {
         if (!user.emailVerified)
           ListTile(
             leading: const Icon(Icons.mark_email_unread_outlined, color: Colors.orange),
-            title: Text(s.bn ? 'ইমেইল নিশ্চিত করুন' : 'Confirm your email'),
-            subtitle: Text(s.bn ? 'ইমেইলে পাঠানো কোড দিন' : 'Enter the code we emailed you'),
+            title: Text(s.t('textConfirmYourEmail')),
+            subtitle: Text(s.t('textEnterTheCodeWeEmailed')),
             onTap: () async {
-              final code = await _code(context, s.bn ? 'ইমেইল কোড' : 'Email code');
+              final code = await _code(context, s.t('textEmailCode'));
               if (code == null || !context.mounted) return;
               await attempt(context, () async {
                 await ref.read(authProvider.notifier).refreshUser();
@@ -46,8 +46,8 @@ class AccountScreen extends ConsumerWidget {
         ),
         ListTile(
           leading: Icon(user.twoFactorEnabled ? Icons.verified_user : Icons.shield_outlined),
-          title: Text(s.bn ? 'দুই ধাপে সাইন-ইন' : 'Two-step sign-in'),
-          subtitle: Text(user.twoFactorEnabled ? (s.bn ? 'চালু' : 'On') : (s.bn ? 'ওয়েবসাইট থেকে চালু করুন' : 'Turn on from the website')),
+          title: Text(s.t('textTwoStepSignIn')),
+          subtitle: Text(user.twoFactorEnabled ? (s.t('textOn')) : (s.t('textTurnOnFromTheWebsite'))),
           onTap: () => launchUrl(Uri.parse('${AppConfig.webUrl}/account'), mode: LaunchMode.externalApplication),
         ),
         const Divider(),
@@ -58,7 +58,7 @@ class AccountScreen extends ConsumerWidget {
               ListTile(
                 leading: Icon(x['client'] == 'mobile' ? Icons.phone_android : Icons.laptop),
                 title: Text((x['deviceName'] as String?) ?? (x['client'] == 'mobile' ? 'Ayojon app' : 'Web browser')),
-                subtitle: Text(x['current'] == true ? (s.bn ? 'এই ডিভাইস' : 'This device') : '${x['lastUsedAt']}'.substring(0, 10)),
+                subtitle: Text(x['current'] == true ? (s.t('textThisDevice')) : '${x['lastUsedAt']}'.substring(0, 10)),
                 trailing: x['current'] == true
                     ? null
                     : IconButton(
@@ -74,7 +74,7 @@ class AccountScreen extends ConsumerWidget {
           error: (_, _) => [],
         ),
         const Divider(),
-        ListTile(leading: const Icon(Icons.description_outlined), title: Text(s.bn ? 'শর্তাবলী ও গোপনীয়তা' : 'Terms & privacy'), onTap: () => launchUrl(Uri.parse('${AppConfig.webUrl}/privacy'), mode: LaunchMode.externalApplication)),
+        ListTile(leading: const Icon(Icons.description_outlined), title: Text(s.t('textTermsPrivacy')), onTap: () => launchUrl(Uri.parse('${AppConfig.webUrl}/privacy'), mode: LaunchMode.externalApplication)),
         ListTile(leading: const Icon(Icons.logout), title: Text(s.t('signOut')), onTap: () => ref.read(authProvider.notifier).logout()),
         ListTile(
           leading: Icon(Icons.delete_forever_outlined, color: Colors.red.shade700),
@@ -101,7 +101,7 @@ Future<String?> _code(BuildContext context, String label, {bool obscure = false}
     builder: (d) => AlertDialog(
       title: Text(label),
       content: TextField(controller: c, autofocus: true, obscureText: obscure, keyboardType: obscure ? TextInputType.visiblePassword : TextInputType.number),
-      actions: [TextButton(onPressed: () => Navigator.pop(d), child: const Text('Cancel')), TextButton(onPressed: () => Navigator.pop(d, c.text.trim()), child: const Text('OK'))],
+      actions: [TextButton(onPressed: () => Navigator.pop(d), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('cancel'))), TextButton(onPressed: () => Navigator.pop(d, c.text.trim()), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('ok')))],
     ),
   );
 }
