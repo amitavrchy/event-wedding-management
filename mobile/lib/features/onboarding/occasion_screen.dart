@@ -46,12 +46,16 @@ class OccasionScreen extends ConsumerStatefulWidget {
 
 class _OccasionScreenState extends ConsumerState<OccasionScreen> {
   final scrollController = ScrollController(keepScrollOffset: false);
+  final searchController = TextEditingController();
+  final searchFocus = FocusNode();
   bool searching = false;
   String query = '';
 
   @override
   void dispose() {
     scrollController.dispose();
+    searchController.dispose();
+    searchFocus.dispose();
     super.dispose();
   }
 
@@ -80,6 +84,7 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
               if (scrollController.hasClients) scrollController.jumpTo(0);
               if (searching) {
                 query = '';
+                searchController.clear();
                 FocusScope.of(context).unfocus();
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted && scrollController.hasClients) {
@@ -88,6 +93,11 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
                 });
               }
               setState(() => searching = !searching);
+              if (searching) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && searching) searchFocus.requestFocus();
+                });
+              }
             },
           ),
           TextButton(
@@ -127,14 +137,38 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(s.t('whatPlanningSub')),
-              if (searching)
+              if (searching) ...[
+                const SizedBox(height: AppSpacing.page),
                 TextField(
+                  controller: searchController,
+                  focusNode: searchFocus,
                   decoration: InputDecoration(
-                    labelText: s.t('searchOccasions'),
+                    hintText: s.t('searchOccasions'),
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: query.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.clear),
+                            tooltip: MaterialLocalizations.of(context)
+                                .deleteButtonTooltip,
+                            onPressed: () {
+                              searchController.clear();
+                              setState(() => query = '');
+                            },
+                          ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.page,
+                      vertical: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    constraints: const BoxConstraints(minHeight: 52),
                   ),
                   onChanged: (value) => setState(() => query = value),
                 ),
-              const SizedBox(height: AppSpacing.page),
+              ],
+              const SizedBox(height: AppSpacing.page + AppSpacing.xs),
               if (visible.isEmpty)
                 Text(s.t('noOccasions'))
               else

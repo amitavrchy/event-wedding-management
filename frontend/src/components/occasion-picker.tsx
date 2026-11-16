@@ -31,7 +31,7 @@ export function OccasionPicker({ onClose, dismissible = true }: { onClose: () =>
       <button type="button" className="occasion-search-button" aria-label={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} onClick={() => { if (searching) setQuery(""); setSearching(!searching); }}><Search size={22} /></button>
       <button type="button" className="link-button" onClick={toggle}>{bn ? "English" : "বাংলা"}</button>
     </div>
-    {searching && <input autoFocus className="occasion-search" aria-label={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} placeholder={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} value={query} onChange={(e) => setQuery(e.target.value)} />}
+    {searching && <div className="occasion-search"><Search size={20} aria-hidden="true" /><input autoFocus aria-label={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} placeholder={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} value={query} onChange={(e) => setQuery(e.target.value)} /></div>}
     {list.length === 0 ? <p role="status">{bn ? "কোনো অনুষ্ঠান পাওয়া যায়নি।" : "No occasions found."}</p> :
       <div className="occasion-grid" role="list">{list.map((t) => { const OccasionIcon = occasionIcons[t.iconKey] || PartyPopper; return <button key={t.type} role="listitem" className="occasion-card" onClick={() => setChosen(t.type)} aria-label={bn ? `${t.labelBn} বেছে নিন` : `Choose ${t.label}`}>
         <span className="occasion-icon" aria-hidden="true"><OccasionIcon size={44} strokeWidth={1.7} /></span>
