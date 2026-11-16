@@ -71,11 +71,11 @@ class AuthController extends Notifier<AuthState> {
       state = SignedIn(User.fromJson(me));
     } on ApiError catch (e) {
       final cached = prefs.getString('user');
-      if (e.status == null && cached != null) {
-        // Offline at launch (e.g. at the venue): keep working with the cached profile.
+      if (e.status != 401 && cached != null) {
+        // Keep the cached profile when the network or server is unavailable.
         state = SignedIn(User.fromJson(jsonDecode(cached) as Json));
       } else {
-        await _tokens.clear();
+        if (e.status == 401) await _tokens.clear();
         state = const SignedOut();
       }
     }

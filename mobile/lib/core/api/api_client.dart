@@ -34,7 +34,16 @@ class ApiClient {
             if (!unauthorized || request.path.startsWith('auth/') || request.extra['retried'] == true) {
               return handler.next(error);
             }
-            if (await _refresh()) {
+            bool refreshed;
+            try {
+              refreshed = await _refresh();
+            } on DioException catch (refreshError) {
+              // Connectivity and server failures do not invalidate a session.
+              return handler.next(refreshError);
+            } catch (refreshError) {
+              return handler.next(DioException(requestOptions: request, error: refreshError));
+            }
+            if (refreshed) {
               request.extra['retried'] = true;
               request.headers['Authorization'] = 'Bearer ${await tokens.access()}';
               try {
@@ -68,10 +77,13 @@ class ApiClient {
         await tokens.save(data['accessToken'] as String, data['refreshToken'] as String);
         completer.complete(true);
       } on DioException catch (e) {
-        // 409: another request refreshed a moment ago and saved new tokens.
-        completer.complete(e.response?.statusCode == 409 && await tokens.access() != null);
-      } catch (_) {
-        completer.complete(false);
+        if (e.response?.statusCode == 401) {
+          completer.complete(false);
+        } else {
+          completer.completeError(e);
+        }
+      } catch (e, stack) {
+        completer.completeError(e, stack);
       } finally {
         _refreshing = null;
       }
