@@ -282,6 +282,7 @@ model ChecklistItem {
   eventId String
   event Event @relation(fields:[eventId],references:[id])
   title String
+  position Int @default(0)
   done Boolean @default(false)
   dueAt DateTime?
   @@index([eventId])

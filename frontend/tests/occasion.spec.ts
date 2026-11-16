@@ -11,7 +11,33 @@ test("new host chooses an occasion first and sees only that occasion's tools", a
   // The occasion popup opens before anything else.
   const picker = page.getByRole("dialog", { name: "What are you planning?" });
   await expect(picker).toBeVisible();
-  await picker.getByRole("listitem", { name: "Plan a Birthday" }).click();
+  const cards = picker.getByRole("listitem");
+  await expect(cards).toHaveCount(46);
+  await expect(cards.nth(0)).toHaveAccessibleName("Choose Wedding");
+  await expect(cards.nth(1)).toHaveAccessibleName("Choose Birthday");
+  await expect(cards.nth(2)).toHaveAccessibleName("Choose Anniversary");
+  await expect(cards.nth(3)).toHaveAccessibleName("Choose Office Program");
+  await page.setViewportSize({ width: 320, height: 640 });
+  const firstCard = cards.first();
+  await expect(firstCard.locator("svg")).toBeVisible();
+  const layout = await firstCard.evaluate((card) => {
+    const title = card.querySelector("strong")!.getBoundingClientRect();
+    const subtitle = card.querySelector(".occasion-bn")!.getBoundingClientRect();
+    const description = card.querySelector(".occasion-description")!.getBoundingClientRect();
+    return { ordered: title.bottom <= subtitle.top && subtitle.bottom <= description.top, overflow: card.scrollWidth > card.clientWidth || document.documentElement.scrollWidth > innerWidth };
+  });
+  expect(layout).toEqual({ ordered: true, overflow: false });
+  await picker.getByRole("button", { name: "Search occasions" }).click();
+  const search = picker.getByRole("textbox", { name: "Search occasions" });
+  await search.fill("BIRTHDAY");
+  await expect(cards).toHaveCount(1);
+  await search.fill("গায়ে হলুদ");
+  await expect(cards.first()).toHaveAccessibleName("Choose Gaye Holud");
+  await search.fill("no-such-occasion");
+  await expect(picker.getByRole("status")).toHaveText("No occasions found.");
+  await search.fill("");
+
+  await picker.getByRole("listitem", { name: "Choose Birthday" }).click();
   await page.getByLabel("Event name").fill("Riya's 30th");
   await page.getByRole("button", { name: "Create event workspace" }).click();
 

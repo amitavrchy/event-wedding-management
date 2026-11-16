@@ -1,20 +1,7 @@
 import { money } from "./domain";
-export const eventTypes = [
-  "GENERAL",
-  "WEDDING",
-  "BIRTHDAY",
-  "ANNIVERSARY",
-  "CORPORATE",
-  "CONFERENCE",
-  "ENGAGEMENT",
-  "HOLUD",
-  "RECEPTION",
-  "BABY_SHOWER",
-  "GRADUATION",
-  "REUNION",
-  "COMMUNITY",
-] as const;
-export type EventType = (typeof eventTypes)[number];
+import { occasionCatalog } from './occasion-catalog';
+export const eventTypes = occasionCatalog.map((item) => item.type) as [typeof occasionCatalog[number]['type'], ...typeof occasionCatalog[number]['type'][]];
+export type EventType = (typeof occasionCatalog)[number]['type'];
 type Template = {
   type: EventType;
   label: string;
@@ -41,7 +28,7 @@ const business = [
   { category: "Event planning", bps: 1500 },
   { category: "Other", bps: 1000 },
 ];
-export const eventTemplates: Template[] = [
+const baseTemplates: Template[] = [
   {
     type: "GENERAL",
     label: "General celebration",
@@ -311,6 +298,10 @@ export const eventTemplates: Template[] = [
     allocations: business,
   },
 ];
+export const eventTemplates: Template[] = occasionCatalog.map((item) => {
+  const base = baseTemplates.find((template) => template.type === item.preset)!;
+  return { ...base, ...item };
+});
 export function templateFor(type: EventType) {
   return eventTemplates.find((t) => t.type === type)!;
 }

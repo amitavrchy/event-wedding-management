@@ -11,6 +11,7 @@ import 'api/api_client.dart';
 import 'api/api_error.dart';
 import 'auth/token_store.dart';
 import 'strings.dart';
+import 'occasion_catalog.dart';
 
 final sharedPrefsProvider = Provider<SharedPreferences>((ref) => throw UnimplementedError('Overridden in main'));
 final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStore());
@@ -179,9 +180,29 @@ class ChosenOccasion extends Notifier<String?> {
   }
 }
 
+/// The bundled catalogue owns display content and order; the API adds defaults.
+List<OccasionType> mergeOccasionTypes(List<dynamic> server) {
+  final catalogue = (jsonDecode(occasionCatalogJson) as List).cast<Json>();
+  final byType = {for (final item in server.cast<Json>()) item['type'] as String: item};
+  final known = catalogue.map((item) => item['type'] as String).toSet();
+  return [
+    for (final item in catalogue)
+      OccasionType.fromJson({
+        ...item,
+        for (final key in ['features', 'budgetMinor', 'guestCapacity'])
+          if (byType[item['type']]?[key] != null) key: byType[item['type']]![key],
+      }),
+    for (final item in server.cast<Json>())
+      if (!known.contains(item['type'])) OccasionType.fromJson(item),
+  ];
+}
+
 final eventTypesProvider = FutureProvider<List<OccasionType>>((ref) async {
-  final list = await ref.read(apiProvider).get<List<dynamic>>('event-types');
-  return [for (final j in list) OccasionType.fromJson(j as Json)];
+  try {
+    return mergeOccasionTypes(await ref.read(apiProvider).get<List<dynamic>>('event-types'));
+  } catch (_) {
+    return mergeOccasionTypes([]);
+  }
 });
 
 final catalogProvider = FutureProvider<FeatureCatalog>((ref) async => FeatureCatalog.fromJson(await ref.read(apiProvider).get<Json>('features')));
