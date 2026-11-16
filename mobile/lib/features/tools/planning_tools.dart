@@ -8,6 +8,7 @@ import '../../core/config.dart';
 import '../../core/format.dart';
 import '../../core/providers.dart';
 import '../../core/strings.dart';
+import '../../core/ui/spacing.dart';
 import '../../core/widgets/common.dart';
 import '../../models/models.dart';
 
@@ -51,7 +52,7 @@ class ChecklistScreen extends ConsumerWidget {
         builder: (e) {
           final tasks = List<Map>.from((e?.raw['tasks'] ?? const []) as List)..sort((a, b) => (a['done'] == true ? 1 : 0) - (b['done'] == true ? 1 : 0));
           if (tasks.isEmpty) return EmptyState(s.t('empty'));
-          return ListView(children: [
+          return ListView(padding: const EdgeInsets.only(bottom: AppSpacing.xl * 3), children: [
             for (final t in tasks)
               Dismissible(
                 key: ValueKey(t['id']),
@@ -232,7 +233,7 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
                         final g = guests[i];
                         return ListTile(
                           title: Text(g.name),
-                          subtitle: Text([g.rsvpStatus.toLowerCase(), '${g.partySize}/${g.maxPartySize}', if (e.has('sides') && g.side != null) sideLabel(s, e, g.side)].join(' · ')),
+                          subtitle: Text([s.codeLabel(g.rsvpStatus), '${g.partySize}/${g.maxPartySize}', if (e.has('sides') && g.side != null) sideLabel(s, e, g.side)].join(' · ')),
                           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                             if (!e.readOnly) IconButton(tooltip: s.t('whatsapp'), icon: const Icon(Icons.send_outlined), onPressed: () => invite(e, g)),
                             if (!e.readOnly)
@@ -287,7 +288,7 @@ class BudgetScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 initialValue: category,
-                items: [for (final c in ['Venue', 'Catering', 'Decoration', 'Photography', 'Attire', 'Other']) DropdownMenuItem(value: c, child: Text(c))],
+                items: [for (final c in ['Venue', 'Catering', 'Decoration', 'Photography', 'Attire', 'Other']) DropdownMenuItem(value: c, child: Text(s.codeLabel(c)))],
                 onChanged: (v) => set(() => category = v ?? 'Other'),
               ),
               if (event.has('costSplit'))
@@ -341,11 +342,11 @@ class BudgetScreen extends ConsumerWidget {
         builder: (data) {
           if (data == null) return const SizedBox();
           final expenses = List<Map>.from(data['expenses'] as List);
-          return ListView(padding: const EdgeInsets.all(16), children: [
+          return ListView(padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, AppSpacing.xl * 3), children: [
             Row(children: [
-              StatTile(value: taka(data['plannedMinor'] as int, compact: true), label: s.t('textPlanned'), icon: Icons.flag_outlined),
-              StatTile(value: taka(data['committedMinor'] as int, compact: true), label: s.t('textCommitted'), icon: Icons.event_available_outlined),
-              StatTile(value: taka(data['actualMinor'] as int, compact: true), label: s.t('spent'), icon: Icons.payments_outlined),
+              StatTile(value: taka(data['plannedMinor'] as int, compact: true, locale: s.locale), label: s.t('textPlanned'), icon: Icons.flag_outlined),
+              StatTile(value: taka(data['committedMinor'] as int, compact: true, locale: s.locale), label: s.t('textCommitted'), icon: Icons.event_available_outlined),
+              StatTile(value: taka(data['actualMinor'] as int, compact: true, locale: s.locale), label: s.t('spent'), icon: Icons.payments_outlined),
             ]),
             if (data['alert'] == true) Card(color: Colors.red.shade50, child: ListTile(leading: const Icon(Icons.warning_amber), title: Text(s.t('textBookingsExceedYourBudget')))),
             const SizedBox(height: 8),
@@ -353,8 +354,8 @@ class BudgetScreen extends ConsumerWidget {
               Card(
                 child: ListTile(
                   title: Text(x['note'] as String),
-                  subtitle: Text('${x['category']}${x['paidBy'] != null && event != null ? ' · ${x['paidBy'] == 'SHARED' ? (s.t('textShared')) : sideLabel(s, event, x['paidBy'] as String)}' : ''}'),
-                  trailing: Text(taka(x['amountMinor'] as int)),
+                  subtitle: Text('${s.codeLabel(x['category'] as String)}${x['paidBy'] != null && event != null ? ' · ${x['paidBy'] == 'SHARED' ? (s.t('textShared')) : sideLabel(s, event, x['paidBy'] as String)}' : ''}'),
+                  trailing: Text(taka(x['amountMinor'] as int, locale: s.locale)),
                   onLongPress: event == null || event.readOnly
                       ? null
                       : () async {
@@ -437,17 +438,17 @@ class GiftsScreen extends ConsumerWidget {
           if (data == null) return const SizedBox();
           final items = List<Map>.from(data['items'] as List);
           final summary = data['summary'] as Map;
-          return ListView(padding: const EdgeInsets.all(16), children: [
+          return ListView(padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, AppSpacing.xl * 3), children: [
             Row(children: [
               StatTile(value: '${summary['count']}', label: s.t('textGifts'), icon: Icons.redeem_outlined),
-              StatTile(value: taka(summary['cashMinor'] as int, compact: true), label: s.t('textCash'), icon: Icons.payments_outlined),
+              StatTile(value: taka(summary['cashMinor'] as int, compact: true, locale: s.locale), label: s.t('textCash'), icon: Icons.payments_outlined),
               StatTile(value: '${summary['thankYouPending']}', label: s.t('textThankYous'), icon: Icons.mark_email_unread_outlined),
             ]),
             for (final g in items)
               Card(
                 child: CheckboxListTile(
                   title: Text(g['giverName'] as String),
-                  subtitle: Text('${g['kind']}${g['amountMinor'] != null ? ' · ${taka(g['amountMinor'] as int)}' : ''}${g['description'] != null ? ' · ${g['description']}' : ''}'),
+                  subtitle: Text('${g['kind']}${g['amountMinor'] != null ? ' · ${taka(g['amountMinor'] as int, locale: s.locale)}' : ''}${g['description'] != null ? ' · ${g['description']}' : ''}'),
                   value: g['thankYouSentAt'] != null,
                   secondary: const Icon(Icons.redeem_outlined),
                   onChanged: event == null || event.readOnly

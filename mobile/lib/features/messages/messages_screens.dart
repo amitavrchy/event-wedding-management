@@ -35,7 +35,7 @@ class ConversationsScreen extends ConsumerWidget {
                   for (final c in items)
                     ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.chat_bubble_outline)),
-                      title: Text(((user?.isVendor ?? false) ? c['eventTitle'] : c['vendorName']) as String? ?? 'Conversation'),
+                      title: Text(((user?.isVendor ?? false) ? c['eventTitle'] : c['vendorName']) as String? ?? s.t('message')),
                       subtitle: Text(((c['lastMessage'] as Map?)?['body'] as String?) ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
                       onTap: () => context.push('/chat/${c['id']}'),
                     ),

@@ -10,7 +10,52 @@ class S {
   static Map<String, String> get english => Map.unmodifiable(_en);
   static Map<String, String> get bangla => Map.unmodifiable(_bn);
 
+  /// A server-owned code is translated when it is known to the app.
+  String codeLabel(String code) {
+    final key = 'code${code.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '')}';
+    return _m[key] ?? (bn ? t('unknownStatus') : code.replaceAll('_', ' ').toLowerCase());
+  }
+
   static const _en = {
+    'unknownStatus': 'Unknown',
+    'errorNetwork': 'No internet connection. Check your network and try again.',
+    'errorUnauthorized': 'Please sign in again.',
+    'errorForbidden': 'You do not have permission to do this.',
+    'errorNotFound': 'This item could not be found.',
+    'errorConflict': 'This item has changed. Please try again.',
+    'errorValidation': 'Please check your information and try again.',
+    'errorRateLimit': 'Too many requests. Please try again later.',
+    'codePENDING': 'Pending',
+    'codeNEW': 'New',
+    'codeSENT': 'Sent',
+    'codeACCEPTED': 'Accepted',
+    'codeREJECTED': 'Rejected',
+    'codeDECLINED': 'Declined',
+    'codeCONFIRMED': 'Confirmed',
+    'codeCANCELLED': 'Cancelled',
+    'codeCANCELED': 'Cancelled',
+    'codeHELD': 'Held',
+    'codeAWAITINGADVANCE': 'Awaiting advance',
+    'codePAID': 'Paid',
+    'codeUNPAID': 'Unpaid',
+    'codePARTIAL': 'Partially paid',
+    'codeEXPIRED': 'Expired',
+    'codeDRAFT': 'Draft',
+    'codeCOMPLETED': 'Completed',
+    'codeDONE': 'Done',
+    'codeTODO': 'To do',
+    'codeINPROGRESS': 'In progress',
+    'codeNOANSWER': 'No response',
+    'codeMAYBE': 'Maybe',
+    'codeATTENDING': 'Attending',
+    'codeNOTATTENDING': 'Not attending',
+    'codeVENUE': 'Venue',
+    'codeCATERING': 'Catering',
+    'codeDECORATION': 'Decoration',
+    'codePHOTOGRAPHY': 'Photography',
+    'codeATTIRE': 'Attire',
+    'codeOTHER': 'Other',
+
     'minutes': 'min',
     'sponsored': 'Sponsored',
 
@@ -188,6 +233,45 @@ class S {
   };
 
   static const _bn = {
+    'unknownStatus': 'অজানা',
+    'errorNetwork': 'ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
+    'errorUnauthorized': 'অনুগ্রহ করে আবার সাইন ইন করুন।',
+    'errorForbidden': 'এটি করার অনুমতি আপনার নেই।',
+    'errorNotFound': 'তথ্যটি পাওয়া যায়নি।',
+    'errorConflict': 'তথ্যটি পরিবর্তিত হয়েছে। আবার চেষ্টা করুন।',
+    'errorValidation': 'তথ্য যাচাই করে আবার চেষ্টা করুন।',
+    'errorRateLimit': 'অনেকবার অনুরোধ করা হয়েছে। পরে আবার চেষ্টা করুন।',
+    'codePENDING': 'অপেক্ষমাণ',
+    'codeNEW': 'নতুন',
+    'codeSENT': 'পাঠানো হয়েছে',
+    'codeACCEPTED': 'গৃহীত',
+    'codeREJECTED': 'প্রত্যাখ্যাত',
+    'codeDECLINED': 'প্রত্যাখ্যাত',
+    'codeCONFIRMED': 'নিশ্চিত',
+    'codeCANCELLED': 'বাতিল',
+    'codeCANCELED': 'বাতিল',
+    'codeHELD': 'সংরক্ষিত',
+    'codeAWAITINGADVANCE': 'অগ্রিমের অপেক্ষায়',
+    'codePAID': 'পরিশোধিত',
+    'codeUNPAID': 'অপরিশোধিত',
+    'codePARTIAL': 'আংশিক পরিশোধিত',
+    'codeEXPIRED': 'মেয়াদোত্তীর্ণ',
+    'codeDRAFT': 'খসড়া',
+    'codeCOMPLETED': 'সম্পন্ন',
+    'codeDONE': 'সম্পন্ন',
+    'codeTODO': 'করতে হবে',
+    'codeINPROGRESS': 'চলমান',
+    'codeNOANSWER': 'উত্তর নেই',
+    'codeMAYBE': 'হতে পারে',
+    'codeATTENDING': 'উপস্থিত থাকবেন',
+    'codeNOTATTENDING': 'উপস্থিত থাকবেন না',
+    'codeVENUE': 'অনুষ্ঠানস্থল',
+    'codeCATERING': 'খাবার',
+    'codeDECORATION': 'সাজসজ্জা',
+    'codePHOTOGRAPHY': 'ফটোগ্রাফি',
+    'codeATTIRE': 'পোশাক',
+    'codeOTHER': 'অন্যান্য',
+
     'minutes': 'মিনিট',
     'sponsored': 'পৃষ্ঠপোষকতায়',
 

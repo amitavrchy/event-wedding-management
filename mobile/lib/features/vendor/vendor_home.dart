@@ -84,11 +84,11 @@ class _InquiriesTab extends ConsumerWidget {
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Row(children: [Expanded(child: Text(i['name'] as String, style: Theme.of(context).textTheme.titleSmall)), Chip(label: Text((i['status'] as String).toLowerCase()))]),
+                            Row(children: [Expanded(child: Text(i['name'] as String, style: Theme.of(context).textTheme.titleSmall)), Chip(label: Text(s.codeLabel(i['status'] as String)))]),
                             Text([
                               if (i['eventDate'] != null) dateLabel(DateTime.parse(i['eventDate'] as String).toLocal(), locale: s.locale),
                               if (i['guestCount'] != null) '${i['guestCount']} ${s.t('guests')}',
-                              if (i['budgetMinor'] != null) taka(i['budgetMinor'] as int),
+                              if (i['budgetMinor'] != null) taka(i['budgetMinor'] as int, locale: s.locale),
                             ].join(' · ')),
                             const SizedBox(height: 6),
                             Text(i['message'] as String),
@@ -139,7 +139,7 @@ class _BusinessTab extends ConsumerWidget {
                 Text('${s.t('report')} (${r['month']})', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Text('${s.t('inquiries')}: ${r['inquiries']} · ${s.t('textReplyRate')} ${r['responseRate'] ?? '—'}%'),
-                Text('${s.t('bookings')}: ${r['bookings']} · ${taka(r['bookedValueMinor'] as int)}'),
+                Text('${s.t('bookings')}: ${r['bookings']} · ${taka(r['bookedValueMinor'] as int, locale: s.locale)}'),
                 if (r['averageResponseMinutes'] != null) Text('${s.t('textAverageReply')}: ${r['averageResponseMinutes']} ${s.t('minutes')}'),
               ]),
             ),

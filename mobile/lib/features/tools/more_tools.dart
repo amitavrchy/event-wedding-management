@@ -85,11 +85,11 @@ class CostSplitScreen extends ConsumerWidget {
                   Text(
                     settlement == null
                         ? (s.t('textBothFamiliesAreEven'))
-                        : '${labels[settlement['from']]} → ${labels[settlement['to']]}: ${taka(settlement['amountMinor'] as int)}',
+                        : '${labels[settlement['from']]} → ${labels[settlement['to']]}: ${taka(settlement['amountMinor'] as int, locale: s.locale)}',
                     style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
-                  Text('${(d['sharePercent'] as Map)['BRIDE']}% / ${(d['sharePercent'] as Map)['GROOM']}% · ${taka(d['totalMinor'] as int)}'),
+                  Text('${(d['sharePercent'] as Map)['BRIDE']}% / ${(d['sharePercent'] as Map)['GROOM']}% · ${taka(d['totalMinor'] as int, locale: s.locale)}'),
                 ]),
               ),
             ),
@@ -97,7 +97,7 @@ class CostSplitScreen extends ConsumerWidget {
               Card(
                 child: ListTile(
                   title: Text('${labels[side]}'),
-                  subtitle: Text('${s.t('textPaid')} ${taka((d['paidMinor'] as Map)[side] as int)} · ${s.t('textFairShare')} ${taka((d['fairShareMinor'] as Map)[side] as int)}'),
+                  subtitle: Text('${s.t('textPaid')} ${taka((d['paidMinor'] as Map)[side] as int, locale: s.locale)} · ${s.t('textFairShare')} ${taka((d['fairShareMinor'] as Map)[side] as int, locale: s.locale)}'),
                 ),
               ),
           ]);
@@ -196,8 +196,8 @@ class _VendorsScreenState extends ConsumerState<VendorsScreen> {
                       Flexible(child: Text(v.businessName)),
                       if (v.verified) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.verified, size: 16, color: Colors.green)),
                     ]),
-                    subtitle: Text('${v.category} · ${v.city}${v.ratingCount > 0 ? ' · ★ ${v.ratingAvg.toStringAsFixed(1)}' : ''}${v.sponsored ? ' · ${s.t('sponsored')}' : ''}'),
-                    trailing: v.priceFromMinor != null ? Text(taka(v.priceFromMinor!, compact: true)) : null,
+                    subtitle: Text('${s.codeLabel(v.category)} · ${v.city}${v.ratingCount > 0 ? ' · ★ ${v.ratingAvg.toStringAsFixed(1)}' : ''}${v.sponsored ? ' · ${s.t('sponsored')}' : ''}'),
+                    trailing: v.priceFromMinor != null ? Text(taka(v.priceFromMinor!, compact: true, locale: s.locale)) : null,
                   ),
                 ]),
               ),
@@ -233,7 +233,7 @@ class _VendorSheetState extends ConsumerState<VendorSheet> {
           if (v.responseMinutes != null) Text(s.bn ? 'সাধারণত ${v.responseMinutes} মিনিটে উত্তর দেন' : 'Usually replies in ${v.responseMinutes} min'),
           const SizedBox(height: 8),
           Text(v.description, maxLines: 6, overflow: TextOverflow.ellipsis),
-          for (final svc in v.services) ListTile(dense: true, contentPadding: EdgeInsets.zero, title: Text('${svc['title']}'), trailing: Text(taka(svc['basePriceMinor'] as int))),
+          for (final svc in v.services) ListTile(dense: true, contentPadding: EdgeInsets.zero, title: Text('${svc['title']}'), trailing: Text(taka(svc['basePriceMinor'] as int, locale: s.locale))),
           TextField(controller: message, maxLines: 3, decoration: InputDecoration(labelText: s.t('message'), hintText: s.t('textTellThemAboutYourEvent'))),
           const SizedBox(height: 8),
           TextField(controller: phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: s.t('textYourPhoneOptional'))),
@@ -289,8 +289,8 @@ class BookingsScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(12),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text('${(b['service'] as Map)['title']} · ${((b['service'] as Map)['vendor'] as Map?)?['businessName'] ?? ''}', style: Theme.of(context).textTheme.titleSmall),
-                          Text('${dateTimeLabel(DateTime.parse(b['startAt'] as String).toLocal(), locale: s.locale)} · ${taka(b['priceMinor'] as int)}'),
-                          Chip(label: Text((b['status'] as String).toLowerCase())),
+                          Text('${dateTimeLabel(DateTime.parse(b['startAt'] as String).toLocal(), locale: s.locale)} · ${taka(b['priceMinor'] as int, locale: s.locale)}'),
+                          Chip(label: Text(s.codeLabel(b['status'] as String))),
                           if (user?.isVendor == true) Wrap(spacing: 8, children: [
                             if (['HELD', 'AWAITING_ADVANCE'].contains(b['status']))
                               FilledButton(
@@ -427,8 +427,8 @@ class QuotesScreen extends ConsumerWidget {
             for (final q in items)
               Card(
                 child: ListTile(
-                  title: Text(taka(q['amountMinor'] as int)),
-                  subtitle: Text('${(q['status'] as String).toLowerCase()} · ${dateLabel(DateTime.parse(q['expiresAt'] as String).toLocal(), locale: s.locale)}'),
+                  title: Text(taka(q['amountMinor'] as int, locale: s.locale)),
+                  subtitle: Text('${s.codeLabel(q['status'] as String)} · ${dateLabel(DateTime.parse(q['expiresAt'] as String).toLocal(), locale: s.locale)}'),
                   onTap: () => launchUrl(Uri.parse('${AppConfig.webUrl}/quotes/${q['id']}'), mode: LaunchMode.externalApplication),
                   trailing: q['status'] == 'SENT' && event?.readOnly == false
                       ? Row(mainAxisSize: MainAxisSize.min, children: [

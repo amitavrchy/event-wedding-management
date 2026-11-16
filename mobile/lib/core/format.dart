@@ -1,9 +1,9 @@
 import 'package:intl/intl.dart';
 
 /// Money is integer paisa everywhere in the API.
-String taka(num minor, {bool compact = false}) {
+String taka(num minor, {bool compact = false, String locale = 'en'}) {
   final value = minor / 100;
-  final format = compact ? NumberFormat.compact(locale: 'en_IN') : NumberFormat.decimalPatternDigits(locale: 'en_IN', decimalDigits: value % 1 == 0 ? 0 : 2);
+  final format = compact ? NumberFormat.compact(locale: locale == 'bn' ? 'bn' : 'en_IN') : NumberFormat.decimalPatternDigits(locale: locale == 'bn' ? 'bn' : 'en_IN', decimalDigits: value % 1 == 0 ? 0 : 2);
   return '৳${format.format(value)}';
 }
 

@@ -21,7 +21,7 @@ class AsyncView<T> extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(ApiError.from(e).message, textAlign: TextAlign.center),
+            Text(ApiError.from(e).localized(s), textAlign: TextAlign.center),
             if (onRetry != null) TextButton(onPressed: onRetry, child: Text(s.t('retry'))),
           ]),
         ),
@@ -68,7 +68,7 @@ class StatTile extends StatelessWidget {
 }
 
 void showError(BuildContext context, Object error) =>
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiError.from(error).message), backgroundColor: Colors.red.shade700));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiError.from(error).localized(ProviderScope.containerOf(context).read(stringsProvider))), backgroundColor: Colors.red.shade700));
 void showMessage(BuildContext context, String message) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
 /// Runs an action with error reporting; returns true on success.
@@ -83,7 +83,7 @@ Future<bool> attempt(BuildContext context, Future<void> Function() action, {Stri
   }
 }
 
-Future<bool> confirmDialog(BuildContext context, String title, String message, {String confirm = 'OK', bool destructive = false}) async {
+Future<bool> confirmDialog(BuildContext context, String title, String message, {String? confirm, bool destructive = false}) async {
   final result = await showDialog<bool>(
     context: context,
     builder: (c) => AlertDialog(
@@ -94,7 +94,7 @@ Future<bool> confirmDialog(BuildContext context, String title, String message, {
         FilledButton(
           style: destructive ? FilledButton.styleFrom(backgroundColor: Colors.red.shade700, minimumSize: const Size(0, 40)) : FilledButton.styleFrom(minimumSize: const Size(0, 40)),
           onPressed: () => Navigator.pop(c, true),
-          child: Text(confirm),
+          child: Text(confirm ?? ProviderScope.containerOf(context).read(stringsProvider).t('ok')),
         ),
       ],
     ),

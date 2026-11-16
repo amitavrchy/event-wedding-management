@@ -130,7 +130,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         // A network failure (no HTTP status) falls through to offline handling.
         final error = ApiError.from(err);
         if (error.status != null) {
-          setState(() => last = error.message);
+          setState(() => last = error.localized(ref.read(stringsProvider)));
           return;
         }
         setState(() => online = false);
@@ -311,14 +311,14 @@ class RunSheetScreen extends ConsumerWidget {
                 subtitle: Text('${c['owner']} · ${c['durationMinutes']} ${s.t('minutes')}'),
                 trailing: event?.readOnly == false
                     ? PopupMenuButton<String>(
-                        child: Chip(label: Text((c['status'] as String).toLowerCase())),
+                        child: Chip(label: Text(s.codeLabel(c['status'] as String))),
                         onSelected: (v) => attempt(context, () async {
                           await ref.read(apiProvider).patch('events/${event!.id}/run-sheet/${c['id']}', {'status': v, 'version': c['version']});
                           ref.invalidate(eventResource('events/:id/run-sheet'));
                         }),
                         itemBuilder: (_) => [for (final st in ['READY', 'LIVE', 'DONE']) PopupMenuItem(value: st, child: Text(st.toLowerCase()))],
                       )
-                    : Chip(label: Text((c['status'] as String).toLowerCase())),
+                    : Chip(label: Text(s.codeLabel(c['status'] as String))),
               ),
           ]);
         },

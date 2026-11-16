@@ -49,7 +49,7 @@ class DashboardScreen extends ConsumerWidget {
               Row(children: [
                 StatTile(value: '$attending', label: s.t('attending'), icon: Icons.people_outline),
                 StatTile(value: '$done/${tasks.length}', label: s.t('tasksDone'), icon: Icons.checklist),
-                StatTile(value: taka(spent, compact: true), label: s.t('spent'), icon: Icons.account_balance_wallet_outlined),
+                StatTile(value: taka(spent, compact: true, locale: s.locale), label: s.t('spent'), icon: Icons.account_balance_wallet_outlined),
               ]),
               const SizedBox(height: 12),
               Text(s.t('nextSteps'), style: Theme.of(context).textTheme.titleMedium),
