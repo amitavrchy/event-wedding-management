@@ -2,6 +2,7 @@
 import { MapPin, ArrowUpRight, Star, BadgeCheck } from "lucide-react";
 import "@/app/tools.css";
 import { Vendor } from "@/lib/types";
+import { usePublicLocale } from "@/lib/public-i18n";
 import { taka } from "@/lib/format";
 
 export function VendorCard({
@@ -11,6 +12,8 @@ export function VendorCard({
   vendor: Vendor;
   onSelect: (vendor: Vendor) => void;
 }) {
+  const { locale } = usePublicLocale();
+  const bn = locale === "bn";
   const prices = vendor.services.map((s) => s.basePriceMinor);
   const price =
     vendor.priceFromMinor ?? (prices.length ? Math.min(...prices) : NaN);
@@ -23,7 +26,7 @@ export function VendorCard({
         <span className="image-pill">{vendor.category}</span>
         {vendor.sponsored && (
           <span className="image-pill badge-sponsored sponsored-pill">
-            Sponsored
+            {bn ? "স্পন্সর করা" : "Sponsored"}
           </span>
         )}
         <span className="vendor-open">
@@ -34,7 +37,14 @@ export function VendorCard({
         <div className="vendor-title">
           <h3>{vendor.businessName}</h3>
           {vendor.verified && (
-            <span className="verified" title="Documents verified by our team">
+            <span
+              className="verified"
+              title={
+                bn
+                  ? "আমাদের দল নথি যাচাই করেছে"
+                  : "Documents verified by our team"
+              }
+            >
               <BadgeCheck size={16} />
             </span>
           )}
@@ -50,9 +60,13 @@ export function VendorCard({
           ) : null}
         </span>
         <div className="vendor-price">
-          <span>Starting from</span>
+          <span>{bn ? "শুরু" : "Starting from"}</span>
           <strong>
-            {Number.isFinite(price) ? taka(price) : "Ask for a quote"}
+            {Number.isFinite(price)
+              ? taka(price)
+              : bn
+                ? "মূল্য জানতে চান"
+                : "Ask for a quote"}
           </strong>
         </div>
       </div>

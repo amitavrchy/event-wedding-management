@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 /** Copy for guest-facing pages (RSVP, family RSVP, photo wall, website). */
 const copy = {
@@ -89,26 +89,58 @@ const copy = {
 export type PublicLocale = keyof typeof copy;
 export type PublicCopy = (typeof copy)["en"];
 
+const key = "ayojon-guest-locale";
+let current: PublicLocale = "en";
+let initialized = false;
+const listeners = new Set<() => void>();
+function publish(locale: PublicLocale) {
+  current = locale;
+  document.documentElement.lang = locale;
+  listeners.forEach((listener) => listener());
+}
+function savedLocale() {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (
+      event.key === key &&
+      (event.newValue === "en" || event.newValue === "bn")
+    )
+      publish(event.newValue);
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
 export function usePublicLocale(preferred?: PublicLocale | "both" | null) {
-  const [locale, setLocale] = useState<PublicLocale>("bn");
+  const locale = useSyncExternalStore(
+    subscribe,
+    () => current,
+    () => "en" as PublicLocale,
+  );
   useEffect(() => {
-    let saved: string | null = null;
-    try {
-      saved = localStorage.getItem("ayojon-guest-locale");
-    } catch {}
-    if (saved === "en" || saved === "bn") setLocale(saved);
-    else if (preferred === "en") setLocale("en");
-    else if (preferred === "bn" || preferred === "both") setLocale("bn");
-    else setLocale(navigator.language?.startsWith("bn") ? "bn" : "en");
+    const saved = savedLocale();
+    if (saved === "en" || saved === "bn") publish(saved);
+    else if (preferred) publish(preferred === "en" ? "en" : "bn");
+    else if (!initialized)
+      publish(navigator.language?.startsWith("bn") ? "bn" : "en");
+    initialized = true;
   }, [preferred]);
-  const toggle = () =>
-    setLocale((current) => {
-      const next = current === "bn" ? "en" : "bn";
-      try {
-        localStorage.setItem("ayojon-guest-locale", next);
-      } catch {}
-      return next;
-    });
+  const toggle = () => {
+    const next = current === "bn" ? "en" : "bn";
+    try {
+      localStorage.setItem(key, next);
+    } catch {}
+    publish(next);
+  };
   return { locale, t: copy[locale] as PublicCopy, toggle };
 }
 
