@@ -763,7 +763,13 @@ class BudgetScreen extends ConsumerWidget {
                     child: ListTile(
                       title: Text(x['note'] as String),
                       subtitle: Text(
-                        '${s.codeLabel(x['category'] as String)}${x['paidBy'] != null && event != null ? ' · ${x['paidBy'] == 'SHARED' ? (s.t('textShared')) : sideLabel(s, event, x['paidBy'] as String)}' : ''}',
+                        s.details([
+                          s.codeLabel(x['category'] as String),
+                          if (x['paidBy'] != null && event != null)
+                            x['paidBy'] == 'SHARED'
+                                ? s.t('textShared')
+                                : sideLabel(s, event, x['paidBy'] as String),
+                        ]),
                       ),
                       trailing: Text(
                         taka(x['amountMinor'] as int, locale: s.locale),
@@ -965,7 +971,12 @@ class GiftsScreen extends ConsumerWidget {
                     child: CheckboxListTile(
                       title: Text(g['giverName'] as String),
                       subtitle: Text(
-                        '${s.codeLabel(g['kind'] as String)}${g['amountMinor'] != null ? ' · ${taka(g['amountMinor'] as int, locale: s.locale)}' : ''}${g['description'] != null ? ' · ${g['description']}' : ''}',
+                        s.details([
+                          s.codeLabel(g['kind'] as String),
+                          if (g['amountMinor'] != null)
+                            taka(g['amountMinor'] as int, locale: s.locale),
+                          g['description'] as String?,
+                        ]),
                       ),
                       value: g['thankYouSentAt'] != null,
                       secondary: const Icon(Icons.redeem_outlined),

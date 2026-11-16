@@ -72,7 +72,10 @@ class DashboardScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${dateTimeLabel(next.startsAt, locale: s.locale)}${next.venueName != null ? ' · ${next.venueName}' : ''}',
+                            s.details([
+                              dateTimeLabel(next.startsAt, locale: s.locale),
+                              next.venueName,
+                            ]),
                           ),
                           Text(
                             s.format('daysRemaining', {

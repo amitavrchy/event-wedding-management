@@ -44,11 +44,7 @@ class _CateringScreenState extends ConsumerState<CateringScreen> {
             for (final m in (p['meals'] as Map).entries)
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      m.key == 'Regular' ? s.codeLabel('REGULAR') : '${m.key}',
-                    ),
-                  ),
+                  Expanded(child: Text(s.codeLabel(m.key.toString()))),
                   Text(numberLabel(m.value as num, locale: s.locale)),
                 ],
               ),
@@ -71,15 +67,13 @@ class _CateringScreenState extends ConsumerState<CateringScreen> {
                 AppSpacing.xl + AppSpacing.page,
               ),
               children: [
-                Text(
-                  '${s.t('textBuffer')}: ${numberLabel(buffer, locale: s.locale)}%',
-                ),
+                Text(s.bufferLabel(numberLabel(buffer, locale: s.locale))),
                 Slider(
                   value: buffer.toDouble(),
                   min: 0,
                   max: 30,
                   divisions: 6,
-                  label: '${numberLabel(buffer, locale: s.locale)}%',
+                  label: s.percentage(numberLabel(buffer, locale: s.locale)),
                   onChanged: (v) => setState(() => buffer = v.round()),
                 ),
                 plan(s.t('textWholeEvent'), d['overall'] as Map),
@@ -97,8 +91,10 @@ class _CateringScreenState extends ConsumerState<CateringScreen> {
                           ),
                           (day['meals'] as Map).entries
                               .map(
-                                (m) =>
-                                    "${m.key == 'Regular' ? s.codeLabel('REGULAR') : m.key} ${numberLabel(m.value as num, locale: s.locale)}",
+                                (m) => s.mealCount(
+                                  s.codeLabel(m.key.toString()),
+                                  numberLabel(m.value as num, locale: s.locale),
+                                ),
                               )
                               .join(', '),
                         ),
@@ -153,12 +149,35 @@ class CostSplitScreen extends ConsumerWidget {
                         Text(
                           settlement == null
                               ? (s.t('textBothFamiliesAreEven'))
-                              : '${s.familyLabel(settlement['from'] as String, labels[settlement['from']] as String)} → ${s.familyLabel(settlement['to'] as String, labels[settlement['to']] as String)}: ${taka(settlement['amountMinor'] as int, locale: s.locale)}',
+                              : s.settlement(
+                                  s.familyLabel(
+                                    settlement['from'] as String,
+                                    labels[settlement['from']] as String,
+                                  ),
+                                  s.familyLabel(
+                                    settlement['to'] as String,
+                                    labels[settlement['to']] as String,
+                                  ),
+                                  taka(
+                                    settlement['amountMinor'] as int,
+                                    locale: s.locale,
+                                  ),
+                                ),
                           style: Theme.of(context).textTheme.titleLarge,
                           textAlign: TextAlign.center,
                         ),
                         Text(
-                          '${numberLabel((d['sharePercent'] as Map)['BRIDE'] as num, locale: s.locale)}% / ${numberLabel((d['sharePercent'] as Map)['GROOM'] as num, locale: s.locale)}% · ${taka(d['totalMinor'] as int, locale: s.locale)}',
+                          s.shareSummary(
+                            numberLabel(
+                              (d['sharePercent'] as Map)['BRIDE'] as num,
+                              locale: s.locale,
+                            ),
+                            numberLabel(
+                              (d['sharePercent'] as Map)['GROOM'] as num,
+                              locale: s.locale,
+                            ),
+                            taka(d['totalMinor'] as int, locale: s.locale),
+                          ),
                         ),
                       ],
                     ),
@@ -169,7 +188,16 @@ class CostSplitScreen extends ConsumerWidget {
                     child: ListTile(
                       title: Text(s.familyLabel(side, labels[side] as String)),
                       subtitle: Text(
-                        '${s.t('textPaid')} ${taka((d['paidMinor'] as Map)[side] as int, locale: s.locale)} · ${s.t('textFairShare')} ${taka((d['fairShareMinor'] as Map)[side] as int, locale: s.locale)}',
+                        s.paidShare(
+                          taka(
+                            (d['paidMinor'] as Map)[side] as int,
+                            locale: s.locale,
+                          ),
+                          taka(
+                            (d['fairShareMinor'] as Map)[side] as int,
+                            locale: s.locale,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -315,7 +343,15 @@ class _VendorsScreenState extends ConsumerState<VendorsScreen> {
                             ],
                           ),
                           subtitle: Text(
-                            '${s.codeLabel(v.category)} · ${v.city}${v.ratingCount > 0 ? ' · ★ ${numberLabel(v.ratingAvg, locale: s.locale)}' : ''}${v.sponsored ? ' · ${s.t('sponsored')}' : ''}',
+                            s.details([
+                              s.codeLabel(v.category),
+                              v.city,
+                              if (v.ratingCount > 0)
+                                s.rating(
+                                  numberLabel(v.ratingAvg, locale: s.locale),
+                                ),
+                              if (v.sponsored) s.t('sponsored'),
+                            ]),
                           ),
                           trailing: v.priceFromMinor != null
                               ? Text(
@@ -392,7 +428,7 @@ class _VendorSheetState extends ConsumerState<VendorSheet> {
               ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                title: Text('${svc['title']}'),
+                title: Text(svc['title'].toString()),
                 trailing: Text(
                   taka(svc['basePriceMinor'] as int, locale: s.locale),
                 ),
@@ -497,11 +533,26 @@ class BookingsScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${(b['service'] as Map)['title']} · ${((b['service'] as Map)['vendor'] as Map?)?['businessName'] ?? ''}',
+                                  s.details([
+                                    (b['service'] as Map)['title'] as String?,
+                                    ((b['service'] as Map)['vendor']
+                                            as Map?)?['businessName']
+                                        as String?,
+                                  ]),
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 Text(
-                                  '${dateTimeLabel(DateTime.parse(b['startAt'] as String).toLocal(), locale: s.locale)} · ${taka(b['priceMinor'] as int, locale: s.locale)}',
+                                  s.details([
+                                    dateTimeLabel(
+                                      DateTime.parse(b['startAt'] as String)
+                                          .toLocal(),
+                                      locale: s.locale,
+                                    ),
+                                    taka(
+                                      b['priceMinor'] as int,
+                                      locale: s.locale,
+                                    ),
+                                  ]),
                                 ),
                                 Chip(
                                   label: Text(
@@ -762,7 +813,13 @@ class QuotesScreen extends ConsumerWidget {
                         taka(q['amountMinor'] as int, locale: s.locale),
                       ),
                       subtitle: Text(
-                        '${s.codeLabel(q['status'] as String)} · ${dateLabel(DateTime.parse(q['expiresAt'] as String).toLocal(), locale: s.locale)}',
+                        s.details([
+                          s.codeLabel(q['status'] as String),
+                          dateLabel(
+                            DateTime.parse(q['expiresAt'] as String).toLocal(),
+                            locale: s.locale,
+                          ),
+                        ]),
                       ),
                       onTap: () => launchUrl(
                         Uri.parse('${AppConfig.webUrl}/quotes/${q['id']}'),

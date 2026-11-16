@@ -285,7 +285,12 @@ class _BusinessTab extends ConsumerWidget {
                         ),
                         'rate': r['responseRate'] == null
                             ? '—'
-                            : '${numberLabel(r['responseRate'] as num, locale: s.locale)}%',
+                            : s.percentage(
+                                numberLabel(
+                                  r['responseRate'] as num,
+                                  locale: s.locale,
+                                ),
+                              ),
                       }),
                     ),
                     Text(

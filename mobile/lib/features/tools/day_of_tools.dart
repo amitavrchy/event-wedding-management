@@ -398,7 +398,7 @@ class _PhotoWallScreenState extends ConsumerState<PhotoWallScreen> {
                     child: ListTile(
                       leading: const Icon(Icons.qr_code_2),
                       title: Text(s.t('textShareThisLinkOrIts')),
-                      subtitle: Text('${w['uploadUrl']}'),
+                      subtitle: Text(w['uploadUrl'].toString()),
                       trailing: IconButton(
                         icon: const Icon(Icons.share_outlined),
                         onPressed: () => SharePlus.instance.share(

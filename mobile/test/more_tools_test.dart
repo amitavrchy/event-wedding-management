@@ -67,7 +67,7 @@ void main() {
   final plan = {
     'recommendedPlates': 12,
     'confirmedPeople': 10,
-    'meals': {'Regular': 10},
+    'meals': {'Regular': 8, 'Vegetarian': 1, 'No beef': 1},
   };
   final cost = {
     'labels': {'BRIDE': "Bride's side", 'GROOM': "Groom's side"},

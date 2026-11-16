@@ -60,6 +60,22 @@ class S {
           .replaceAll('{owner}', owner)
           .replaceAll('{minutes}', minutes);
 
+  String details(Iterable<String?> parts) =>
+      parts.whereType<String>().where((part) => part.isNotEmpty).join(' · ');
+  String percentage(String value) => '$value%';
+  String rating(String value) => '★ $value';
+  String mealCount(String meal, String count) =>
+      format('mealCount', {'meal': meal, 'count': count});
+  String bufferLabel(String value) => format('bufferValue', {'value': value});
+  String paidShare(String paid, String share) =>
+      format('paidShare', {'paid': paid, 'share': share});
+  String settlement(String from, String to, String amount) =>
+      format('settlement', {'from': from, 'to': to, 'amount': amount});
+  String shareSummary(String first, String second, String amount) => format(
+    'shareSummary',
+    {'first': first, 'second': second, 'amount': amount},
+  );
+
   String format(String key, Map<String, String> values) {
     var result = t(key);
     for (final entry in values.entries) {
@@ -77,6 +93,10 @@ class S {
   }
 
   static const _en = {
+    'bufferValue': 'Buffer: {value}%',
+    'paidShare': 'Paid {paid} · Fair share {share}',
+    'settlement': '{from} → {to}: {amount}',
+    'shareSummary': '{first}% / {second}% · {amount}',
     'greeting': 'Hello, {name}',
     'daysRemaining': '{count} days to go',
     'taskProgress': '{done} of {total}',
@@ -169,6 +189,9 @@ class S {
     'codeBRIDE': "Bride's side",
     'codeGROOM': "Groom's side",
     'codeREGULAR': 'Regular',
+    'codeVEGETARIAN': 'Vegetarian',
+    'codeNOBEEF': 'No beef',
+    'mealCount': '{meal} {count}',
     'guestSummary': '{total} guests · {attending} attending',
     'guestParty': '{size} of {maximum}',
     'invitation':
@@ -397,6 +420,10 @@ class S {
   };
 
   static const _bn = {
+    'bufferValue': 'অতিরিক্ত: {value}%',
+    'paidShare': 'পরিশোধিত {paid} · ন্যায্য ভাগ {share}',
+    'settlement': '{from} থেকে {to}: {amount}',
+    'shareSummary': '{first}% ও {second}% · মোট {amount}',
     'greeting': 'হ্যালো, {name}',
     'daysRemaining': 'আর {count} দিন বাকি',
     'taskProgress': '{total}টির মধ্যে {done}টি',
@@ -488,6 +515,9 @@ class S {
     'codeBRIDE': 'কনের পক্ষ',
     'codeGROOM': 'বরের পক্ষ',
     'codeREGULAR': 'সাধারণ',
+    'codeVEGETARIAN': 'নিরামিষ',
+    'codeNOBEEF': 'গরুর মাংস ছাড়া',
+    'mealCount': '{meal}: {count}',
     'guestSummary': '{total} জন অতিথি · {attending} জন আসছেন',
     'guestParty': '{maximum} জনের মধ্যে {size} জন',
     'invitation': 'আসসালামু আলাইকুম {name},\n{event} — উপস্থিতি জানাতে এই লিংকে ক্লিক করুন: {url}',
