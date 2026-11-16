@@ -14,8 +14,19 @@ String taka(num minor, {bool compact = false, String locale = 'en'}) {
 
 String dateLabel(DateTime value, {String locale = 'en'}) =>
     DateFormat.yMMMd(locale == 'bn' ? 'bn' : 'en').format(value);
-String dateTimeLabel(DateTime value, {String locale = 'en'}) =>
-    DateFormat('EEE d MMM, h:mm a', locale == 'bn' ? 'bn' : 'en').format(value);
+String dateTimeLabel(DateTime value, {String locale = 'en'}) => _localizePeriod(
+  DateFormat('EEE d MMM, h:mm a', locale == 'bn' ? 'bn' : 'en').format(value),
+  locale,
+);
+
+String timeLabel(DateTime value, {String locale = 'en'}) => _localizePeriod(
+  DateFormat.jm(locale == 'bn' ? 'bn' : 'en').format(value),
+  locale,
+);
+
+String _localizePeriod(String value, String locale) => locale == 'bn'
+    ? value.replaceAll('AM', 'পূর্বাহ্ণ').replaceAll('PM', 'অপরাহ্ণ')
+    : value;
 
 String numberLabel(num value, {String locale = 'en'}) =>
     NumberFormat.decimalPattern(locale == 'bn' ? 'bn' : 'en_IN').format(value);

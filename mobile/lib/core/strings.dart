@@ -25,6 +25,20 @@ class S {
           .replaceAll('{event}', event)
           .replaceAll('{url}', url);
 
+  String platesConfirmed(String count) =>
+      t('platesConfirmed').replaceAll('{count}', count);
+  String cateringShare(String day, String count, String meals) =>
+      t('cateringShare')
+          .replaceAll('{day}', day)
+          .replaceAll('{count}', count)
+          .replaceAll('{meals}', meals);
+  String replyMinutes(String count) =>
+      t('replyMinutes').replaceAll('{count}', count);
+  String familyLabel(String side, String label) =>
+      label == "Bride's side" || label == "Groom's side"
+      ? codeLabel(side)
+      : label;
+
   /// A server-owned code is translated when it is known to the app.
   String codeLabel(String code) {
     final key =
@@ -34,6 +48,12 @@ class S {
   }
 
   static const _en = {
+    'platesConfirmed': 'plates to order · {count} confirmed',
+    'cateringShare': '{day}: {count} plates ({meals})',
+    'replyMinutes': 'Usually replies in {count} min',
+    'codeBRIDE': "Bride's side",
+    'codeGROOM': "Groom's side",
+    'codeREGULAR': 'Regular',
     'guestSummary': '{total} guests · {attending} attending',
     'guestParty': '{size} of {maximum}',
     'invitation':
@@ -262,6 +282,12 @@ class S {
   };
 
   static const _bn = {
+    'platesConfirmed': 'প্লেট অর্ডার করুন · {count} জন নিশ্চিত',
+    'cateringShare': '{day}: {count} প্লেট ({meals})',
+    'replyMinutes': 'সাধারণত {count} মিনিটে উত্তর দেন',
+    'codeBRIDE': 'কনের পক্ষ',
+    'codeGROOM': 'বরের পক্ষ',
+    'codeREGULAR': 'সাধারণ',
     'guestSummary': '{total} জন অতিথি · {attending} জন আসছেন',
     'guestParty': '{maximum} জনের মধ্যে {size} জন',
     'invitation': 'আসসালামু আলাইকুম {name},\n{event} — উপস্থিতি জানাতে এই লিংকে ক্লিক করুন: {url}',
