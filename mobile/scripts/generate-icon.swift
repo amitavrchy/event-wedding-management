@@ -1,0 +1,35 @@
+import AppKit
+let image = NSImage(size: NSSize(width: 1024, height: 1024))
+image.lockFocus()
+NSColor(calibratedRed: 0.52, green: 0.384, blue: 0.275, alpha: 1).setFill()
+NSRect(x: 0, y: 0, width: 1024, height: 1024).fill()
+let cream = NSColor(calibratedRed: 0.988, green: 0.98, blue: 0.96, alpha: 1)
+cream.setStroke()
+let arch = NSBezierPath()
+arch.lineWidth = 43
+arch.lineCapStyle = .round
+arch.move(to: NSPoint(x: 276, y: 265))
+arch.line(to: NSPoint(x: 512, y: 754))
+arch.line(to: NSPoint(x: 748, y: 265))
+arch.stroke()
+let bar = NSBezierPath()
+bar.lineWidth = 43
+bar.lineCapStyle = .round
+bar.move(to: NSPoint(x: 368, y: 440))
+bar.line(to: NSPoint(x: 656, y: 440))
+bar.stroke()
+let star = NSBezierPath()
+star.move(to: NSPoint(x: 512, y: 840))
+star.line(to: NSPoint(x: 529, y: 803))
+star.line(to: NSPoint(x: 566, y: 786))
+star.line(to: NSPoint(x: 529, y: 769))
+star.line(to: NSPoint(x: 512, y: 732))
+star.line(to: NSPoint(x: 495, y: 769))
+star.line(to: NSPoint(x: 458, y: 786))
+star.line(to: NSPoint(x: 495, y: 803))
+star.close()
+cream.setFill()
+star.fill()
+image.unlockFocus()
+let bitmap = NSBitmapImageRep(data: image.tiffRepresentation!)!
+try bitmap.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: "assets/icon.png"))
