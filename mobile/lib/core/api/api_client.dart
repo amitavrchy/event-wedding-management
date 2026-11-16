@@ -23,7 +23,7 @@ class ApiClient {
     this.dio.interceptors.add(InterceptorsWrapper(
           onRequest: (options, handler) async {
             final token = await tokens.access();
-            if (token != null && options.headers['Authorization'] == null) {
+            if (token != null && !options.extra.containsKey('noAuth') && options.headers['Authorization'] == null) {
               options.headers['Authorization'] = 'Bearer $token';
             }
             handler.next(options);
@@ -34,12 +34,16 @@ class ApiClient {
             if (unauthorized && request.extra['retried'] == true) {
               onSessionExpired?.call();
             }
-            if (!unauthorized || request.path.startsWith('auth/') || request.extra['retried'] == true) {
+            if (!unauthorized || _refreshExempt(request.path) || request.extra['retried'] == true) {
               return handler.next(error);
             }
             bool refreshed;
             try {
-              refreshed = await _refresh();
+              final current = await tokens.access();
+              final sent = request.headers['Authorization'];
+              refreshed = current != null && sent != 'Bearer $current'
+                  ? true
+                  : await _refresh();
             } on DioException catch (refreshError) {
               // Connectivity and server failures do not invalidate a session.
               return handler.next(refreshError);
@@ -61,6 +65,11 @@ class ApiClient {
         ));
   }
 
+  static bool _refreshExempt(String path) => const {
+        'auth/login', 'auth/login/2fa', 'auth/register', 'auth/refresh',
+        'auth/logout', 'auth/password/forgot',
+      }.contains(path.split('?').first);
+
   final TokenStore tokens;
   final Dio dio;
   void Function()? onSessionExpired;
@@ -75,7 +84,7 @@ class ApiClient {
         final refresh = await tokens.refresh();
         if (refresh == null) return completer.complete(false);
         final response = await dio.post('auth/refresh',
-            data: {'refreshToken': refresh}, options: Options(headers: {'Authorization': null}));
+            data: {'refreshToken': refresh}, options: Options(extra: {'noAuth': true}));
         final data = response.data as Map<String, dynamic>;
         await tokens.save(data['accessToken'] as String, data['refreshToken'] as String);
         completer.complete(true);

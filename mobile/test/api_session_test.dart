@@ -47,6 +47,42 @@ void main() {
     expect(tokens.refreshToken, 'next');
   });
 
+  test('profile and socket token requests refresh expired bearer tokens', () async {
+    for (final path in ['auth/me', 'auth/socket-token', 'auth/devices']) {
+      final tokens = MemoryTokens();
+      final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/'));
+      var refreshes = 0;
+      dio.httpClientAdapter = TestAdapter((request) async {
+        if (request.path == 'auth/refresh') {
+          refreshes++;
+          expect(request.headers['Authorization'], isNull);
+          expect(request.data, {'refreshToken': 'refresh'});
+          return reply(200, {'accessToken': 'new', 'refreshToken': 'next'});
+        }
+        return request.headers['Authorization'] == 'Bearer new'
+            ? reply(200, {'ok': true}) : reply(401, {'message': 'expired'});
+      });
+      final client = ApiClient(tokens, dio: dio);
+      expect(await client.get<Map<String, dynamic>>(path), {'ok': true});
+      expect(refreshes, 1);
+    }
+  });
+
+  test('bad credentials do not refresh or expire an existing session', () async {
+    final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/'));
+    var calls = 0;
+    dio.httpClientAdapter = TestAdapter((request) async {
+      calls++;
+      return reply(401, {'message': 'Incorrect email or password'});
+    });
+    final client = ApiClient(MemoryTokens(), dio: dio);
+    var expired = false;
+    client.onSessionExpired = () => expired = true;
+    await expectLater(client.post('auth/login', {}), throwsA(isA<ApiError>()));
+    expect(calls, 1);
+    expect(expired, false);
+  });
+
   test('invalid refresh expires the session', () async {
     final tokens = MemoryTokens();
     final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/'));
