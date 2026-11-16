@@ -60,6 +60,14 @@ class S {
           .replaceAll('{owner}', owner)
           .replaceAll('{minutes}', minutes);
 
+  String format(String key, Map<String, String> values) {
+    var result = t(key);
+    for (final entry in values.entries) {
+      result = result.replaceAll('{${entry.key}}', entry.value);
+    }
+    return result;
+  }
+
   /// A server-owned code is translated when it is known to the app.
   String codeLabel(String code) {
     final key =
@@ -69,6 +77,73 @@ class S {
   }
 
   static const _en = {
+    'sendMessage': 'Send message',
+    'workspaceFallback': 'a workspace',
+    'notificationInviteBody': '{name} invited you to {workspace}',
+    'dateToConfirm': 'a date to confirm',
+    'bookingRequestTitle': 'New booking request',
+    'yourBookingTitle': 'Your booking',
+    'bookingWaiting': 'waiting for advance',
+    'bookingPleaseConfirm': 'please confirm',
+    'bookingConfirmedVendor': 'confirmed by the vendor',
+    'bookingCancelledVendor': 'cancelled by the vendor',
+    'vendorFallback': 'A vendor',
+    "guestCount": "{count} guests",
+    "reportMonth": "{month} report",
+    "reportInquiries": "{count} inquiries · {rate} reply rate",
+    "reportBookings": "{count} bookings · {value}",
+    "reportAverage": "Average reply: {count} min",
+    "planLabel": "Plan: {plan}",
+    "codeFREE": "Free",
+    "codeBASIC": "Basic",
+    "codePRO": "Pro",
+    "codePREMIUM": "Premium",
+    "notificationReviewTitle": "New {rating}★ review",
+    "notificationArrivedTitle": "{name} has arrived",
+    "notificationReportTitle": "Your {month} report",
+    "notificationReportBody": "{inquiries} inquiries, {bookings} bookings",
+    "notificationReportAverage": "{summary}, average reply {minutes} min.",
+    "notificationReportNoAverage": "{summary}.",
+    "notificationInquiryBody":
+        "{name} asked a day ago. Quick replies win more bookings.",
+    "notificationRsvpBody": "{count} invitation replies are still pending for {event}. Share their public invitation links before the deadline.",
+    "notificationBalanceBody":
+        "Your {service} booking is coming up. Balance remaining: {amount}.",
+    "notificationInstallmentBody": "{label}: {amount} due {date}.",
+    "notificationRenewalBody":
+        "Your {plan} plan ends on {date}. Renew to keep your listing benefits.",
+    "notificationQuoteAmount": "{amount}",
+    "notificationTitlePayment": "A little payment reminder",
+    "notificationTitleMilestone": "A payment milestone is coming up",
+    "notificationTitleTask": "One lovely detail is nearly due",
+    "notificationTitleRsvp": "A little nudge for your guest list",
+    "notificationTitleInquiry": "An inquiry is waiting for you",
+    "notificationTitleActive": "Your plan is active",
+    "notificationTitlePaymentFailed": "We could not confirm your payment",
+    "notificationTitleRenewal": "Your plan renews soon",
+    "notificationTitleVerified": "Your business is verified",
+    "notificationTitleVerification": "Verification needs another look",
+    "notificationVerifiedBody": "The Verified badge now shows on your profile.",
+    "notificationTitleReviewRequest": "How did it go?",
+    "notificationReviewRequestBody": "Your booking is complete. A short review helps other families choose well.",
+    "notificationTitleAccepted": "Your quotation was accepted",
+    "notificationTitleDeclined": "Your quotation was declined",
+    "notificationTitleBooking": "Your booking is recorded",
+    "notificationBookingBody":
+        "Arrange the advance and balance directly with your vendor.",
+    "notificationActiveBody":
+        "{plan} is active until {date}. Receipt {receipt}.",
+    "notificationTitleMessage": "New message",
+    "notificationTitleNewInquiry": "New inquiry on Ayojon",
+    "notificationTitleQuote": "You received a quotation",
+    "notificationTitleBookingUpdate": "Booking update",
+    "notificationTitleInvite": "You're invited to plan together",
+    "notificationInquiryTemplate":
+        "{name} sent you an inquiry for {date}. Reply soon: {link}",
+    "notificationQuoteTemplate":
+        "{vendor} sent a quotation of {amount}. Review it: {link}",
+    "notificationBookingTemplate": "{title}: {status}. Details: {link}",
+
     'alreadyArrivedMessage': '{name}: already checked in',
     'partyTable': '{count} guests · {table}',
     'arrivalMessage': '{name} · {count} — arrived ✓',
@@ -315,6 +390,72 @@ class S {
   };
 
   static const _bn = {
+    'sendMessage': 'বার্তা পাঠান',
+    'workspaceFallback': 'একটি কর্মপরিসর',
+    'notificationInviteBody': '{name} আপনাকে {workspace} এ আমন্ত্রণ জানিয়েছেন',
+    'dateToConfirm': 'তারিখ এখনো ঠিক হয়নি',
+    'bookingRequestTitle': 'নতুন বুকিং অনুরোধ',
+    'yourBookingTitle': 'আপনার বুকিং',
+    'bookingWaiting': 'অগ্রিমের অপেক্ষায়',
+    'bookingPleaseConfirm': 'অনুগ্রহ করে নিশ্চিত করুন',
+    'bookingConfirmedVendor': 'ভেন্ডর নিশ্চিত করেছেন',
+    'bookingCancelledVendor': 'ভেন্ডর বাতিল করেছেন',
+    'vendorFallback': 'একজন ভেন্ডর',
+    "guestCount": "{count} জন অতিথি",
+    "reportMonth": "{month} প্রতিবেদন",
+    "reportInquiries": "{count}টি জিজ্ঞাসা · উত্তরের হার {rate}",
+    "reportBookings": "{count}টি বুকিং · {value}",
+    "reportAverage": "গড় উত্তর: {count} মিনিট",
+    "planLabel": "প্ল্যান: {plan}",
+    "codeFREE": "বিনামূল্যে",
+    "codeBASIC": "বেসিক",
+    "codePRO": "প্রো",
+    "codePREMIUM": "প্রিমিয়াম",
+    "notificationReviewTitle": "নতুন {rating}★ রিভিউ",
+    "notificationArrivedTitle": "{name} এসে পৌঁছেছেন",
+    "notificationReportTitle": "আপনার {month} প্রতিবেদন",
+    "notificationReportBody": "{inquiries}টি জিজ্ঞাসা, {bookings}টি বুকিং",
+    "notificationReportAverage": "{summary}, গড় উত্তর {minutes} মিনিট।",
+    "notificationReportNoAverage": "{summary}।",
+    "notificationInquiryBody": "{name} এক দিন আগে জিজ্ঞাসা পাঠিয়েছেন। দ্রুত উত্তর দিলে বুকিংয়ের সম্ভাবনা বাড়ে।",
+    "notificationRsvpBody": "{event} অনুষ্ঠানের {count}টি আমন্ত্রণের উত্তর বাকি। শেষ সময়ের আগে আমন্ত্রণের লিংক পাঠান।",
+    "notificationBalanceBody":
+        "আপনার {service} বুকিংয়ের দিন এগিয়ে আসছে। বাকি আছে: {amount}।",
+    "notificationInstallmentBody":
+        "{label}: {date} তারিখে {amount} পরিশোধ করতে হবে।",
+    "notificationRenewalBody": "আপনার {plan} প্ল্যানের মেয়াদ {date} শেষ হবে। সুবিধা পেতে নবায়ন করুন।",
+    "notificationQuoteAmount": "পরিমাণ: {amount}",
+    "notificationTitlePayment": "পেমেন্টের স্মরণবার্তা",
+    "notificationTitleMilestone": "পেমেন্টের সময় এগিয়ে আসছে",
+    "notificationTitleTask": "একটি কাজের সময় প্রায় শেষ",
+    "notificationTitleRsvp": "অতিথি তালিকার স্মরণবার্তা",
+    "notificationTitleInquiry": "আপনার উত্তরের অপেক্ষায় একটি জিজ্ঞাসা",
+    "notificationTitleActive": "আপনার প্ল্যান চালু হয়েছে",
+    "notificationTitlePaymentFailed": "আপনার পেমেন্ট নিশ্চিত করা যায়নি",
+    "notificationTitleRenewal": "আপনার প্ল্যান শিগগির নবায়ন করতে হবে",
+    "notificationTitleVerified": "আপনার ব্যবসা যাচাই হয়েছে",
+    "notificationTitleVerification": "যাচাইয়ের জন্য আরও তথ্য প্রয়োজন",
+    "notificationVerifiedBody":
+        "আপনার প্রোফাইলে এখন যাচাইয়ের ব্যাজ দেখানো হচ্ছে।",
+    "notificationTitleReviewRequest": "অভিজ্ঞতা কেমন ছিল?",
+    "notificationReviewRequestBody": "আপনার বুকিং সম্পন্ন হয়েছে। ছোট্ট একটি রিভিউ অন্য পরিবারকে সঠিক সিদ্ধান্ত নিতে সাহায্য করবে।",
+    "notificationTitleAccepted": "আপনার কোটেশন গৃহীত হয়েছে",
+    "notificationTitleDeclined": "আপনার কোটেশন প্রত্যাখ্যাত হয়েছে",
+    "notificationTitleBooking": "আপনার বুকিং নথিভুক্ত হয়েছে",
+    "notificationBookingBody":
+        "অগ্রিম ও বাকি পেমেন্ট সরাসরি ভেন্ডরের সঙ্গে ঠিক করুন।",
+    "notificationActiveBody":
+        "{plan} প্ল্যান {date} পর্যন্ত চালু আছে। রসিদ {receipt}।",
+    "notificationTitleMessage": "নতুন বার্তা",
+    "notificationTitleNewInquiry": "আয়োজনে নতুন জিজ্ঞাসা",
+    "notificationTitleQuote": "নতুন কোটেশন",
+    "notificationTitleBookingUpdate": "বুকিং আপডেট",
+    "notificationTitleInvite": "একসাথে পরিকল্পনার আমন্ত্রণ",
+    "notificationInquiryTemplate": "{name} {date} তারিখের জন্য জিজ্ঞাসা পাঠিয়েছেন। দ্রুত উত্তর দিন: {link}",
+    "notificationQuoteTemplate":
+        "{vendor} {amount} এর কোটেশন পাঠিয়েছে। দেখুন: {link}",
+    "notificationBookingTemplate": "{title}: {status}। বিস্তারিত: {link}",
+
     'alreadyArrivedMessage': '{name}: আগেই চেক-ইন হয়েছে',
     'partyTable': '{count} অতিথি · {table}',
     'arrivalMessage': '{name} · {count} — এসেছেন ✓',

@@ -19,6 +19,9 @@ String dateTimeLabel(DateTime value, {String locale = 'en'}) => _localizePeriod(
   locale,
 );
 
+String monthLabel(DateTime value, {String locale = 'en'}) =>
+    DateFormat.yMMMM(locale == 'bn' ? 'bn' : 'en').format(value);
+
 String timeLabel(DateTime value, {String locale = 'en'}) => _localizePeriod(
   DateFormat.jm(locale == 'bn' ? 'bn' : 'en').format(value),
   locale,
@@ -30,6 +33,13 @@ String _localizePeriod(String value, String locale) => locale == 'bn'
 
 String numberLabel(num value, {String locale = 'en'}) =>
     NumberFormat.decimalPattern(locale == 'bn' ? 'bn' : 'en_IN').format(value);
+
+String numberLabelPhone(String value, {String locale = 'en'}) => locale == 'bn'
+    ? value.replaceAllMapped(
+        RegExp(r'[0-9]'),
+        (m) => String.fromCharCode(0x09e6 + int.parse(m[0]!)),
+      )
+    : value;
 
 /// Accept localized digits in numeric input.
 String normalizedDigits(String value) => value.replaceAllMapped(
