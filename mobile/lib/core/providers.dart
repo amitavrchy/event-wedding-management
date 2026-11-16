@@ -180,13 +180,28 @@ class ChosenOccasion extends Notifier<String?> {
   }
 }
 
+/// The bundled catalogue owns display content and order; the API adds defaults.
+List<OccasionType> mergeOccasionTypes(List<dynamic> server) {
+  final catalogue = (jsonDecode(occasionCatalogJson) as List).cast<Json>();
+  final byType = {for (final item in server.cast<Json>()) item['type'] as String: item};
+  final known = catalogue.map((item) => item['type'] as String).toSet();
+  return [
+    for (final item in catalogue)
+      OccasionType.fromJson({
+        ...item,
+        for (final key in ['features', 'budgetMinor', 'guestCapacity'])
+          if (byType[item['type']]?[key] != null) key: byType[item['type']]![key],
+      }),
+    for (final item in server.cast<Json>())
+      if (!known.contains(item['type'])) OccasionType.fromJson(item),
+  ];
+}
+
 final eventTypesProvider = FutureProvider<List<OccasionType>>((ref) async {
   try {
-    final list = await ref.read(apiProvider).get<List<dynamic>>('event-types');
-    return [for (final j in list) OccasionType.fromJson(j as Json)];
+    return mergeOccasionTypes(await ref.read(apiProvider).get<List<dynamic>>('event-types'));
   } catch (_) {
-    final list = jsonDecode(occasionCatalogJson) as List<dynamic>;
-    return [for (final j in list) OccasionType.fromJson(j as Json)];
+    return mergeOccasionTypes([]);
   }
 });
 

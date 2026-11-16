@@ -76,8 +76,8 @@ test(
         });
         assert.equal(event.eventType, type);
         assert.deepEqual(
-          event.tasks.map((t) => t.title).sort(),
-          [...template.checklist].sort(),
+          event.tasks.map((t) => t.title),
+          template.checklist,
         );
         assert.equal(
           event.budget.reduce((s, b) => s + b.plannedMinor, 0),
@@ -93,6 +93,12 @@ test(
           template.checklist.length,
         );
       }
+      const undated = await controller.create(req, {
+        title: "Undated workspace", eventType: "WEDDING", budgetMinor: 0, guestCapacity: 1,
+      });
+      assert.deepEqual(undated.tasks.map((t) => t.title), templateFor("WEDDING").checklist);
+      const reloaded = await controller.get(req, undated.id);
+      assert.deepEqual(reloaded!.tasks.map((t) => t.title), templateFor("WEDDING").checklist);
       const empty = await controller.create(req, {
         title: "Blank workspace",
         budgetMinor: 0,

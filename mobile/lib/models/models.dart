@@ -37,8 +37,8 @@ class User {
 }
 
 class OccasionType {
-  OccasionType({required this.type, required this.label, required this.labelBn, required this.description, required this.budgetMinor, required this.guestCapacity, required this.features, this.descriptionBn = '', this.icon = '✨'});
-  final String type, label, labelBn, description, descriptionBn, icon;
+  OccasionType({required this.type, required this.label, required this.labelBn, required this.description, required this.budgetMinor, required this.guestCapacity, required this.features, this.descriptionBn = '', this.icon = '✨', this.iconKey = 'celebration'});
+  final String type, label, labelBn, description, descriptionBn, icon, iconKey;
   final int budgetMinor, guestCapacity;
   final List<String> features;
   factory OccasionType.fromJson(Json j) => OccasionType(
@@ -48,6 +48,7 @@ class OccasionType {
         description: (j['description'] ?? '') as String,
         descriptionBn: (j['descriptionBn'] ?? '') as String,
         icon: (j['icon'] ?? '✨') as String,
+        iconKey: (j['iconKey'] ?? 'celebration') as String,
         budgetMinor: (j['budgetMinor'] ?? 0) as int,
         guestCapacity: (j['guestCapacity'] ?? 50) as int,
         features: List<String>.from((j['features'] ?? const []) as List),

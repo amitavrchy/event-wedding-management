@@ -1,6 +1,15 @@
 "use client";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Heart, Cake, BriefcaseBusiness, Flower2, Gem, PartyPopper, Utensils, Baby, Moon, Flame, Music, GraduationCap, Users, Mic, Wrench, Rocket, Trees, Trophy, House, BookOpen, Palette } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+const occasionIcons: Record<string, LucideIcon> = {
+  favorite: Heart, cake: Cake, work: BriefcaseBusiness, flower: Flower2,
+  diamond: Gem, celebration: PartyPopper, restaurant: Utensils, child: Baby,
+  moon: Moon, flame: Flame, music: Music, school: GraduationCap, groups: Users,
+  mic: Mic, build: Wrench, rocket: Rocket, park: Trees, trophy: Trophy,
+  home: House, book: BookOpen, palette: Palette,
+};
 import "@/app/occasion.css";
 import { eventTypes } from "@/lib/event-types";
 import { usePublicLocale } from "@/lib/public-i18n";
@@ -24,9 +33,9 @@ export function OccasionPicker({ onClose, dismissible = true }: { onClose: () =>
     </div>
     {searching && <input autoFocus className="occasion-search" aria-label={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} placeholder={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} value={query} onChange={(e) => setQuery(e.target.value)} />}
     {list.length === 0 ? <p role="status">{bn ? "কোনো অনুষ্ঠান পাওয়া যায়নি।" : "No occasions found."}</p> :
-      <div className="occasion-grid" role="list">{list.map((t) => <button key={t.type} role="listitem" className="occasion-card" onClick={() => setChosen(t.type)} aria-label={`Plan a ${t.label}`}>
-        <span className="occasion-icon" aria-hidden="true">{t.icon}</span>
+      <div className="occasion-grid" role="list">{list.map((t) => { const OccasionIcon = occasionIcons[t.iconKey] || PartyPopper; return <button key={t.type} role="listitem" className="occasion-card" onClick={() => setChosen(t.type)} aria-label={bn ? `${t.labelBn} বেছে নিন` : `Choose ${t.label}`}>
+        <span className="occasion-icon" aria-hidden="true"><OccasionIcon size={36} strokeWidth={1.7} /></span>
         <span className="occasion-body"><strong>{bn ? t.labelBn : t.label}</strong><span className="occasion-bn">{bn ? t.label : t.labelBn}</span><span className="occasion-description">{bn ? t.descriptionBn : t.description}</span></span>
-      </button>)}</div>}
+      </button>; })}</div>}
   </Modal>;
 }

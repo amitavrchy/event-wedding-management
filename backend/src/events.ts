@@ -25,7 +25,7 @@ export class EventsController {
   @Get() async list(@Req() req: any, @Query("archived") archived?: string) {
     const events = await this.db.event.findMany({
       where: { ...eventAccess(req.user.sub), archivedAt: archived === "true" ? { not: null } : null },
-      include: { days: true, tasks: true },
+      include: { days: true, tasks: { orderBy: { position: "asc" } } },
       orderBy: { createdAt: "desc" },
     });
     return events.map((event) => ({ ...event, features: featuresFor(event) }));
@@ -56,6 +56,7 @@ export class EventsController {
           ? {
               create: template.checklist.map((title, index) => ({
                 title,
+                position: index,
                 dueAt: startsAt
                   ? new Date(
                       +new Date(startsAt) -
@@ -81,7 +82,7 @@ export class EventsController {
             }
           : undefined,
       },
-      include: { days: true, tasks: true, budget: true },
+      include: { days: true, tasks: { orderBy: { position: "asc" } }, budget: true },
     });
     return { ...created, features: featuresFor(created) };
   }
@@ -91,7 +92,7 @@ export class EventsController {
       where: { id },
       include: {
         days: true,
-        tasks: true,
+        tasks: { orderBy: { position: "asc" } },
         bookings: { include: { service: { include: { vendor: true } } } },
         guests: true,
         budget: true,

@@ -6,6 +6,20 @@ import '../../core/providers.dart';
 import '../../core/widgets/common.dart';
 import '../../models/models.dart';
 
+const occasionIcons = <String, IconData>{
+  'favorite': Icons.favorite_outline, 'cake': Icons.cake_outlined,
+  'work': Icons.work_outline, 'flower': Icons.local_florist_outlined,
+  'diamond': Icons.diamond_outlined, 'celebration': Icons.celebration_outlined,
+  'restaurant': Icons.restaurant_outlined, 'child': Icons.child_care_outlined,
+  'moon': Icons.nightlight_outlined, 'flame': Icons.local_fire_department_outlined,
+  'music': Icons.music_note_outlined, 'school': Icons.school_outlined,
+  'groups': Icons.groups_outlined, 'mic': Icons.mic_none_outlined,
+  'build': Icons.build_outlined, 'rocket': Icons.rocket_launch_outlined,
+  'park': Icons.park_outlined, 'trophy': Icons.emoji_events_outlined,
+  'home': Icons.home_outlined, 'book': Icons.menu_book_outlined,
+  'palette': Icons.palette_outlined,
+};
+
 /// The first screen of the app: "What are you planning?". The choice decides
 /// which tools the workspace shows. Signed-in hosts reach it to add an event.
 class OccasionScreen extends ConsumerStatefulWidget {
@@ -77,7 +91,7 @@ class _OccasionScreenState extends ConsumerState<OccasionScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(14),
                             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                              Text(t.icon, style: const TextStyle(fontSize: 34)),
+                              Icon(occasionIcons[t.iconKey] ?? Icons.celebration_outlined, size: 38, color: Theme.of(context).colorScheme.primary),
                               const SizedBox(height: 6),
                               Text(s.bn ? t.labelBn : t.label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
                               Text(s.bn ? t.label : t.labelBn, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),

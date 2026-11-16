@@ -7,7 +7,8 @@ export const occasionCatalog = [
     "description": "Celebrate your wedding together",
     "descriptionBn": "একসাথে বিয়ের আনন্দ উদযাপন",
     "icon": "💍",
-    "preset": "WEDDING"
+    "preset": "WEDDING",
+    "iconKey": "favorite"
   },
   {
     "type": "BIRTHDAY",
@@ -16,7 +17,8 @@ export const occasionCatalog = [
     "description": "Celebrate another joyful year",
     "descriptionBn": "আনন্দে জন্মদিন উদযাপন করুন",
     "icon": "🎂",
-    "preset": "BIRTHDAY"
+    "preset": "BIRTHDAY",
+    "iconKey": "cake"
   },
   {
     "type": "ANNIVERSARY",
@@ -25,7 +27,8 @@ export const occasionCatalog = [
     "description": "Celebrate your shared journey",
     "descriptionBn": "একসাথে পথচলার বছর উদযাপন",
     "icon": "💐",
-    "preset": "ANNIVERSARY"
+    "preset": "ANNIVERSARY",
+    "iconKey": "favorite"
   },
   {
     "type": "CORPORATE",
@@ -34,7 +37,8 @@ export const occasionCatalog = [
     "description": "Bring your team together",
     "descriptionBn": "সহকর্মীদের নিয়ে আনন্দ আয়োজন",
     "icon": "💼",
-    "preset": "CORPORATE"
+    "preset": "CORPORATE",
+    "iconKey": "work"
   },
   {
     "type": "HOLUD",
@@ -43,7 +47,8 @@ export const occasionCatalog = [
     "description": "Celebrate with turmeric traditions",
     "descriptionBn": "হলুদের রঙে আনন্দ আয়োজন",
     "icon": "🌼",
-    "preset": "HOLUD"
+    "preset": "HOLUD",
+    "iconKey": "flower"
   },
   {
     "type": "ENGAGEMENT",
@@ -52,7 +57,8 @@ export const occasionCatalog = [
     "description": "Celebrate your new beginning",
     "descriptionBn": "নতুন পথচলার শুরু উদযাপন",
     "icon": "💎",
-    "preset": "ENGAGEMENT"
+    "preset": "ENGAGEMENT",
+    "iconKey": "diamond"
   },
   {
     "type": "MEHENDI",
@@ -61,7 +67,8 @@ export const occasionCatalog = [
     "description": "Gather for henna celebrations",
     "descriptionBn": "মেহেদির রঙে আনন্দ আয়োজন",
     "icon": "🌿",
-    "preset": "HOLUD"
+    "preset": "HOLUD",
+    "iconKey": "flower"
   },
   {
     "type": "RECEPTION",
@@ -70,7 +77,8 @@ export const occasionCatalog = [
     "description": "Welcome your wedding guests",
     "descriptionBn": "বিয়ের অতিথিদের স্বাগত আয়োজন",
     "icon": "🥂",
-    "preset": "RECEPTION"
+    "preset": "RECEPTION",
+    "iconKey": "celebration"
   },
   {
     "type": "WALIMA",
@@ -79,7 +87,8 @@ export const occasionCatalog = [
     "description": "Share a wedding feast",
     "descriptionBn": "বিয়ের আনন্দে ভোজ আয়োজন",
     "icon": "🍽️",
-    "preset": "RECEPTION"
+    "preset": "RECEPTION",
+    "iconKey": "restaurant"
   },
   {
     "type": "AQIQAH",
@@ -88,7 +97,8 @@ export const occasionCatalog = [
     "description": "Celebrate a newborn blessing",
     "descriptionBn": "নবজাতকের জন্য দোয়া আয়োজন",
     "icon": "🍼",
-    "preset": "BIRTHDAY"
+    "preset": "BIRTHDAY",
+    "iconKey": "child"
   },
   {
     "type": "SUNNAT",
@@ -97,7 +107,8 @@ export const occasionCatalog = [
     "description": "Mark a family milestone",
     "descriptionBn": "পরিবারের বিশেষ মুহূর্ত উদযাপন",
     "icon": "🌙",
-    "preset": "BIRTHDAY"
+    "preset": "BIRTHDAY",
+    "iconKey": "moon"
   },
   {
     "type": "ANNAPRASHAN",
@@ -106,7 +117,8 @@ export const occasionCatalog = [
     "description": "Celebrate baby's first rice",
     "descriptionBn": "শিশুর প্রথম ভাত উদযাপন",
     "icon": "🥣",
-    "preset": "BIRTHDAY"
+    "preset": "BIRTHDAY",
+    "iconKey": "restaurant"
   },
   {
     "type": "BABY_SHOWER",
@@ -115,7 +127,8 @@ export const occasionCatalog = [
     "description": "Welcome a little arrival",
     "descriptionBn": "নতুন অতিথির আগমন উদযাপন",
     "icon": "👶",
-    "preset": "BABY_SHOWER"
+    "preset": "BABY_SHOWER",
+    "iconKey": "child"
   },
   {
     "type": "PUJA",
@@ -124,7 +137,8 @@ export const occasionCatalog = [
     "description": "Gather for festive worship",
     "descriptionBn": "পূজার আনন্দে একসাথে আয়োজন",
     "icon": "🪔",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "flame"
   },
   {
     "type": "EID",
@@ -133,7 +147,8 @@ export const occasionCatalog = [
     "description": "Share the Eid joy",
     "descriptionBn": "ঈদের আনন্দে সবাই একসাথে",
     "icon": "🌙",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "moon"
   },
   {
     "type": "IFTAR",
@@ -142,7 +157,8 @@ export const occasionCatalog = [
     "description": "Share iftar with family",
     "descriptionBn": "প্রিয়জনদের সঙ্গে ইফতার আয়োজন",
     "icon": "🥣",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "restaurant"
   },
   {
     "type": "POHELA_BOISHAKH",
@@ -151,7 +167,8 @@ export const occasionCatalog = [
     "description": "Welcome the Bengali year",
     "descriptionBn": "বাংলা নববর্ষের আনন্দ উদযাপন",
     "icon": "🎊",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "celebration"
   },
   {
     "type": "CONCERT",
@@ -160,7 +177,8 @@ export const occasionCatalog = [
     "description": "Celebrate music and culture",
     "descriptionBn": "গান ও সংস্কৃতির আয়োজন",
     "icon": "🎵",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "music"
   },
   {
     "type": "UNIVERSITY_CLUB",
@@ -169,7 +187,8 @@ export const occasionCatalog = [
     "description": "Bring club members together",
     "descriptionBn": "ক্লাব সদস্যদের নিয়ে আয়োজন",
     "icon": "🎓",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "school"
   },
   {
     "type": "SCHOOL_EVENT",
@@ -178,7 +197,8 @@ export const occasionCatalog = [
     "description": "Gather students and teachers",
     "descriptionBn": "শিক্ষার্থী ও শিক্ষকদের আয়োজন",
     "icon": "🏫",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "school"
   },
   {
     "type": "REUNION",
@@ -187,7 +207,8 @@ export const occasionCatalog = [
     "description": "Reconnect with familiar faces",
     "descriptionBn": "পুরোনো বন্ধুদের সঙ্গে পুনর্মিলন",
     "icon": "🤝",
-    "preset": "REUNION"
+    "preset": "REUNION",
+    "iconKey": "groups"
   },
   {
     "type": "CONFERENCE",
@@ -196,7 +217,8 @@ export const occasionCatalog = [
     "description": "Share ideas and expertise",
     "descriptionBn": "জ্ঞান ও অভিজ্ঞতা বিনিময়",
     "icon": "🎤",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "mic"
   },
   {
     "type": "WORKSHOP",
@@ -205,7 +227,8 @@ export const occasionCatalog = [
     "description": "Learn and create together",
     "descriptionBn": "একসাথে শেখা ও অনুশীলন",
     "icon": "🛠️",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "build"
   },
   {
     "type": "PRODUCT_LAUNCH",
@@ -214,7 +237,8 @@ export const occasionCatalog = [
     "description": "Introduce your newest product",
     "descriptionBn": "নতুন পণ্য সবার সামনে",
     "icon": "🚀",
-    "preset": "CORPORATE"
+    "preset": "CORPORATE",
+    "iconKey": "rocket"
   },
   {
     "type": "CORPORATE_DINNER",
@@ -223,7 +247,8 @@ export const occasionCatalog = [
     "description": "Dine with your colleagues",
     "descriptionBn": "সহকর্মীদের সঙ্গে নৈশভোজ আয়োজন",
     "icon": "🍽️",
-    "preset": "CORPORATE"
+    "preset": "CORPORATE",
+    "iconKey": "restaurant"
   },
   {
     "type": "PICNIC",
@@ -232,7 +257,8 @@ export const occasionCatalog = [
     "description": "Enjoy a day outdoors",
     "descriptionBn": "খোলা আকাশে আনন্দের দিন",
     "icon": "🧺",
-    "preset": "REUNION"
+    "preset": "REUNION",
+    "iconKey": "park"
   },
   {
     "type": "FAREWELL",
@@ -241,7 +267,8 @@ export const occasionCatalog = [
     "description": "Celebrate a meaningful goodbye",
     "descriptionBn": "স্মরণীয় বিদায়ের আয়োজন করুন",
     "icon": "👋",
-    "preset": "REUNION"
+    "preset": "REUNION",
+    "iconKey": "groups"
   },
   {
     "type": "FRESHERS",
@@ -250,7 +277,8 @@ export const occasionCatalog = [
     "description": "Welcome the newest students",
     "descriptionBn": "নতুন শিক্ষার্থীদের স্বাগত আয়োজন",
     "icon": "🎉",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "celebration"
   },
   {
     "type": "CONVOCATION",
@@ -259,7 +287,8 @@ export const occasionCatalog = [
     "description": "Celebrate academic achievements together",
     "descriptionBn": "শিক্ষা জীবনের অর্জন উদযাপন",
     "icon": "🎓",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "school"
   },
   {
     "type": "SPORTS_DAY",
@@ -268,7 +297,8 @@ export const occasionCatalog = [
     "description": "Play compete and celebrate",
     "descriptionBn": "খেলা প্রতিযোগিতা ও আনন্দ",
     "icon": "🏆",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "trophy"
   },
   {
     "type": "CHARITY",
@@ -277,7 +307,8 @@ export const occasionCatalog = [
     "description": "Gather support for causes",
     "descriptionBn": "মহৎ কাজে সহায়তা সংগ্রহ",
     "icon": "❤️",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "favorite"
   },
   {
     "type": "MILAD",
@@ -286,7 +317,8 @@ export const occasionCatalog = [
     "description": "Gather for prayers together",
     "descriptionBn": "একসাথে দোয়া ও প্রার্থনা",
     "icon": "🤲",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "groups"
   },
   {
     "type": "RETIREMENT",
@@ -295,7 +327,8 @@ export const occasionCatalog = [
     "description": "Celebrate years of service",
     "descriptionBn": "কর্মজীবনের অবদান উদযাপন করুন",
     "icon": "💐",
-    "preset": "CORPORATE"
+    "preset": "CORPORATE",
+    "iconKey": "flower"
   },
   {
     "type": "HOUSEWARMING",
@@ -304,7 +337,8 @@ export const occasionCatalog = [
     "description": "Welcome everyone home together",
     "descriptionBn": "নতুন ঘরে সবাইকে স্বাগত",
     "icon": "🏠",
-    "preset": "REUNION"
+    "preset": "REUNION",
+    "iconKey": "home"
   },
   {
     "type": "GRADUATION",
@@ -313,7 +347,8 @@ export const occasionCatalog = [
     "description": "Celebrate a proud achievement",
     "descriptionBn": "শিক্ষাজীবনের সফলতা একসাথে উদযাপন",
     "icon": "🎓",
-    "preset": "GRADUATION"
+    "preset": "GRADUATION",
+    "iconKey": "school"
   },
   {
     "type": "PRIZE_GIVING",
@@ -322,7 +357,8 @@ export const occasionCatalog = [
     "description": "Recognize achievements and excellence",
     "descriptionBn": "সাফল্য ও কৃতিত্বের স্বীকৃতি",
     "icon": "🏅",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "trophy"
   },
   {
     "type": "BOOK_LAUNCH",
@@ -331,7 +367,8 @@ export const occasionCatalog = [
     "description": "Introduce a new book",
     "descriptionBn": "নতুন বই প্রকাশের আয়োজন",
     "icon": "📚",
-    "preset": "CONFERENCE"
+    "preset": "CONFERENCE",
+    "iconKey": "book"
   },
   {
     "type": "EXHIBITION",
@@ -340,7 +377,8 @@ export const occasionCatalog = [
     "description": "Explore creativity and crafts",
     "descriptionBn": "সৃজনশীলতা ও শিল্পের প্রদর্শনী",
     "icon": "🎨",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "palette"
   },
   {
     "type": "TRADE_SHOW",
@@ -349,7 +387,8 @@ export const occasionCatalog = [
     "description": "Connect businesses and visitors",
     "descriptionBn": "ব্যবসা ও দর্শনার্থীদের মিলনমেলা",
     "icon": "🏬",
-    "preset": "CORPORATE"
+    "preset": "CORPORATE",
+    "iconKey": "work"
   },
   {
     "type": "FAMILY_GET_TOGETHER",
@@ -358,7 +397,8 @@ export const occasionCatalog = [
     "description": "Spend time with family",
     "descriptionBn": "পরিবারের সবাই মিলে আনন্দ",
     "icon": "👨‍👩‍👧‍👦",
-    "preset": "REUNION"
+    "preset": "REUNION",
+    "iconKey": "groups"
   },
   {
     "type": "KIDS_PARTY",
@@ -367,7 +407,8 @@ export const occasionCatalog = [
     "description": "Fun and games together",
     "descriptionBn": "শিশুদের খেলা ও আনন্দ",
     "icon": "🎈",
-    "preset": "BIRTHDAY"
+    "preset": "BIRTHDAY",
+    "iconKey": "cake"
   },
   {
     "type": "MEMORIAL",
@@ -376,7 +417,8 @@ export const occasionCatalog = [
     "description": "Remember loved ones together",
     "descriptionBn": "প্রয়াত প্রিয়জনকে একসাথে স্মরণ",
     "icon": "🕯️",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "flame"
   },
   {
     "type": "CHRISTMAS",
@@ -385,7 +427,8 @@ export const occasionCatalog = [
     "description": "Share the Christmas joy",
     "descriptionBn": "বড়দিনের আনন্দ একসাথে উদযাপন",
     "icon": "🎄",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "park"
   },
   {
     "type": "BUDDHA_PURNIMA",
@@ -394,7 +437,8 @@ export const occasionCatalog = [
     "description": "Gather in peaceful celebration",
     "descriptionBn": "শান্তি ও প্রার্থনায় একত্রিত",
     "icon": "🪷",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "flower"
   },
   {
     "type": "COMMUNITY",
@@ -403,7 +447,8 @@ export const occasionCatalog = [
     "description": "Bring your community together",
     "descriptionBn": "সবার জন্য মিলনমেলার আয়োজন",
     "icon": "🤝",
-    "preset": "COMMUNITY"
+    "preset": "COMMUNITY",
+    "iconKey": "groups"
   },
   {
     "type": "GENERAL",
@@ -412,6 +457,7 @@ export const occasionCatalog = [
     "description": "Plan your special gathering",
     "descriptionBn": "আপনার বিশেষ অনুষ্ঠানের আয়োজন",
     "icon": "✨",
-    "preset": "GENERAL"
+    "preset": "GENERAL",
+    "iconKey": "celebration"
   }
 ] as const;
