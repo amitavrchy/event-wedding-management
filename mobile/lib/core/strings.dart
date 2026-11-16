@@ -77,6 +77,13 @@ class S {
   }
 
   static const _en = {
+    'greeting': 'Hello, {name}',
+    'daysRemaining': '{count} days to go',
+    'taskProgress': '{done} of {total}',
+    'appDevice': 'Ayojon app',
+    'webBrowser': 'Web browser',
+    'dhaka': 'Dhaka',
+    'unknownDate': 'Date unavailable',
     'sendMessage': 'Send message',
     'workspaceFallback': 'a workspace',
     'notificationInviteBody': '{name} invited you to {workspace}',
@@ -390,6 +397,13 @@ class S {
   };
 
   static const _bn = {
+    'greeting': 'হ্যালো, {name}',
+    'daysRemaining': 'আর {count} দিন বাকি',
+    'taskProgress': '{total}টির মধ্যে {done}টি',
+    'appDevice': 'আয়োজন অ্যাপ',
+    'webBrowser': 'ওয়েব ব্রাউজার',
+    'dhaka': 'ঢাকা',
+    'unknownDate': 'তারিখ পাওয়া যায়নি',
     'sendMessage': 'বার্তা পাঠান',
     'workspaceFallback': 'একটি কর্মপরিসর',
     'notificationInviteBody': '{name} আপনাকে {workspace} এ আমন্ত্রণ জানিয়েছেন',

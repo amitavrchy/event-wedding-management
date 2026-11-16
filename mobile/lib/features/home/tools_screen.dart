@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/ui/spacing.dart';
 import '../../core/widgets/common.dart';
 import 'home_shell.dart';
 
@@ -56,42 +57,88 @@ class ToolsScreen extends ConsumerWidget {
           value: event,
           builder: (e) {
             if (e == null) return const SizedBox();
-            return ListView(padding: const EdgeInsets.all(16), children: [
-              for (final group in cat.groups) ...() {
-                final items = cat.features.where((f) => f.group == group.key && e.has(f.key)).toList();
-                if (items.isEmpty) return <Widget>[];
-                return [
-                  Padding(padding: const EdgeInsets.fromLTRB(4, 12, 4, 6), child: Text(s.bn ? group.labelBn : group.label, style: Theme.of(context).textTheme.titleSmall)),
-                  GridView.count(
-                    crossAxisCount: 3,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    children: [
-                      for (final f in items)
-                        Card(
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () => context.push('/tool/${f.key}'),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                Icon(toolIcons[f.key] ?? Icons.auto_awesome_outlined, color: Theme.of(context).colorScheme.primary),
-                                const SizedBox(height: 6),
-                                Text(s.bn ? f.labelBn : f.label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelMedium),
-                              ]),
-                            ),
-                          ),
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppSpacing.page,
+                AppSpacing.page,
+                AppSpacing.xl,
+              ),
+              children: [
+                for (final group in cat.groups)
+                  ...() {
+                    final items = cat.features
+                        .where((f) => f.group == group.key && e.has(f.key))
+                        .toList();
+                    if (items.isEmpty) return <Widget>[];
+                    return [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.xs,
+                          AppSpacing.md,
+                          AppSpacing.xs,
+                          AppSpacing.sm,
                         ),
-                    ],
+                        child: Text(
+                          s.bn ? group.labelBn : group.label,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
+                      GridView.count(
+                        crossAxisCount: MediaQuery.sizeOf(context).width < 360
+                            ? 2
+                            : 3,
+                        mainAxisExtent: 140,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: AppSpacing.sm,
+                        crossAxisSpacing: AppSpacing.sm,
+                        children: [
+                          for (final f in items)
+                            Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () => context.push('/tool/${f.key}'),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(AppSpacing.sm),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        toolIcons[f.key] ??
+                                            Icons.auto_awesome_outlined,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                      const SizedBox(height: AppSpacing.sm),
+                                      Text(
+                                        s.bn ? f.labelBn : f.label,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ];
+                  }(),
+                const SizedBox(height: AppSpacing.md),
+                if (!e.readOnly)
+                  OutlinedButton.icon(
+                    onPressed: () => context.push('/tool-settings'),
+                    icon: const Icon(Icons.tune),
+                    label: Text(s.t('textAddMoreTools')),
                   ),
-                ];
-              }(),
-              const SizedBox(height: 12),
-              if (!e.readOnly)
-                OutlinedButton.icon(onPressed: () => context.push('/tool-settings'), icon: const Icon(Icons.tune), label: Text(s.t('textAddMoreTools'))),
-            ]);
+              ],
+            );
           },
         ),
       ),
@@ -108,10 +155,18 @@ class ToolSettingsScreen extends ConsumerWidget {
     final event = ref.watch(currentEventProvider).value;
     final catalog = ref.watch(catalogProvider).value;
     final types = ref.watch(eventTypesProvider).value ?? [];
-    if (event == null || catalog == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    final defaults = types.where((t) => t.type == event.eventType).firstOrNull?.features ?? const [];
-    final enabled = List<String>.from((event.raw['enabledFeatures'] ?? const []) as List);
-    final disabled = List<String>.from((event.raw['disabledFeatures'] ?? const []) as List);
+    if (event == null || catalog == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final defaults =
+        types.where((t) => t.type == event.eventType).firstOrNull?.features ??
+        const [];
+    final enabled = List<String>.from(
+      (event.raw['enabledFeatures'] ?? const []) as List,
+    );
+    final disabled = List<String>.from(
+      (event.raw['disabledFeatures'] ?? const []) as List,
+    );
     Future<void> toggle(String key, bool on) async {
       final e = {...enabled}, d = {...disabled};
       if (on) {
@@ -122,22 +177,42 @@ class ToolSettingsScreen extends ConsumerWidget {
         if (defaults.contains(key)) d.add(key);
       }
       await attempt(context, () async {
-        await ref.read(apiProvider).patch('events/${event.id}', {'enabledFeatures': e.toList(), 'disabledFeatures': d.toList()});
+        await ref.read(apiProvider).patch('events/${event.id}', {
+          'enabledFeatures': e.toList(),
+          'disabledFeatures': d.toList(),
+        });
         refreshEvent(ref);
       });
     }
 
     return Scaffold(
       appBar: AppBar(title: Text(s.t('textToolsForThisEvent'))),
-      body: ListView(children: [
-        for (final f in catalog.features.where((f) => !f.core))
-          SwitchListTile(
-            value: event.has(f.key),
-            title: Text(s.bn ? f.labelBn : f.label),
-            subtitle: Text(f.description + (defaults.contains(f.key) ? (s.t('textSuggested')) : '')),
-            onChanged: (on) => toggle(f.key, on),
-          ),
-      ]),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.page,
+          AppSpacing.page,
+          AppSpacing.xl,
+        ),
+        children: [
+          for (final f in catalog.features.where((f) => !f.core))
+            SwitchListTile(
+              value: event.has(f.key),
+              title: Text(s.bn ? f.labelBn : f.label),
+              subtitle: s.bn
+                  ? (defaults.contains(f.key)
+                        ? Text(s.t('textSuggested'))
+                        : null)
+                  : Text(
+                      f.description +
+                          (defaults.contains(f.key)
+                              ? s.t('textSuggested')
+                              : ''),
+                    ),
+              onChanged: (on) => toggle(f.key, on),
+            ),
+        ],
+      ),
     );
   }
 }
