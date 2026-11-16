@@ -25,6 +25,7 @@ test(
       serviceId = "";
     let extraServiceId = "";
     try {
+      await db.user.create({ data: { id: suffix, email: `quote-${suffix}@example.com`, fullName: "Test User", passwordHash: "test" } });
       const vendor = await db.vendor.create({
         data: {
           ownerId: suffix,
@@ -246,28 +247,32 @@ test(
           expiresAt: new Date(Date.now() + 86400000).toISOString(),
         },
       );
-      await quotes.respond(req, quote.id, { status: "ACCEPTED" });
-      const quoted = await booking.hold(req, {
-        eventId,
-        serviceId: extraServiceId,
-        startAt: new Date(Date.now() + 20 * 86400000).toISOString(),
-        quoteId: quote.id,
-      });
-      assert.equal(
-        quoted.priceMinor,
-        50000,
-        "accepted quote price overrides the catalog price",
-      );
-      await assert.rejects(
-        () =>
-          booking.hold(req, {
-            eventId,
-            serviceId: extraServiceId,
-            startAt: new Date(Date.now() + 21 * 86400000).toISOString(),
-            quoteId: quote.id,
-          }),
-        /already been booked/,
-      );
+      const accept = { status: "ACCEPTED", serviceId: extraServiceId, startAt: new Date(Date.now() + 20 * 86400000).toISOString() };
+      const [first, second] = await Promise.all([quotes.respond(req, quote.id, accept), quotes.respond(req, quote.id, accept)]);
+      const quoted = first.booking!;
+      assert.equal(second.booking?.id, quoted.id);
+      assert.equal((await quotes.respond(req, quote.id, accept)).booking?.id, quoted.id);
+      assert.equal(await db.booking.count({ where: { quoteId: quote.id } }), 1);
+      assert.equal(quoted.priceMinor, 50000, "accepted quote price overrides the catalog price");
+      assert.equal(quoted.status, "CONFIRMED");
+      assert.deepEqual((await db.installment.findMany({ where: { bookingId: quoted.id }, orderBy: { dueAt: "asc" } })).map(i => [i.label, i.amountMinor, i.status]), [["Advance", 15000, "PENDING"], ["Balance", 35000, "PENDING"]]);
+      assert.equal((await booking.list(req)).some(b => b.id === quoted.id), true);
+      assert.equal((await booking.list({ user: { sub: suffix, role: "VENDOR" } })).some(b => b.id === quoted.id), true);
+      assert.equal(await db.notification.count({ where: { key: { in: [`quote-response:${quote.id}`, `quote-booking-host:${quote.id}`] } } }), 2);
+      await assert.rejects(() => booking.hold(req, { eventId, serviceId: extraServiceId, startAt: new Date(Date.now() + 21 * 86400000).toISOString(), quoteId: quote.id }), /already been booked/);
+      const conflictQuote = await quotes.create({ user: { sub: suffix, role: "VENDOR" } }, { eventId, vendorId, amountMinor: 60000, breakdown: [{ label: "Other quote", amountMinor: 60000 }], expiresAt: new Date(Date.now() + 86400000).toISOString() });
+      await assert.rejects(() => quotes.respond(req, conflictQuote.id, accept), (error: any) => error.getStatus() === 409 && /reserved/.test(error.message));
+      assert.equal((await db.quote.findUniqueOrThrow({ where: { id: conflictQuote.id } })).status, "SENT");
+      assert.equal(await db.booking.count({ where: { quoteId: conflictQuote.id } }), 0);
+      const retry = await quotes.respond(req, conflictQuote.id, { ...accept, startAt: new Date(Date.now() + 22 * 86400000).toISOString() });
+      assert.ok(retry.booking);
+      const vendorReq = { user: { sub: suffix, role: "VENDOR" } };
+      const offline = { amountMinor: 18000, method: "CASH", kind: "ADVANCE", idempotencyKey: `offline-${suffix}-advance` };
+      const recorded = await booking.recordPayment(vendorReq, retry.booking!.id, offline);
+      assert.equal((await booking.recordPayment(vendorReq, retry.booking!.id, offline)).id, recorded.id);
+      assert.deepEqual((await db.installment.findMany({ where: { bookingId: retry.booking!.id }, orderBy: { dueAt: "asc" } })).map(i => i.status), ["PAID", "PENDING"]);
+      await booking.recordPayment(vendorReq, retry.booking!.id, { ...offline, amountMinor: 42000, kind: "BALANCE", idempotencyKey: `offline-${suffix}-balance` });
+      assert.deepEqual((await db.installment.findMany({ where: { bookingId: retry.booking!.id }, orderBy: { dueAt: "asc" } })).map(i => i.status), ["PAID", "PAID"]);
       const quotedAdvance = await payments.create(req, {
         bookingId: quoted.id,
         provider: "SANDBOX",
@@ -307,6 +312,7 @@ test(
     } finally {
       await db.ledgerEntry.deleteMany({ where: { vendorId } });
       await db.payment.deleteMany({ where: { eventId } });
+      await db.installment.deleteMany({ where: { eventId } });
       await db.booking.deleteMany({ where: { eventId } });
       await db.guest.deleteMany({ where: { eventId } });
       await db.quote.deleteMany({ where: { eventId } });
@@ -320,6 +326,8 @@ test(
       if (extraServiceId)
         await db.vendorService.delete({ where: { id: extraServiceId } });
       if (vendorId) await db.vendor.delete({ where: { id: vendorId } });
+      await db.notification.deleteMany({ where: { recipientId: suffix } });
+      await db.user.deleteMany({ where: { id: suffix } });
       await db.$disconnect();
     }
   },

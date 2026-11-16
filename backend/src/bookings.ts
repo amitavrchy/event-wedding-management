@@ -34,7 +34,7 @@ export class BookingsController {
         req.user.role === "VENDOR"
           ? { service: { vendor: vendorAccess(req.user.sub) } }
           : { event: eventAccess(req.user.sub) },
-      include: { service: { include: { vendor: true } }, event: true },
+      include: { service: { include: { vendor: true } }, event: true, installments: { orderBy: { dueAt: "asc" } }, payments: { where: { status: "CAPTURED" } } },
       orderBy: { startAt: "asc" },
     });
   }
@@ -114,7 +114,7 @@ export class BookingsController {
       const paid = await tx.payment.aggregate({ where: { bookingId: id, status: "CAPTURED" }, _sum: { amountMinor: true } });
       if ((paid._sum.amountMinor || 0) + data.amountMinor > current.priceMinor)
         throw new BadRequestException("This is more than the remaining balance");
-      return tx.payment.create({
+      const payment = await tx.payment.create({
         data: {
           bookingId: id,
           eventId: current.eventId,
@@ -125,6 +125,17 @@ export class BookingsController {
           idempotencyKey: data.idempotencyKey,
         },
       });
+      if (current.quoteId) {
+        let remaining = (paid._sum.amountMinor || 0) + data.amountMinor;
+        const milestones = await tx.installment.findMany({ where: { bookingId: id }, orderBy: { dueAt: "asc" } });
+        for (const milestone of milestones) {
+          if (remaining >= milestone.amountMinor) {
+            await tx.installment.update({ where: { id: milestone.id }, data: { status: "PAID" } });
+            remaining -= milestone.amountMinor;
+          } else break;
+        }
+      }
+      return payment;
     });
   }
   @Patch(":id/status") async status(

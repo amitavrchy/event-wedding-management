@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
   BadRequestException,
+  ConflictException,
 } from "@nestjs/common";
 import { Database } from "./prisma";
 import { AuthGuard } from "./auth";
@@ -16,6 +17,8 @@ import { packagePrice } from "./domain";
 import { Notifier } from "./notify/notifier";
 import { link } from "./notify/templates";
 import { markResponded } from "./marketplace";
+import { reserve } from "./reservations";
+import { publishBooking } from "./realtime";
 @Controller("packages")
 export class PackagesController {
   constructor(private db: Database) {}
@@ -135,25 +138,59 @@ export class QuotesController {
     @Param("id") id: string,
     @Body() body: unknown,
   ) {
-    const { status } = parse(
-      z.object({ status: z.enum(["ACCEPTED", "REJECTED"]) }),
+    const data = parse(
+      z.object({ status: z.enum(["ACCEPTED", "REJECTED"]), serviceId: z.string().optional(), startAt: date.optional() }),
       body,
     );
     const quote = await this.db.quote.findUniqueOrThrow({ where: { id } });
     await ownEvent(this.db, quote.eventId, req.user);
-    if (quote.status !== "SENT" || quote.expiresAt < new Date())
-      throw new BadRequestException("Quote is closed or expired");
-    const updated = await this.db.quote.update({ where: { id }, data: { status } });
-    const vendor = await this.db.vendor.findUnique({ where: { id: quote.vendorId } });
-    if (vendor)
-      await this.notifier.notify(vendor.ownerId, {
-        title: status === "ACCEPTED" ? "Your quotation was accepted" : "Your quotation was declined",
-        body: `BDT ${(quote.amountMinor / 100).toLocaleString("en-IN")}`,
-        link: link("/business"),
-        kind: "QUOTE",
-        key: `quote-response:${id}`,
-        channels: { email: status === "ACCEPTED" },
+    let result: { quote: typeof quote; booking: Awaited<ReturnType<typeof reserve>> | null; created: boolean };
+    try {
+      result = await this.db.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${id}))`;
+        const current = await tx.quote.findUniqueOrThrow({ where: { id } });
+        const existing = await tx.booking.findUnique({ where: { quoteId: id } });
+        if (data.status === "ACCEPTED" && current.status === "ACCEPTED" && existing)
+          return { quote: current, booking: existing, created: false };
+        if (current.status !== "SENT" || current.expiresAt < new Date())
+          throw new BadRequestException("Quote is closed or expired");
+        if (data.status === "REJECTED")
+          return { quote: await tx.quote.update({ where: { id }, data: { status: data.status } }), booking: null, created: true };
+        if (!data.serviceId || !data.startAt)
+          throw new BadRequestException("Choose a service and date to accept this quote");
+        const updated = await tx.quote.update({ where: { id }, data: { status: "ACCEPTED" } });
+        const held = await reserve(tx, { eventId: current.eventId, serviceId: data.serviceId, startAt: data.startAt, quoteId: id, policyFlags: [] });
+        const booking = await tx.booking.update({ where: { id: held.id }, data: { status: "CONFIRMED" } });
+        await tx.installment.createMany({ data: [
+          { bookingId: booking.id, eventId: booking.eventId, label: "Advance", amountMinor: booking.advanceMinor, dueAt: new Date() },
+          { bookingId: booking.id, eventId: booking.eventId, label: "Balance", amountMinor: booking.priceMinor - booking.advanceMinor, dueAt: booking.startAt },
+        ] });
+        return { quote: updated, booking, created: true };
       });
-    return updated;
+    } catch (error) {
+      if (String(error).includes("booking_service_period_exclusion") || String(error).includes("23P01"))
+        throw new ConflictException("This service is already reserved for that time");
+      throw error;
+    }
+    if (result.created) {
+      const [vendor, event] = await Promise.all([
+        this.db.vendor.findUnique({ where: { id: quote.vendorId } }),
+        this.db.event.findUnique({ where: { id: quote.eventId } }),
+      ]);
+      if (result.booking) await publishBooking(this.db, quote.eventId, quote.vendorId);
+      if (vendor)
+        await this.notifier.notify(vendor.ownerId, {
+          title: data.status === "ACCEPTED" ? "Your quotation was accepted" : "Your quotation was declined",
+          body: `BDT ${(quote.amountMinor / 100).toLocaleString("en-IN")}`,
+          link: link(data.status === "ACCEPTED" ? "/bookings" : "/business"), kind: "QUOTE",
+          key: `quote-response:${id}`, channels: { email: data.status === "ACCEPTED" },
+        });
+      if (event && result.booking)
+        await this.notifier.notify(event.hostId, {
+          title: "Your booking is recorded", body: "Arrange the advance and balance directly with your vendor.",
+          link: link("/bookings"), kind: "BOOKING", key: `quote-booking-host:${id}`, channels: { email: true },
+        });
+    }
+    return { ...result.quote, booking: result.booking };
   }
 }

@@ -134,8 +134,7 @@ export default function Bookings() {
       <div className="info-note">
         <CreditCard size={20} />
         <span>
-          Sandbox checkout is available for testing. It never charges real
-          money. Holds expire after 15 minutes.
+          {sandbox ? "Sandbox checkout is for testing only. Quote bookings are paid directly to the vendor." : "Arrange payments directly with your vendor; the vendor can record payments here."}
         </span>
       </div>
       <div className="booking-list">
@@ -173,6 +172,9 @@ export default function Bookings() {
             </div>
             <div className="booking-actions">
               <strong className="booking-total">{taka(b.priceMinor)}</strong>
+              {b.quoteId && b.installments?.map((milestone) => (
+                <small key={milestone.id}>{milestone.label}: {taka(milestone.amountMinor)} · {milestone.status.toLowerCase()}</small>
+              ))}
               {user?.role === "VENDOR" &&
                 ["HELD", "AWAITING_ADVANCE"].includes(b.status) && (
                   <Button onClick={() => void vendorAction(b, "confirm")}>
@@ -206,6 +208,7 @@ export default function Bookings() {
                 )}
               {user?.role !== "VENDOR" &&
                 sandbox &&
+                !b.quoteId &&
                 b.status === "CONFIRMED" && (
                   <Button
                     variant="secondary"

@@ -131,6 +131,8 @@ export type Booking = {
   holdExpiresAt: string;
   priceMinor: number;
   advanceMinor: number;
+  quoteId?: string | null;
+  installments?: { id: string; label: string; amountMinor: number; status: string; dueAt: string }[];
   category: string;
   service: Service;
   event?: Event;

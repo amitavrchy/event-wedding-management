@@ -13,6 +13,8 @@ export async function reserve(
   },
   discountBps = 0,
 ) {
+  if (data.quoteId)
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${data.quoteId}))`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${data.serviceId}))`;
   const service = await tx.vendorService.findUnique({
     where: { id: data.serviceId },
@@ -56,7 +58,6 @@ export async function reserve(
     (service.basePriceMinor * (10000 - discountBps)) / 10000,
   );
   if (data.quoteId) {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${data.quoteId}))`;
     const quote = await tx.quote.findUniqueOrThrow({
       where: { id: data.quoteId },
     });

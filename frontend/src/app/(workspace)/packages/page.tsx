@@ -108,15 +108,6 @@ export default function Packages() {
               </div>
               <strong>{taka(q.amountMinor)}</strong>
               <Badge value={q.status} />
-              {q.status === "ACCEPTED" &&
-                vendors.some((v) => v.id === q.vendorId) && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => setBookingQuote(q)}
-                  >
-                    Book this quote
-                  </Button>
-                )}
               {q.status === "SENT" && (
                 <div className="button-group">
                   {["ACCEPTED", "REJECTED"].map((status) => (
@@ -125,6 +116,14 @@ export default function Packages() {
                       variant={status === "ACCEPTED" ? "primary" : "secondary"}
                       busy={busy === q.id}
                       onClick={async () => {
+                        if (status === "ACCEPTED") {
+                          if (!vendors.find((v) => v.id === q.vendorId)?.services.length) {
+                            notify("This vendor has no available service to book", true);
+                            return;
+                          }
+                          setBookingQuote(q);
+                          return;
+                        }
                         setBusy(q.id);
                         try {
                           await api(`quotes/${q.id}/respond`, {
@@ -214,10 +213,10 @@ export default function Packages() {
         />
       )}
       {bookingQuote && (
-        <QuoteCheckout
+        vendors.find((v) => v.id === bookingQuote.vendorId) && <QuoteCheckout
           quote={bookingQuote}
           vendor={vendors.find((v) => v.id === bookingQuote.vendorId)!}
-          onClose={() => setBookingQuote(null)}
+          onClose={() => { setBookingQuote(null); void load(); }}
         />
       )}
     </>

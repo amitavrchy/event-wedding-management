@@ -15,15 +15,15 @@ export function QuoteCheckout({
   vendor: Vendor;
   onClose: () => void;
 }) {
-  const { event, refresh, notify } = useApp();
+  const { refresh, notify } = useApp();
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   return (
     <Modal title="A celebration, made personal" onClose={onClose}>
       <p>
-        Your accepted quote from {vendor.businessName}:{" "}
+        Accept the quote from {vendor.businessName}:{" "}
         <strong>{taka(quote.amountMinor)}</strong>. The quoted total is
-        snapshotted when your date is held.
+        recorded with your booking. Arrange payment directly with the vendor.
       </p>
       <form
         className="form-stack"
@@ -32,17 +32,16 @@ export function QuoteCheckout({
           setBusy(true);
           const f = new FormData(e.currentTarget);
           try {
-            await api("bookings", {
+            await api(`quotes/${quote.id}/respond`, {
               method: "POST",
               body: json({
-                eventId: event?.id,
+                status: "ACCEPTED",
                 serviceId: f.get("serviceId"),
                 startAt: localDateToISO(String(f.get("startAt"))),
-                quoteId: quote.id,
               }),
             });
             await refresh();
-            notify("Your custom quote and date are held for 15 minutes");
+            notify("Your quote was accepted and your booking recorded");
             onClose();
             router.push("/bookings");
           } catch (e) {
@@ -64,7 +63,7 @@ export function QuoteCheckout({
         <Field label="Date and time (Asia/Dhaka)">
           <input name="startAt" type="datetime-local" required />
         </Field>
-        <Button busy={busy}>Hold at the quoted price</Button>
+        <Button busy={busy}>Accept and book</Button>
       </form>
     </Modal>
   );
