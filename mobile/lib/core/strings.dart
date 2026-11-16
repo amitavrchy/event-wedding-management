@@ -3,20 +3,45 @@ class S {
   S._(this._m, this.locale);
   final Map<String, String> _m;
   final String locale;
-  static S of(String locale) => S._(locale == 'bn' ? _bn : _en, locale == 'bn' ? 'bn' : 'en');
+  static S of(String locale) =>
+      S._(locale == 'bn' ? _bn : _en, locale == 'bn' ? 'bn' : 'en');
   String t(String key) => _m[key] ?? _en[key] ?? key;
   bool get bn => locale == 'bn';
 
   static Map<String, String> get english => Map.unmodifiable(_en);
   static Map<String, String> get bangla => Map.unmodifiable(_bn);
 
+  String guestSummary(String total, String attending) =>
+      t('guestSummary')
+          .replaceAll('{total}', total)
+          .replaceAll('{attending}', attending);
+  String guestParty(String size, String maximum) =>
+      t('guestParty')
+          .replaceAll('{size}', size)
+          .replaceAll('{maximum}', maximum);
+  String invitation(String name, String event, String url) =>
+      t('invitation')
+          .replaceAll('{name}', name)
+          .replaceAll('{event}', event)
+          .replaceAll('{url}', url);
+
   /// A server-owned code is translated when it is known to the app.
   String codeLabel(String code) {
-    final key = 'code${code.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '')}';
-    return _m[key] ?? (bn ? t('unknownStatus') : code.replaceAll('_', ' ').toLowerCase());
+    final key =
+        'code${code.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '')}';
+    return _m[key] ??
+        (bn ? t('unknownStatus') : code.replaceAll('_', ' ').toLowerCase());
   }
 
   static const _en = {
+    'guestSummary': '{total} guests · {attending} attending',
+    'guestParty': '{size} of {maximum}',
+    'invitation':
+        'Dear {name},\n{event}. Please let us know if you can come: {url}',
+    'codeINVITED': 'Invited',
+    'codeCASH': 'Cash',
+    'codeGIFT': 'Gift',
+    'codeGOLD': 'Gold',
     'unknownStatus': 'Unknown',
     'errorNetwork': 'No internet connection. Check your network and try again.',
     'errorUnauthorized': 'Please sign in again.',
@@ -133,9 +158,11 @@ class S {
     'textApprove': 'Approve',
     'textHide': 'Hide',
     'textRunSheet': 'Run sheet',
-    'textSendAVendorAnInquiry': 'Send a vendor an inquiry to start a conversation',
+    'textSendAVendorAnInquiry':
+        'Send a vendor an inquiry to start a conversation',
     'textAtLeast10Characters': 'At least 10 characters',
-    'textByCreatingAnAccountYou': 'By creating an account you agree to our terms and privacy policy.',
+    'textByCreatingAnAccountYou':
+        'By creating an account you agree to our terms and privacy policy.',
     'textConfirmYourEmail': 'Confirm your email',
     'textEnterTheCodeWeEmailed': 'Enter the code we emailed you',
     'textEmailCode': 'Email code',
@@ -156,7 +183,8 @@ class S {
 
     'appName': 'Ayojon',
     'whatPlanning': 'What are you planning?',
-    'whatPlanningSub': 'Choose your occasion. We will show only the tools it needs.',
+    'whatPlanningSub':
+        'Choose your occasion. We will show only the tools it needs.',
     'moreOccasions': 'More occasions',
     'searchOccasions': 'Search occasions',
     'noOccasions': 'No occasions found.',
@@ -220,7 +248,8 @@ class S {
     'alreadyArrived': 'Already checked in',
     'notInvited': 'Not on the list for this day',
     'openOnWeb': 'Open on the web',
-    'webOnly': 'This tool works best on a larger screen. It opens in your browser.',
+    'webOnly':
+        'This tool works best on a larger screen. It opens in your browser.',
     'updateRequired': 'Please update Ayojon to continue.',
     'update': 'Update',
     'plan': 'Plan',
@@ -233,6 +262,13 @@ class S {
   };
 
   static const _bn = {
+    'guestSummary': '{total} জন অতিথি · {attending} জন আসছেন',
+    'guestParty': '{maximum} জনের মধ্যে {size} জন',
+    'invitation': 'আসসালামু আলাইকুম {name},\n{event} — উপস্থিতি জানাতে এই লিংকে ক্লিক করুন: {url}',
+    'codeINVITED': 'আমন্ত্রিত',
+    'codeCASH': 'নগদ',
+    'codeGIFT': 'উপহার',
+    'codeGOLD': 'স্বর্ণ',
     'unknownStatus': 'অজানা',
     'errorNetwork': 'ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
     'errorUnauthorized': 'অনুগ্রহ করে আবার সাইন ইন করুন।',
@@ -351,7 +387,8 @@ class S {
     'textRunSheet': 'রান শিট',
     'textSendAVendorAnInquiry': 'ভেন্ডরকে জিজ্ঞাসা পাঠালে কথোপকথন এখানে আসবে',
     'textAtLeast10Characters': 'কমপক্ষে ১০ অক্ষর',
-    'textByCreatingAnAccountYou': 'অ্যাকাউন্ট খুলে আপনি আমাদের শর্তাবলী ও গোপনীয়তা নীতিতে সম্মত হচ্ছেন।',
+    'textByCreatingAnAccountYou':
+        'অ্যাকাউন্ট খুলে আপনি আমাদের শর্তাবলী ও গোপনীয়তা নীতিতে সম্মত হচ্ছেন।',
     'textConfirmYourEmail': 'ইমেইল নিশ্চিত করুন',
     'textEnterTheCodeWeEmailed': 'ইমেইলে পাঠানো কোড দিন',
     'textEmailCode': 'ইমেইল কোড',

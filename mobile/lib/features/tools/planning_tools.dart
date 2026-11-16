@@ -13,7 +13,10 @@ import '../../core/widgets/common.dart';
 import '../../models/models.dart';
 
 /// Loads a JSON resource for the current event; `path` gets the event id.
-final eventResource = FutureProvider.autoDispose.family<dynamic, String>((ref, path) async {
+final eventResource = FutureProvider.autoDispose.family<dynamic, String>((
+  ref,
+  path,
+) async {
   final event = await ref.watch(currentEventProvider.future);
   if (event == null) return null;
   return ref.read(apiProvider).get<dynamic>(path.replaceAll(':id', event.id));
@@ -22,8 +25,15 @@ final eventResource = FutureProvider.autoDispose.family<dynamic, String>((ref, p
 String sideLabel(S s, EventSummary e, String? side) {
   if (side == null) return '—';
   final custom = ((e.raw['sides'] ?? const {}) as Map)[side];
-  if (custom is Map && custom['label'] is String) return custom['label'] as String;
-  return s.t(switch (side) { 'BRIDE' => 'bride', 'GROOM' => 'groom', _ => 'both' });
+  if (custom is Map && custom['label'] is String) {
+    return custom['label'] as String;
+  }
+  return switch (side) {
+    'BRIDE' => s.t('bride'),
+    'GROOM' => s.t('groom'),
+    'BOTH' => s.t('both'),
+    _ => s.codeLabel(side),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -39,59 +49,132 @@ class ChecklistScreen extends ConsumerWidget {
         onPressed: () async {
           final title = await _prompt(context, s.t('textNewTask'));
           final e = event.value;
-          if (title == null || title.length < 2 || e == null || !context.mounted) return;
+          if (title == null ||
+              title.length < 2 ||
+              e == null ||
+              !context.mounted) {
+            return;
+          }
           await attempt(context, () async {
-            await ref.read(apiProvider).post('events/${e.id}/tasks', {'title': title});
+            await ref.read(apiProvider).post('events/${e.id}/tasks', {
+              'title': title,
+            });
             refreshEvent(ref);
           });
         },
         child: const Icon(Icons.add),
       ),
-      body: AsyncView(
-        value: event,
-        builder: (e) {
-          final tasks = List<Map>.from((e?.raw['tasks'] ?? const []) as List)..sort((a, b) => (a['done'] == true ? 1 : 0) - (b['done'] == true ? 1 : 0));
-          if (tasks.isEmpty) return EmptyState(s.t('empty'));
-          return ListView(padding: const EdgeInsets.only(bottom: AppSpacing.xl * 3), children: [
-            for (final t in tasks)
-              Dismissible(
-                key: ValueKey(t['id']),
-                direction: e!.readOnly ? DismissDirection.none : DismissDirection.endToStart,
-                background: Container(color: Colors.red.shade100, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), child: const Icon(Icons.delete_outline)),
-                confirmDismiss: (_) => confirmDialog(context, s.t('delete'), t['title'] as String, destructive: true),
-                onDismissed: (_) => attempt(context, () async {
-                  await ref.read(apiProvider).delete('events/${e.id}/tasks/${t['id']}');
-                  refreshEvent(ref);
-                }),
-                child: CheckboxListTile(
-                  value: t['done'] == true,
-                  title: Text(t['title'] as String, style: t['done'] == true ? const TextStyle(decoration: TextDecoration.lineThrough) : null),
-                  subtitle: t['dueAt'] != null ? Text(dateLabel(DateTime.parse(t['dueAt'] as String).toLocal(), locale: s.locale)) : null,
-                  onChanged: e.readOnly
-                      ? null
-                      : (v) => attempt(context, () async {
-                            await ref.read(apiProvider).patch('events/${e.id}/tasks/${t['id']}', {'done': v == true});
-                            refreshEvent(ref);
-                          }),
-                ),
+      body: SafeArea(
+        child: AsyncView(
+          value: event,
+          builder: (e) {
+            final tasks = List<Map>.from((e?.raw['tasks'] ?? const []) as List)
+              ..sort(
+                (a, b) =>
+                    (a['done'] == true ? 1 : 0) - (b['done'] == true ? 1 : 0),
+              );
+            if (tasks.isEmpty) return EmptyState(s.t('empty'));
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                0,
+                AppSpacing.page,
+                AppSpacing.xl * 4,
               ),
-          ]);
-        },
+              children: [
+                for (final t in tasks)
+                  Dismissible(
+                    key: ValueKey(t['id']),
+                    direction: e!.readOnly
+                        ? DismissDirection.none
+                        : DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red.shade100,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: AppSpacing.page),
+                      child: const Icon(Icons.delete_outline),
+                    ),
+                    confirmDismiss: (_) => confirmDialog(
+                      context,
+                      s.t('delete'),
+                      t['title'] as String,
+                      destructive: true,
+                    ),
+                    onDismissed: (_) => attempt(context, () async {
+                      await ref
+                          .read(apiProvider)
+                          .delete('events/${e.id}/tasks/${t['id']}');
+                      refreshEvent(ref);
+                    }),
+                    child: CheckboxListTile(
+                      value: t['done'] == true,
+                      title: Text(
+                        t['title'] as String,
+                        style: t['done'] == true
+                            ? const TextStyle(
+                                decoration: TextDecoration.lineThrough,
+                              )
+                            : null,
+                      ),
+                      subtitle: t['dueAt'] != null
+                          ? Text(
+                              dateLabel(
+                                DateTime.parse(t['dueAt'] as String).toLocal(),
+                                locale: s.locale,
+                              ),
+                            )
+                          : null,
+                      onChanged: e.readOnly
+                          ? null
+                          : (v) => attempt(context, () async {
+                              await ref.read(apiProvider).patch(
+                                'events/${e.id}/tasks/${t['id']}',
+                                {'done': v == true},
+                              );
+                              refreshEvent(ref);
+                            }),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-Future<String?> _prompt(BuildContext context, String title, {String? initial, TextInputType? keyboard}) {
+Future<String?> _prompt(
+  BuildContext context,
+  String title, {
+  String? initial,
+  TextInputType? keyboard,
+}) {
   final controller = TextEditingController(text: initial);
   return showDialog<String>(
     context: context,
     builder: (c) => AlertDialog(
       title: Text(title),
-      content: TextField(controller: controller, autofocus: true, keyboardType: keyboard),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        keyboardType: keyboard,
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(c), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('cancel'))),
-        TextButton(onPressed: () => Navigator.pop(c, controller.text.trim()), child: Text(ProviderScope.containerOf(context).read(stringsProvider).t('ok'))),
+        TextButton(
+          onPressed: () => Navigator.pop(c),
+          child: Text(
+            ProviderScope.containerOf(context)
+                .read(stringsProvider)
+                .t('cancel'),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(c, controller.text.trim()),
+          child: Text(
+            ProviderScope.containerOf(context).read(stringsProvider).t('ok'),
+          ),
+        ),
       ],
     ),
   );
@@ -108,43 +191,108 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
   String query = '';
   String? side;
 
-  Future<void> edit(EventSummary e, {Guest? guest, String? name, String? phone}) async {
+  Future<void> edit(
+    EventSummary e, {
+    Guest? guest,
+    String? name,
+    String? phone,
+  }) async {
     final s = ref.read(stringsProvider);
-    final nameC = TextEditingController(text: guest?.name ?? name), phoneC = TextEditingController(text: guest?.phone ?? phone);
-    final partyC = TextEditingController(text: '${guest?.maxPartySize ?? 2}'), relC = TextEditingController(text: guest?.relationship);
+    final nameC = TextEditingController(text: guest?.name ?? name),
+        phoneC = TextEditingController(text: guest?.phone ?? phone);
+    final partyC = TextEditingController(
+          text: numberLabel(guest?.maxPartySize ?? 2, locale: s.locale),
+        ),
+        relC = TextEditingController(text: guest?.relationship);
     String? chosenSide = guest?.side;
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (c) => StatefulBuilder(
-        builder: (c, setSheet) => Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.viewInsetsOf(c).bottom + 16),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: nameC, decoration: InputDecoration(labelText: s.t('fullName')), textCapitalization: TextCapitalization.words),
-            const SizedBox(height: 10),
-            TextField(controller: phoneC, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: s.t('phone'))),
-            const SizedBox(height: 10),
-            Row(children: [
-              Expanded(child: TextField(controller: partyC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: s.t('textMaxPartySize')))),
-              const SizedBox(width: 10),
-              Expanded(child: TextField(controller: relC, decoration: InputDecoration(labelText: s.t('textRelationship')))),
-            ]),
-            if (e.has('sides')) ...[
-              const SizedBox(height: 10),
-              SegmentedButton<String?>(
-                segments: [
-                  ButtonSegment(value: 'BRIDE', label: Text(sideLabel(s, e, 'BRIDE'))),
-                  ButtonSegment(value: 'GROOM', label: Text(sideLabel(s, e, 'GROOM'))),
-                  ButtonSegment(value: 'BOTH', label: Text(s.t('both'))),
-                ],
-                emptySelectionAllowed: true,
-                selected: {chosenSide},
-                onSelectionChanged: (v) => setSheet(() => chosenSide = v.firstOrNull),
+        builder: (c, setSheet) => SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppSpacing.page,
+                AppSpacing.page,
+                MediaQuery.viewInsetsOf(c).bottom + AppSpacing.page,
               ),
-            ],
-            const SizedBox(height: 16),
-            FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(s.t('save'))),
-          ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameC,
+                    decoration: InputDecoration(labelText: s.t('fullName')),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  TextField(
+                    controller: phoneC,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(labelText: s.t('phone')),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: partyC,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: s.t('textMaxPartySize'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: TextField(
+                          controller: relC,
+                          decoration: InputDecoration(
+                            labelText: s.t('textRelationship'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (e.has('sides')) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<String?>(
+                        segments: [
+                          ButtonSegment(
+                            value: 'BRIDE',
+                            label: Text(sideLabel(s, e, 'BRIDE')),
+                          ),
+                          ButtonSegment(
+                            value: 'GROOM',
+                            label: Text(sideLabel(s, e, 'GROOM')),
+                          ),
+                          ButtonSegment(
+                            value: 'BOTH',
+                            label: Text(s.t('both')),
+                          ),
+                        ],
+                        emptySelectionAllowed: true,
+                        selected: {chosenSide},
+                        onSelectionChanged: (v) =>
+                            setSheet(() => chosenSide = v.firstOrNull),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.page),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(c, true),
+                      child: Text(s.t('save')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -152,7 +300,7 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
     final body = {
       'name': nameC.text.trim(),
       if (phoneC.text.trim().isNotEmpty) 'phone': phoneC.text.trim(),
-      'maxPartySize': int.tryParse(partyC.text) ?? 2,
+      'maxPartySize': int.tryParse(normalizedDigits(partyC.text)) ?? 2,
       if (relC.text.trim().isNotEmpty) 'relationship': relC.text.trim(),
       if (e.has('sides')) 'side': chosenSide,
     };
@@ -169,19 +317,35 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
 
   /// Native contact picker: no contacts permission needed, one contact at a time.
   Future<void> fromContacts(EventSummary e) async {
-    final contact = await FlutterContacts.native.showPicker(properties: {ContactProperty.name, ContactProperty.phone});
+    final contact = await FlutterContacts.native.showPicker(
+      properties: {ContactProperty.name, ContactProperty.phone},
+    );
     if (contact == null || !mounted) return;
-    await edit(e, name: contact.displayName, phone: contact.phones.firstOrNull?.number);
+    await edit(
+      e,
+      name: contact.displayName,
+      phone: contact.phones.firstOrNull?.number,
+    );
   }
 
   Future<void> invite(EventSummary e, Guest g) async {
     final s = ref.read(stringsProvider);
     if (g.token == null) return;
     final url = '${AppConfig.webUrl}/rsvp/${g.token}';
-    final text = s.bn ? 'আসসালামু আলাইকুম ${g.name},\n${e.title} — উপস্থিতি জানাতে এই লিংকে ক্লিক করুন: $url' : 'Dear ${g.name},\n${e.title}. Please let us know if you can come: $url';
+    final text = s.invitation(g.name, e.title, url);
     final number = whatsappNumber(g.phone) ?? '';
-    final opened = await launchUrl(Uri.parse('https://wa.me/$number?text=${Uri.encodeComponent(text)}'), mode: LaunchMode.externalApplication);
-    if (opened) await ref.read(apiProvider).post('events/${e.id}/guests/mark-sent', {'guestIds': [g.id]}).catchError((_) => null);
+    final opened = await launchUrl(
+      Uri.parse('https://wa.me/$number?text=${Uri.encodeComponent(text)}'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (opened) {
+      await ref
+          .read(apiProvider)
+          .post('events/${e.id}/guests/mark-sent', {
+            'guestIds': [g.id],
+          })
+          .catchError((_) => null);
+    }
   }
 
   @override
@@ -191,71 +355,185 @@ class _GuestsScreenState extends ConsumerState<GuestsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(s.t('textGuestList'))),
       floatingActionButton: event.value?.readOnly == false
-          ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-              FloatingActionButton.small(heroTag: 'contacts', onPressed: () => fromContacts(event.value!), tooltip: s.t('fromContacts'), child: const Icon(Icons.contacts_outlined)),
-              const SizedBox(height: 10),
-              FloatingActionButton.extended(heroTag: 'add', onPressed: () => edit(event.value!), icon: const Icon(Icons.person_add_alt), label: Text(s.t('addGuest'))),
-            ])
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'contacts',
+                  onPressed: () => fromContacts(event.value!),
+                  tooltip: s.t('fromContacts'),
+                  child: const Icon(Icons.contacts_outlined),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                FloatingActionButton.extended(
+                  heroTag: 'add',
+                  onPressed: () => edit(event.value!),
+                  icon: const Icon(Icons.person_add_alt),
+                  label: Text(s.t('addGuest')),
+                ),
+              ],
+            )
           : null,
-      body: AsyncView(
-        value: event,
-        builder: (e) {
-          if (e == null) return const SizedBox();
-          final guests = [for (final g in (e.raw['guests'] ?? const []) as List) Guest.fromJson(g as Json)]
-              .where((g) => g.name.toLowerCase().contains(query.toLowerCase()) && (side == null || g.side == side))
-              .toList();
-          final attending = guests.where((g) => g.rsvpStatus == 'ACCEPTED').fold<int>(0, (n, g) => n + g.partySize);
-          return Column(children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: s.t('search')), onChanged: (v) => setState(() => query = v)),
-            ),
-            if (e.has('sides'))
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Row(children: [
-                  for (final option in [null, 'BRIDE', 'GROOM', 'BOTH'])
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(label: Text(option == null ? (s.t('textAll')) : sideLabel(s, e, option)), selected: side == option, onSelected: (_) => setState(() => side = option)),
+      body: SafeArea(
+        child: AsyncView(
+          value: event,
+          builder: (e) {
+            if (e == null) return const SizedBox();
+            final guests =
+                [
+                      for (final g in (e.raw['guests'] ?? const []) as List)
+                        Guest.fromJson(g as Json),
+                    ]
+                    .where(
+                      (g) =>
+                          g.name.toLowerCase().contains(query.toLowerCase()) &&
+                          (side == null || g.side == side),
+                    )
+                    .toList();
+            final attending = guests
+                .where((g) => g.rsvpStatus == 'ACCEPTED')
+                .fold<int>(0, (n, g) => n + g.partySize);
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.page,
+                    AppSpacing.sm,
+                    AppSpacing.page,
+                    0,
+                  ),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: s.t('search'),
                     ),
-                ]),
-              ),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Align(alignment: Alignment.centerLeft, child: Text('${guests.length} · $attending ${s.t('attending')}'))),
-            Expanded(
-              child: guests.isEmpty
-                  ? EmptyState(s.t('empty'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 140),
-                      itemCount: guests.length,
-                      itemBuilder: (_, i) {
-                        final g = guests[i];
-                        return ListTile(
-                          title: Text(g.name),
-                          subtitle: Text([s.codeLabel(g.rsvpStatus), '${g.partySize}/${g.maxPartySize}', if (e.has('sides') && g.side != null) sideLabel(s, e, g.side)].join(' · ')),
-                          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                            if (!e.readOnly) IconButton(tooltip: s.t('whatsapp'), icon: const Icon(Icons.send_outlined), onPressed: () => invite(e, g)),
-                            if (!e.readOnly)
-                              PopupMenuButton<String>(
-                                onSelected: (v) async {
-                                  if (v == 'edit') return edit(e, guest: g);
-                                  if (await confirmDialog(context, s.t('delete'), g.name, destructive: true) && context.mounted) {
-                                    await attempt(context, () async {
-                                      await ref.read(apiProvider).delete('events/${e.id}/guests/${g.id}');
-                                      refreshEvent(ref);
-                                    });
-                                  }
-                                },
-                                itemBuilder: (_) => [PopupMenuItem(value: 'edit', child: Text(s.t('edit'))), PopupMenuItem(value: 'delete', child: Text(s.t('delete')))],
+                    onChanged: (v) => setState(() => query = v),
+                  ),
+                ),
+                if (e.has('sides'))
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        for (final option in [null, 'BRIDE', 'GROOM', 'BOTH'])
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xs,
+                            ),
+                            child: ChoiceChip(
+                              label: Text(
+                                option == null
+                                    ? (s.t('textAll'))
+                                    : sideLabel(s, e, option),
                               ),
-                          ]),
-                        );
-                      },
+                              selected: side == option,
+                              onSelected: (_) => setState(() => side = option),
+                            ),
+                          ),
+                      ],
                     ),
-            ),
-          ]);
-        },
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.page,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      s.guestSummary(
+                        numberLabel(guests.length, locale: s.locale),
+                        numberLabel(attending, locale: s.locale),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: guests.isEmpty
+                      ? EmptyState(s.t('empty'))
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.page,
+                            0,
+                            AppSpacing.page,
+                            AppSpacing.xl * 5,
+                          ),
+                          itemCount: guests.length,
+                          itemBuilder: (_, i) {
+                            final g = guests[i];
+                            return ListTile(
+                              title: Text(g.name),
+                              subtitle: Text(
+                                [
+                                  s.codeLabel(g.rsvpStatus),
+                                  s.guestParty(
+                                    numberLabel(g.partySize, locale: s.locale),
+                                    numberLabel(
+                                      g.maxPartySize,
+                                      locale: s.locale,
+                                    ),
+                                  ),
+                                  if (e.has('sides') && g.side != null)
+                                    sideLabel(s, e, g.side),
+                                ].join(' · '),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!e.readOnly)
+                                    IconButton(
+                                      tooltip: s.t('whatsapp'),
+                                      icon: const Icon(Icons.send_outlined),
+                                      onPressed: () => invite(e, g),
+                                    ),
+                                  if (!e.readOnly)
+                                    PopupMenuButton<String>(
+                                      onSelected: (v) async {
+                                        if (v == 'edit') {
+                                          return edit(e, guest: g);
+                                        }
+                                        if (await confirmDialog(
+                                              context,
+                                              s.t('delete'),
+                                              g.name,
+                                              destructive: true,
+                                            ) &&
+                                            context.mounted) {
+                                          await attempt(context, () async {
+                                            await ref
+                                                .read(apiProvider)
+                                                .delete(
+                                                  'events/${e.id}/guests/${g.id}',
+                                                );
+                                            refreshEvent(ref);
+                                          });
+                                        }
+                                      },
+                                      itemBuilder: (_) => [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Text(s.t('edit')),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Text(s.t('delete')),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -279,54 +557,133 @@ class BudgetScreen extends ConsumerWidget {
         context: context,
         isScrollControlled: true,
         builder: (c) => StatefulBuilder(
-          builder: (c, set) => Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.viewInsetsOf(c).bottom + 16),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: noteC, decoration: InputDecoration(labelText: s.t('textWhatFor'))),
-              const SizedBox(height: 10),
-              TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: '৳')),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                initialValue: category,
-                items: [for (final c in ['Venue', 'Catering', 'Decoration', 'Photography', 'Attire', 'Other']) DropdownMenuItem(value: c, child: Text(s.codeLabel(c)))],
-                onChanged: (v) => set(() => category = v ?? 'Other'),
-              ),
-              if (event.has('costSplit'))
-                DropdownButtonFormField<String?>(
-                  initialValue: paidBy,
-                  decoration: InputDecoration(labelText: s.t('textPaidBy')),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('—')),
-                    DropdownMenuItem(value: 'BRIDE', child: Text(sideLabel(s, event, 'BRIDE'))),
-                    DropdownMenuItem(value: 'GROOM', child: Text(sideLabel(s, event, 'GROOM'))),
-                    DropdownMenuItem(value: 'SHARED', child: Text(s.t('textShared'))),
-                  ],
-                  onChanged: (v) => set(() => paidBy = v),
+          builder: (c, set) => SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.page,
+                  AppSpacing.page,
+                  AppSpacing.page,
+                  MediaQuery.viewInsetsOf(c).bottom + AppSpacing.page,
                 ),
-              TextButton.icon(
-                onPressed: () async {
-                  final picked = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 2000, imageQuality: 80);
-                  if (picked != null) set(() => receipt = picked);
-                },
-                icon: const Icon(Icons.receipt_long_outlined),
-                label: Text(receipt == null ? (s.t('textPhotoOfReceipt')) : (s.t('textReceiptAttached'))),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: noteC,
+                      decoration: InputDecoration(
+                        labelText: s.t('textWhatFor'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: amountC,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: '৳'),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      initialValue: category,
+                      items: [
+                        for (final c in [
+                          'Venue',
+                          'Catering',
+                          'Decoration',
+                          'Photography',
+                          'Attire',
+                          'Other',
+                        ])
+                          DropdownMenuItem(
+                            value: c,
+                            child: Text(s.codeLabel(c)),
+                          ),
+                      ],
+                      onChanged: (v) => set(() => category = v ?? 'Other'),
+                    ),
+                    if (event.has('costSplit'))
+                      DropdownButtonFormField<String?>(
+                        isExpanded: true,
+                        initialValue: paidBy,
+                        decoration: InputDecoration(
+                          labelText: s.t('textPaidBy'),
+                        ),
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('—')),
+                          DropdownMenuItem(
+                            value: 'BRIDE',
+                            child: Text(sideLabel(s, event, 'BRIDE')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'GROOM',
+                            child: Text(sideLabel(s, event, 'GROOM')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'SHARED',
+                            child: Text(s.t('textShared')),
+                          ),
+                        ],
+                        onChanged: (v) => set(() => paidBy = v),
+                      ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final picked = await ImagePicker().pickImage(
+                          source: ImageSource.camera,
+                          maxWidth: 2000,
+                          imageQuality: 80,
+                        );
+                        if (picked != null) set(() => receipt = picked);
+                      },
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: Text(
+                        receipt == null
+                            ? (s.t('textPhotoOfReceipt'))
+                            : (s.t('textReceiptAttached')),
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(c, true),
+                        child: Text(s.t('save')),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(s.t('save'))),
-            ]),
+            ),
           ),
         ),
       );
       if (ok != true || !context.mounted) return;
       await attempt(context, () async {
         final api = ref.read(apiProvider);
-        final created = await api.post<Json>('events/${event.id}/budget/expenses', {
-          'category': category,
-          'note': noteC.text.trim(),
-          'amountMinor': ((double.tryParse(amountC.text) ?? 0) * 100).round(),
-        });
-        final media = receipt == null ? null : await api.upload(await receipt!.readAsBytes(), 'image/jpeg', 'RECEIPT', fileName: 'receipt.jpg');
+        final created = await api.post<Json>(
+          'events/${event.id}/budget/expenses',
+          {
+            'category': category,
+            'note': noteC.text.trim(),
+            'amountMinor':
+                ((double.tryParse(normalizedDigits(amountC.text)) ?? 0) * 100)
+                    .round(),
+          },
+        );
+        final media = receipt == null
+            ? null
+            : await api.upload(
+                await receipt!.readAsBytes(),
+                'image/jpeg',
+                'RECEIPT',
+                fileName: 'receipt.jpg',
+              );
         if (paidBy != null || media != null) {
-          await api.patch('events/${event.id}/budget/expenses/${created['id']}', {'paidBy': ?paidBy, if (media != null) 'receiptMediaId': media['id']});
+          await api.patch(
+            'events/${event.id}/budget/expenses/${created['id']}',
+            {
+              'paidBy': ?paidBy,
+              if (media != null) 'receiptMediaId': media['id'],
+            },
+          );
         }
         ref.invalidate(eventResource('events/:id/budget'));
         refreshEvent(ref);
@@ -335,42 +692,111 @@ class BudgetScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(s.t('textBudget'))),
-      floatingActionButton: event?.readOnly == false ? FloatingActionButton(onPressed: add, child: const Icon(Icons.add)) : null,
-      body: AsyncView(
-        value: budget,
-        onRetry: () => ref.invalidate(eventResource('events/:id/budget')),
-        builder: (data) {
-          if (data == null) return const SizedBox();
-          final expenses = List<Map>.from(data['expenses'] as List);
-          return ListView(padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, AppSpacing.xl * 3), children: [
-            Row(children: [
-              StatTile(value: taka(data['plannedMinor'] as int, compact: true, locale: s.locale), label: s.t('textPlanned'), icon: Icons.flag_outlined),
-              StatTile(value: taka(data['committedMinor'] as int, compact: true, locale: s.locale), label: s.t('textCommitted'), icon: Icons.event_available_outlined),
-              StatTile(value: taka(data['actualMinor'] as int, compact: true, locale: s.locale), label: s.t('spent'), icon: Icons.payments_outlined),
-            ]),
-            if (data['alert'] == true) Card(color: Colors.red.shade50, child: ListTile(leading: const Icon(Icons.warning_amber), title: Text(s.t('textBookingsExceedYourBudget')))),
-            const SizedBox(height: 8),
-            for (final x in expenses)
-              Card(
-                child: ListTile(
-                  title: Text(x['note'] as String),
-                  subtitle: Text('${s.codeLabel(x['category'] as String)}${x['paidBy'] != null && event != null ? ' · ${x['paidBy'] == 'SHARED' ? (s.t('textShared')) : sideLabel(s, event, x['paidBy'] as String)}' : ''}'),
-                  trailing: Text(taka(x['amountMinor'] as int, locale: s.locale)),
-                  onLongPress: event == null || event.readOnly
-                      ? null
-                      : () async {
-                          if (await confirmDialog(context, s.t('delete'), x['note'] as String, destructive: true) && context.mounted) {
-                            await attempt(context, () async {
-                              await ref.read(apiProvider).delete('events/${event.id}/budget/expenses/${x['id']}');
-                              ref.invalidate(eventResource('events/:id/budget'));
-                            });
-                          }
-                        },
-                ),
+      floatingActionButton: event?.readOnly == false
+          ? FloatingActionButton(onPressed: add, child: const Icon(Icons.add))
+          : null,
+      body: SafeArea(
+        child: AsyncView(
+          value: budget,
+          onRetry: () => ref.invalidate(eventResource('events/:id/budget')),
+          builder: (data) {
+            if (data == null) return const SizedBox();
+            final expenses = List<Map>.from(data['expenses'] as List);
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppSpacing.page,
+                AppSpacing.page,
+                AppSpacing.xl * 3,
               ),
-            if (expenses.isEmpty) EmptyState(s.t('empty')),
-          ]);
-        },
+              children: [
+                Row(
+                  children: [
+                    StatTile(
+                      value: taka(
+                        data['plannedMinor'] as int,
+                        compact: true,
+                        locale: s.locale,
+                      ),
+                      label: s.t('textPlanned'),
+                      icon: Icons.flag_outlined,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    StatTile(
+                      value: taka(
+                        data['committedMinor'] as int,
+                        compact: true,
+                        locale: s.locale,
+                      ),
+                      label: s.t('textCommitted'),
+                      icon: Icons.event_available_outlined,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    StatTile(
+                      value: taka(
+                        data['actualMinor'] as int,
+                        compact: true,
+                        locale: s.locale,
+                      ),
+                      label: s.t('spent'),
+                      icon: Icons.payments_outlined,
+                    ),
+                  ],
+                ),
+                if (data['alert'] == true)
+                  Card(
+                    color: Colors.red.shade50,
+                    child: ListTile(
+                      leading: const Icon(Icons.warning_amber),
+                      title: Text(s.t('textBookingsExceedYourBudget')),
+                    ),
+                  ),
+                const SizedBox(height: AppSpacing.sm),
+                for (final x in expenses)
+                  Card(
+                    child: ListTile(
+                      title: Text(x['note'] as String),
+                      subtitle: Text(
+                        '${s.codeLabel(x['category'] as String)}${x['paidBy'] != null && event != null ? ' · ${x['paidBy'] == 'SHARED' ? (s.t('textShared')) : sideLabel(s, event, x['paidBy'] as String)}' : ''}',
+                      ),
+                      trailing: Text(
+                        taka(x['amountMinor'] as int, locale: s.locale),
+                      ),
+                      onLongPress: event == null || event.readOnly
+                          ? null
+                          : () async {
+                              if (await confirmDialog(
+                                    context,
+                                    s.t('delete'),
+                                    x['note'] as String,
+                                    destructive: true,
+                                  ) &&
+                                  context.mounted) {
+                                await attempt(context, () async {
+                                  await ref
+                                      .read(apiProvider)
+                                      .delete(
+                                        'events/${event.id}/budget/expenses/${x['id']}',
+                                      );
+                                  ref.invalidate(
+                                    eventResource('events/:id/budget'),
+                                  );
+                                });
+                              }
+                            },
+                    ),
+                  ),
+                if (expenses.isEmpty) EmptyState(s.t('empty')),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -386,33 +812,78 @@ class GiftsScreen extends ConsumerWidget {
     final event = ref.watch(currentEventProvider).value;
     void reload() => ref.invalidate(eventResource('events/:id/gifts'));
     Future<void> add() async {
-      final nameC = TextEditingController(), amountC = TextEditingController(), descC = TextEditingController();
+      final nameC = TextEditingController(),
+          amountC = TextEditingController(),
+          descC = TextEditingController();
       String kind = 'CASH';
       final ok = await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         builder: (c) => StatefulBuilder(
-          builder: (c, set) => Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.viewInsetsOf(c).bottom + 16),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: nameC, autofocus: true, decoration: InputDecoration(labelText: s.t('textFrom'))),
-              const SizedBox(height: 10),
-              SegmentedButton<String>(
-                segments: [
-                  ButtonSegment(value: 'CASH', label: Text(s.t('textCash'))),
-                  ButtonSegment(value: 'GIFT', label: Text(s.t('textGift'))),
-                  ButtonSegment(value: 'GOLD', label: Text(s.t('textGold'))),
-                ],
-                selected: {kind},
-                onSelectionChanged: (v) => set(() => kind = v.first),
+          builder: (c, set) => SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.page,
+                  AppSpacing.page,
+                  AppSpacing.page,
+                  MediaQuery.viewInsetsOf(c).bottom + AppSpacing.page,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameC,
+                      autofocus: true,
+                      decoration: InputDecoration(labelText: s.t('textFrom')),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<String>(
+                        segments: [
+                          ButtonSegment(
+                            value: 'CASH',
+                            label: Text(s.t('textCash')),
+                          ),
+                          ButtonSegment(
+                            value: 'GIFT',
+                            label: Text(s.t('textGift')),
+                          ),
+                          ButtonSegment(
+                            value: 'GOLD',
+                            label: Text(s.t('textGold')),
+                          ),
+                        ],
+                        selected: {kind},
+                        onSelectionChanged: (v) => set(() => kind = v.first),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: amountC,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: '৳'),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: descC,
+                      decoration: InputDecoration(
+                        labelText: s.t('textDescription'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.page),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(c, true),
+                        child: Text(s.t('save')),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
-              TextField(controller: amountC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: '৳')),
-              const SizedBox(height: 10),
-              TextField(controller: descC, decoration: InputDecoration(labelText: s.t('textDescription'))),
-              const SizedBox(height: 16),
-              FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(s.t('save'))),
-            ]),
+            ),
           ),
         ),
       );
@@ -421,7 +892,10 @@ class GiftsScreen extends ConsumerWidget {
         await ref.read(apiProvider).post('events/${event.id}/gifts', {
           'giverName': nameC.text.trim(),
           'kind': kind,
-          if (amountC.text.isNotEmpty) 'amountMinor': ((double.tryParse(amountC.text) ?? 0) * 100).round(),
+          if (amountC.text.isNotEmpty)
+            'amountMinor':
+                ((double.tryParse(normalizedDigits(amountC.text)) ?? 0) * 100)
+                    .round(),
           if (descC.text.isNotEmpty) 'description': descC.text.trim(),
         });
         reload();
@@ -430,38 +904,87 @@ class GiftsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(s.t('textGiftRegister'))),
-      floatingActionButton: event?.readOnly == false ? FloatingActionButton(onPressed: add, child: const Icon(Icons.add)) : null,
-      body: AsyncView(
-        value: gifts,
-        onRetry: reload,
-        builder: (data) {
-          if (data == null) return const SizedBox();
-          final items = List<Map>.from(data['items'] as List);
-          final summary = data['summary'] as Map;
-          return ListView(padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, AppSpacing.xl * 3), children: [
-            Row(children: [
-              StatTile(value: '${summary['count']}', label: s.t('textGifts'), icon: Icons.redeem_outlined),
-              StatTile(value: taka(summary['cashMinor'] as int, compact: true, locale: s.locale), label: s.t('textCash'), icon: Icons.payments_outlined),
-              StatTile(value: '${summary['thankYouPending']}', label: s.t('textThankYous'), icon: Icons.mark_email_unread_outlined),
-            ]),
-            for (final g in items)
-              Card(
-                child: CheckboxListTile(
-                  title: Text(g['giverName'] as String),
-                  subtitle: Text('${g['kind']}${g['amountMinor'] != null ? ' · ${taka(g['amountMinor'] as int, locale: s.locale)}' : ''}${g['description'] != null ? ' · ${g['description']}' : ''}'),
-                  value: g['thankYouSentAt'] != null,
-                  secondary: const Icon(Icons.redeem_outlined),
-                  onChanged: event == null || event.readOnly
-                      ? null
-                      : (v) => attempt(context, () async {
-                            await ref.read(apiProvider).patch('events/${event.id}/gifts/${g['id']}', {'thankYouSent': v == true});
-                            reload();
-                          }),
-                ),
+      floatingActionButton: event?.readOnly == false
+          ? FloatingActionButton(onPressed: add, child: const Icon(Icons.add))
+          : null,
+      body: SafeArea(
+        child: AsyncView(
+          value: gifts,
+          onRetry: reload,
+          builder: (data) {
+            if (data == null) return const SizedBox();
+            final items = List<Map>.from(data['items'] as List);
+            final summary = data['summary'] as Map;
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppSpacing.page,
+                AppSpacing.page,
+                AppSpacing.xl * 3,
               ),
-            if (items.isEmpty) EmptyState(s.t('empty')),
-          ]);
-        },
+              children: [
+                Row(
+                  children: [
+                    StatTile(
+                      value: numberLabel(
+                        summary['count'] as int,
+                        locale: s.locale,
+                      ),
+                      label: s.t('textGifts'),
+                      icon: Icons.redeem_outlined,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    StatTile(
+                      value: taka(
+                        summary['cashMinor'] as int,
+                        compact: true,
+                        locale: s.locale,
+                      ),
+                      label: s.t('textCash'),
+                      icon: Icons.payments_outlined,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    StatTile(
+                      value: numberLabel(
+                        summary['thankYouPending'] as int,
+                        locale: s.locale,
+                      ),
+                      label: s.t('textThankYous'),
+                      icon: Icons.mark_email_unread_outlined,
+                    ),
+                  ],
+                ),
+                for (final g in items)
+                  Card(
+                    child: CheckboxListTile(
+                      title: Text(g['giverName'] as String),
+                      subtitle: Text(
+                        '${s.codeLabel(g['kind'] as String)}${g['amountMinor'] != null ? ' · ${taka(g['amountMinor'] as int, locale: s.locale)}' : ''}${g['description'] != null ? ' · ${g['description']}' : ''}',
+                      ),
+                      value: g['thankYouSentAt'] != null,
+                      secondary: const Icon(Icons.redeem_outlined),
+                      onChanged: event == null || event.readOnly
+                          ? null
+                          : (v) => attempt(context, () async {
+                              await ref.read(apiProvider).patch(
+                                'events/${event.id}/gifts/${g['id']}',
+                                {'thankYouSent': v == true},
+                              );
+                              reload();
+                            }),
+                    ),
+                  ),
+                if (items.isEmpty) EmptyState(s.t('empty')),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
