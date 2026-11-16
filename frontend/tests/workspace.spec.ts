@@ -217,6 +217,11 @@ test("budget expenses and checklist tasks persist after reload", async ({
   await page.getByRole("button", { name: "Add to checklist" }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.getByRole("button").filter({ hasText: title }).click();
+  // The click starts an asynchronous PATCH. Wait for the saved state before
+  // navigating away, otherwise reload can cancel the request.
+  await expect(page.getByRole("button").filter({ hasText: title })).toHaveClass(
+    /done/,
+  );
   await page.reload();
   await expect(page.getByRole("button").filter({ hasText: title })).toHaveClass(
     /done/,
