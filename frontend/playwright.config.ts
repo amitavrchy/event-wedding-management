@@ -5,7 +5,7 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   timeout: 45000,
-  use: { baseURL: "http://localhost:3000", trace: "retain-on-failure" },
+  use: { baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000", trace: "retain-on-failure" },
   projects: [
     {
       name: "desktop",

@@ -7,6 +7,27 @@ on:
 permissions:
   contents: read
 jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.8'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build apk --debug
   product-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -69,7 +90,9 @@ jobs:
         working-directory: frontend
       - name: Start production servers
         run: |
-          npm run start > /tmp/utsab-api.log 2>&1 &
+          # Browser tests share one loopback IP and deliberately sign in many
+          # times. The backend tests above exercise the default auth limit.
+          RATE_LIMIT_AUTH_PER_MINUTE=200 npm run start > /tmp/utsab-api.log 2>&1 &
           npm --prefix ../frontend run start > /tmp/utsab-web.log 2>&1 &
           node scripts/wait-for.mjs http://localhost:4000/api/health http://localhost:3000
       - run: npm run test:e2e

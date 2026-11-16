@@ -9,6 +9,7 @@ import {
   Star,
 } from "lucide-react";
 import { api, json } from "@/lib/api";
+import { usePublicLocale } from "@/lib/public-i18n";
 import { useApp } from "@/lib/context";
 import { taka } from "@/lib/format";
 import type { Vendor } from "@/lib/types";
@@ -24,6 +25,8 @@ export function VendorSheet({
   onClose: () => void;
 }) {
   const { event, notify } = useApp();
+  const { locale } = usePublicLocale();
+  const bn = locale === "bn";
   const [mode, setMode] = useState<"view" | "inquiry" | "book">("view");
   const [busy, setBusy] = useState(false);
   if (mode === "book")
@@ -38,37 +41,44 @@ export function VendorSheet({
           <div className="vendor-badges">
             {vendor.verified && (
               <span className="badge badge-verified">
-                <BadgeCheck size={14} /> Verified
+                <BadgeCheck size={14} /> {bn ? "যাচাইকৃত" : "Verified"}
               </span>
             )}
             {vendor.sponsored && (
-              <span className="badge badge-sponsored">Sponsored</span>
+              <span className="badge badge-sponsored">
+                {bn ? "স্পন্সর করা" : "Sponsored"}
+              </span>
             )}
             {vendor.ratingCount ? (
               <span className="badge">
                 <Star size={14} /> {vendor.ratingAvg?.toFixed(1)} ·{" "}
-                {vendor.ratingCount} reviews
+                {vendor.ratingCount} {bn ? "রিভিউ" : "reviews"}
               </span>
             ) : null}
             {vendor.responseMinutes != null && (
               <span className="badge">
-                <Clock size={14} /> Usually replies in{" "}
+                <Clock size={14} />{" "}
+                {bn ? "সাধারণত উত্তর দেন" : "Usually replies in"}{" "}
                 {vendor.responseMinutes < 60
-                  ? `${vendor.responseMinutes} min`
-                  : `${Math.round(vendor.responseMinutes / 60)} h`}
+                  ? `${vendor.responseMinutes} ${bn ? "মিনিটে" : "min"}`
+                  : `${Math.round(vendor.responseMinutes / 60)} ${bn ? "ঘণ্টায়" : "h"}`}
               </span>
             )}
           </div>
           <p>{vendor.description}</p>
           {vendor.serviceAreas?.length ? (
-            <p className="muted">Serves {vendor.serviceAreas.join(", ")}</p>
+            <p className="muted">
+              {bn ? "সেবার এলাকা" : "Serves"} {vendor.serviceAreas.join(", ")}
+            </p>
           ) : null}
           <ul className="meal-list">
             {vendor.services.map((s) => (
               <li key={s.id}>
                 <span>
                   {s.title}
-                  {s.capacity ? ` · up to ${s.capacity} guests` : ""}
+                  {s.capacity
+                    ? ` · ${bn ? "সর্বোচ্চ" : "up to"} ${s.capacity} ${bn ? "অতিথি" : "guests"}`
+                    : ""}
                 </span>
                 <strong>{taka(s.basePriceMinor)}</strong>
               </li>
@@ -76,17 +86,18 @@ export function VendorSheet({
           </ul>
           <div className="button-group">
             <Button onClick={() => setMode("inquiry")}>
-              <MessageSquareText size={17} /> Send an inquiry
+              <MessageSquareText size={17} />{" "}
+              {bn ? "অনুসন্ধান পাঠান" : "Send an inquiry"}
             </Button>
             <Button variant="secondary" onClick={() => setMode("book")}>
-              <CalendarCheck size={17} /> Check a date
+              <CalendarCheck size={17} /> {bn ? "তারিখ দেখুন" : "Check a date"}
             </Button>
             <Link
               className="text-link"
               href={`/v/${vendor.slug}`}
               target="_blank"
             >
-              Full profile ↗
+              {bn ? "সম্পূর্ণ প্রোফাইল ↗" : "Full profile ↗"}
             </Link>
           </div>
         </div>
@@ -117,7 +128,9 @@ export function VendorSheet({
                 }),
               });
               notify(
-                `Inquiry sent to ${vendor.businessName}. You'll be notified when they reply.`,
+                bn
+                  ? `${vendor.businessName} বরাবর অনুসন্ধান পাঠানো হয়েছে। উত্তর পেলে আপনাকে জানানো হবে।`
+                  : `Inquiry sent to ${vendor.businessName}. You'll be notified when they reply.`,
               );
               onClose();
             } catch (e) {
@@ -127,9 +140,9 @@ export function VendorSheet({
             }
           }}
         >
-          <Field label="Service">
+          <Field label={bn ? "সেবা" : "Service"}>
             <select name="serviceId" defaultValue="">
-              <option value="">Not sure yet</option>
+              <option value="">{bn ? "এখনও ঠিক করিনি" : "Not sure yet"}</option>
               {vendor.services.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.title}
@@ -138,14 +151,14 @@ export function VendorSheet({
             </select>
           </Field>
           <div className="form-row">
-            <Field label="Event date">
+            <Field label={bn ? "অনুষ্ঠানের তারিখ" : "Event date"}>
               <input
                 name="date"
                 type="date"
                 defaultValue={firstDay?.startsAt.slice(0, 10)}
               />
             </Field>
-            <Field label="Guests">
+            <Field label={bn ? "অতিথি" : "Guests"}>
               <input
                 name="guests"
                 type="number"
@@ -155,31 +168,43 @@ export function VendorSheet({
             </Field>
           </div>
           <div className="form-row">
-            <Field label="Budget for this (৳)">
+            <Field label={bn ? "এর জন্য বাজেট (৳)" : "Budget for this (৳)"}>
               <input name="budget" type="number" min="0" />
             </Field>
-            <Field label="Your phone (shared with this vendor)">
+            <Field
+              label={
+                bn
+                  ? "আপনার ফোন (এই বিক্রেতাকে জানানো হবে)"
+                  : "Your phone (shared with this vendor)"
+              }
+            >
               <input name="phone" type="tel" placeholder="01XXXXXXXXX" />
             </Field>
           </div>
-          <Field label="Message">
+          <Field label={bn ? "বার্তা" : "Message"}>
             <textarea
               name="message"
               required
               minLength={10}
               maxLength={2000}
               rows={4}
-              placeholder="Tell them about your event and what you need."
+              placeholder={
+                bn
+                  ? "আপনার অনুষ্ঠান ও প্রয়োজন সম্পর্কে জানান।"
+                  : "Tell them about your event and what you need."
+              }
             />
           </Field>
           <div className="button-group">
-            <Button busy={busy}>Send inquiry</Button>
+            <Button busy={busy}>
+              {bn ? "অনুসন্ধান পাঠান" : "Send inquiry"}
+            </Button>
             <Button
               type="button"
               variant="ghost"
               onClick={() => setMode("view")}
             >
-              Back
+              {bn ? "ফিরে যান" : "Back"}
             </Button>
           </div>
         </form>

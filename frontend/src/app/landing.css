@@ -2927,3 +2927,9 @@
     display: flex !important;
   }
 }
+
+@media (max-width: 380px) {
+  .landing-header-actions > .landing-button {
+    display: none;
+  }
+}

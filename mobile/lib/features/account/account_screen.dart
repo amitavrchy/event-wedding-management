@@ -30,6 +30,7 @@ class AccountScreen extends ConsumerWidget {
               final code = await _code(context, s.bn ? 'ইমেইল কোড' : 'Email code');
               if (code == null || !context.mounted) return;
               await attempt(context, () async {
+                await ref.read(authProvider.notifier).refreshUser();
                 ref.read(authProvider.notifier).setUser(User.fromJson(await ref.read(apiProvider).post<Json>('auth/email/verify', {'code': code})));
               });
             },

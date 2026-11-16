@@ -23,7 +23,7 @@ class ApiClient {
     this.dio.interceptors.add(InterceptorsWrapper(
           onRequest: (options, handler) async {
             final token = await tokens.access();
-            if (token != null && options.headers['Authorization'] == null) {
+            if (token != null && !options.extra.containsKey('noAuth') && options.headers['Authorization'] == null) {
               options.headers['Authorization'] = 'Bearer $token';
             }
             handler.next(options);
@@ -31,10 +31,26 @@ class ApiClient {
           onError: (error, handler) async {
             final request = error.requestOptions;
             final unauthorized = error.response?.statusCode == 401;
-            if (!unauthorized || request.path.startsWith('auth/') || request.extra['retried'] == true) {
+            if (unauthorized && request.extra['retried'] == true) {
+              onSessionExpired?.call();
+            }
+            if (!unauthorized || _refreshExempt(request.path) || request.extra['retried'] == true) {
               return handler.next(error);
             }
-            if (await _refresh()) {
+            bool refreshed;
+            try {
+              final current = await tokens.access();
+              final sent = request.headers['Authorization'];
+              refreshed = current != null && sent != 'Bearer $current'
+                  ? true
+                  : await _refresh();
+            } on DioException catch (refreshError) {
+              // Connectivity and server failures do not invalidate a session.
+              return handler.next(refreshError);
+            } catch (refreshError) {
+              return handler.next(DioException(requestOptions: request, error: refreshError));
+            }
+            if (refreshed) {
               request.extra['retried'] = true;
               request.headers['Authorization'] = 'Bearer ${await tokens.access()}';
               try {
@@ -48,6 +64,11 @@ class ApiClient {
           },
         ));
   }
+
+  static bool _refreshExempt(String path) => const {
+        'auth/login', 'auth/login/2fa', 'auth/register', 'auth/refresh',
+        'auth/logout', 'auth/password/forgot',
+      }.contains(path.split('?').first);
 
   final TokenStore tokens;
   final Dio dio;
@@ -63,15 +84,18 @@ class ApiClient {
         final refresh = await tokens.refresh();
         if (refresh == null) return completer.complete(false);
         final response = await dio.post('auth/refresh',
-            data: {'refreshToken': refresh}, options: Options(headers: {'Authorization': null}));
+            data: {'refreshToken': refresh}, options: Options(extra: {'noAuth': true}));
         final data = response.data as Map<String, dynamic>;
         await tokens.save(data['accessToken'] as String, data['refreshToken'] as String);
         completer.complete(true);
       } on DioException catch (e) {
-        // 409: another request refreshed a moment ago and saved new tokens.
-        completer.complete(e.response?.statusCode == 409 && await tokens.access() != null);
-      } catch (_) {
-        completer.complete(false);
+        if (e.response?.statusCode == 401) {
+          completer.complete(false);
+        } else {
+          completer.completeError(e);
+        }
+      } catch (e, stack) {
+        completer.completeError(e, stack);
       } finally {
         _refreshing = null;
       }

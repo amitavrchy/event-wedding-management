@@ -1,0 +1,9 @@
+{
+  "API_URL": "https://api.utsab.13.203.3.1.sslip.io/api",
+  "WEB_URL": "https://utsab.13.203.3.1.sslip.io",
+  "SOCKET_URL": "https://api.utsab.13.203.3.1.sslip.io",
+  "FIREBASE_API_KEY": "",
+  "FIREBASE_APP_ID": "",
+  "FIREBASE_SENDER_ID": "",
+  "FIREBASE_PROJECT_ID": ""
+}

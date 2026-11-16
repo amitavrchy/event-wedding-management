@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import { Plus, Zap, Play, Trash2, ArrowRight } from "lucide-react";
 import { api, json } from "@/lib/api";
@@ -134,7 +135,8 @@ export default function Automations() {
                 className="icon-button"
                 aria-label={`Delete workflow ${r.title}`}
                 disabled={busy}
-                onClick={() =>
+                onClick={async () =>
+                  (await confirmAction("Delete this workflow?")) &&
                   void run(async () => {
                     await api(`events/${event.id}/automations/${r.id}`, {
                       method: "DELETE",

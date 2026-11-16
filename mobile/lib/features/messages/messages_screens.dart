@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../core/format.dart';
 import '../../core/providers.dart';
@@ -57,14 +58,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final input = TextEditingController();
   final scroll = ScrollController();
   bool loading = true;
+  io.Socket? socket;
 
   @override
   void initState() {
     super.initState();
     _load();
-    final socket = ref.read(socketProvider);
-    socket?.emitWithAck('join', widget.id, ack: (_) {});
+    socket = ref.read(socketProvider);
     socket?.on('message', _onMessage);
+    socket?.onConnect(_join);
+    if (socket?.connected == true) _join(null);
+  }
+
+  void _join(dynamic _) {
+    socket?.emitWithAck('join', widget.id, ack: (result) {
+      if (mounted && result is Map && result['ok'] == true) _load();
+    });
   }
 
   void _onMessage(dynamic data) {
@@ -77,10 +86,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _load() async {
     try {
       final list = await ref.read(apiProvider).get<List<dynamic>>('conversations/${widget.id}/messages');
+      if (!mounted) return;
       setState(() {
+        final known = {for (final m in list) m['id']};
+        final newer = messages.where((m) => !known.contains(m['id'])).toList();
         messages
           ..clear()
-          ..addAll(List<Json>.from(list));
+          ..addAll(List<Json>.from(list))
+          ..addAll(newer);
         loading = false;
       });
       _bottom();
@@ -95,9 +108,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
-    final socket = ref.read(socketProvider);
+    socket?.off('connect', _join);
     socket?.off('message', _onMessage);
     socket?.emit('leave', widget.id);
+    input.dispose();
+    scroll.dispose();
     super.dispose();
   }
 

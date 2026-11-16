@@ -23,6 +23,9 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
+import { usePublicLocale } from "@/lib/public-i18n";
+import { LanguageSwitch } from "./language-switch";
+import { BanglaLanding } from "./landing-bn";
 import { useApp } from "@/lib/context";
 import { eventType } from "@/lib/event-types";
 import { taka } from "@/lib/format";
@@ -90,6 +93,7 @@ const faqs = [
 ];
 export function LandingPage() {
   const { user } = useApp();
+  const { locale } = usePublicLocale();
   const [selected, setSelected] = useState("BIRTHDAY"),
     [open, setOpen] = useState(false);
   const preview = eventType(selected);
@@ -101,6 +105,7 @@ export function LandingPage() {
         : `/dashboard?new=${type}`
       : `/signup?event=${type}`;
   }
+  if (locale === "bn") return <BanglaLanding user={user} />;
   return (
     <div className="landing">
       <a className="landing-skip" href="#landing-main">
@@ -131,6 +136,7 @@ export function LandingPage() {
           </Link>
         </nav>
         <div className="landing-header-actions">
+          <LanguageSwitch />
           {user ? (
             <Link href={workspace} className="landing-signin">
               Your workspace <ArrowUpRight size={16} />

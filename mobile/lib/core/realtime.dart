@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -9,14 +11,28 @@ import 'providers.dart';
 final socketProvider = Provider<io.Socket?>((ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
-  final tokens = ref.read(tokenStoreProvider);
+  final api = ref.read(apiProvider);
   final socket = io.io(
     AppConfig.socketUrl,
     io.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setAuthFn((callback) async {
-      callback({'token': await tokens.access()});
+      try {
+        final result = await api.get<Map<String, dynamic>>('auth/socket-token');
+        callback({'token': result['token']});
+      } catch (_) {
+        callback({});
+      }
     }).build(),
   );
+  Timer? retry;
+  socket.onConnectError((_) {
+    retry?.cancel();
+    retry = Timer(const Duration(seconds: 5), socket.connect);
+  });
+  socket.onConnect((_) => retry?.cancel());
   socket.connect();
-  ref.onDispose(socket.dispose);
+  ref.onDispose(() {
+    retry?.cancel();
+    socket.dispose();
+  });
   return socket;
 });

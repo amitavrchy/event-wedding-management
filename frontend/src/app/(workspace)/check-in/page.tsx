@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useEffect, useRef, useState } from "react";
 import { Camera, QrCode, Check, Search, RotateCcw } from "lucide-react";
 import { useApp } from "@/lib/context";
@@ -265,7 +266,8 @@ export default function CheckIn() {
                     <Button
                       variant="ghost"
                       busy={busy}
-                      onClick={() =>
+                      onClick={async () =>
+                        (await confirmAction("Undo this check-in?")) &&
                         void run(async () => {
                           await api(`events/${event.id}/check-in/${e.id}`, {
                             method: "DELETE",

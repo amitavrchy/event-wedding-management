@@ -342,6 +342,72 @@ Future<double?> _askAmount(BuildContext context, String title) async {
 }
 
 // ---------------------------------------------------------------------------
+Future<void> acceptQuote(BuildContext context, WidgetRef ref, Json quote) async {
+  final api = ref.read(apiProvider);
+  Json vendor;
+  try {
+    vendor = await api.get<Json>('vendors/${quote['vendorId']}');
+  } catch (e) {
+    if (context.mounted) showError(context, e);
+    return;
+  }
+  if (!context.mounted) return;
+  final services = List<Json>.from(vendor['services'] as List);
+  if (services.isEmpty) {
+    showError(context, StateError('This vendor has no available services'));
+    return;
+  }
+  String serviceId = services.first['id'] as String;
+  DateTime? date;
+  TimeOfDay? time;
+  final selection = await showDialog<({String serviceId, DateTime startAt})>(
+    context: context,
+    builder: (dialog) => StatefulBuilder(builder: (dialog, setDialog) => AlertDialog(
+      title: const Text('Accept quote and book'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        DropdownButtonFormField<String>(
+          initialValue: serviceId,
+          items: [for (final service in services) DropdownMenuItem(value: service['id'] as String, child: Text(service['title'] as String))],
+          onChanged: (value) => setDialog(() => serviceId = value!),
+        ),
+        TextButton(
+          onPressed: () async {
+            final chosen = await showDatePicker(context: dialog, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 1095)));
+            if (chosen != null) setDialog(() => date = chosen);
+          },
+          child: Text(date == null ? 'Choose date' : MaterialLocalizations.of(dialog).formatFullDate(date!)),
+        ),
+        TextButton(
+          onPressed: () async {
+            final chosen = await showTimePicker(context: dialog, initialTime: TimeOfDay.now());
+            if (chosen != null) setDialog(() => time = chosen);
+          },
+          child: Text(time == null ? 'Choose time (Dhaka)' : time!.format(dialog)),
+        ),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialog), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: date == null || time == null ? null : () {
+            final utc = DateTime.utc(date!.year, date!.month, date!.day, time!.hour - 6, time!.minute);
+            Navigator.pop(dialog, (serviceId: serviceId, startAt: utc));
+          },
+          child: const Text('Accept'),
+        ),
+      ],
+    )),
+  );
+  if (selection == null || !context.mounted) return;
+  await attempt(context, () async {
+    await api.post('quotes/${quote['id']}/respond', {
+      'status': 'ACCEPTED', 'serviceId': selection.serviceId,
+      'startAt': selection.startAt.toIso8601String(),
+    });
+    ref.invalidate(eventResource('quotes/event/:id'));
+    ref.invalidate(bookingsProvider);
+  });
+}
+
 class QuotesScreen extends ConsumerWidget {
   const QuotesScreen({super.key});
   @override
@@ -367,10 +433,7 @@ class QuotesScreen extends ConsumerWidget {
                       ? Row(mainAxisSize: MainAxisSize.min, children: [
                           IconButton(
                             icon: const Icon(Icons.check_circle_outline, color: Colors.green),
-                            onPressed: () => attempt(context, () async {
-                              await ref.read(apiProvider).post('quotes/${q['id']}/respond', {'status': 'ACCEPTED'});
-                              ref.invalidate(eventResource('quotes/event/:id'));
-                            }),
+                            onPressed: () => acceptQuote(context, ref, q),
                           ),
                           IconButton(
                             icon: const Icon(Icons.cancel_outlined),

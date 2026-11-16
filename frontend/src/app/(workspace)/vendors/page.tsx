@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import "@/app/tools.css";
+import { usePublicLocale } from "@/lib/public-i18n";
+import { LanguageSwitch } from "@/components/language-switch";
 import { useApp } from "@/lib/context";
 import type { Paged, Vendor } from "@/lib/types";
 import { useResource } from "@/lib/use-resource";
@@ -12,6 +14,8 @@ import { Button, Empty, Field, PageHeading } from "@/components/ui";
 /** Marketplace search: date, guests, budget and area filters run on the server. */
 export default function Vendors() {
   const { event } = useApp();
+  const { locale } = usePublicLocale();
+  const bn = locale === "bn";
   const categories = useResource<{ name: string }[]>("categories", []);
   const [filters, setFilters] = useState({
     q: "",
@@ -52,10 +56,19 @@ export default function Vendors() {
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
   return (
     <>
+      <LanguageSwitch />
       <PageHeading
-        eyebrow="GOOD PEOPLE. BEAUTIFUL CELEBRATIONS."
-        title="Find your dream team"
-        description="Search by your date, guest count and budget to see who fits."
+        eyebrow={
+          bn
+            ? "ভালো মানুষ। সুন্দর উদযাপন।"
+            : "GOOD PEOPLE. BEAUTIFUL CELEBRATIONS."
+        }
+        title={bn ? "আপনার পছন্দের দল খুঁজুন" : "Find your dream team"}
+        description={
+          bn
+            ? "তারিখ, অতিথি সংখ্যা ও বাজেট দিয়ে উপযুক্ত পেশাদার খুঁজুন।"
+            : "Search by your date, guest count and budget to see who fits."
+        }
         action={
           event && (
             <Button
@@ -69,7 +82,7 @@ export default function Vendors() {
                 }))
               }
             >
-              Match my event
+              {bn ? "আমার অনুষ্ঠানের সঙ্গে মেলান" : "Match my event"}
             </Button>
           )
         }
@@ -78,38 +91,38 @@ export default function Vendors() {
         <div className="search-field">
           <Search size={19} />
           <input
-            aria-label="Search vendors"
-            placeholder="Name or service…"
+            aria-label={bn ? "বিক্রেতা খুঁজুন" : "Search vendors"}
+            placeholder={bn ? "নাম বা সেবা…" : "Name or service…"}
             value={filters.q}
             onChange={(e) => set("q", e.target.value)}
           />
         </div>
-        <Field label="Category">
+        <Field label={bn ? "বিভাগ" : "Category"}>
           <select
             value={filters.category}
             onChange={(e) => set("category", e.target.value)}
           >
-            <option value="">All</option>
+            <option value="">{bn ? "সব" : "All"}</option>
             {categories.data.map((c) => (
               <option key={c.name}>{c.name}</option>
             ))}
           </select>
         </Field>
-        <Field label="Area or city">
+        <Field label={bn ? "এলাকা বা শহর" : "Area or city"}>
           <input
             value={filters.area}
-            placeholder="Dhanmondi"
+            placeholder={bn ? "ধানমন্ডি" : "Dhanmondi"}
             onChange={(e) => set("area", e.target.value)}
           />
         </Field>
-        <Field label="Free on">
+        <Field label={bn ? "যে তারিখে খালি" : "Free on"}>
           <input
             type="date"
             value={filters.date}
             onChange={(e) => set("date", e.target.value)}
           />
         </Field>
-        <Field label="Guests">
+        <Field label={bn ? "অতিথি" : "Guests"}>
           <input
             type="number"
             min="1"
@@ -117,7 +130,7 @@ export default function Vendors() {
             onChange={(e) => set("guests", e.target.value)}
           />
         </Field>
-        <Field label="Budget up to (৳)">
+        <Field label={bn ? "সর্বোচ্চ বাজেট (৳)" : "Budget up to (৳)"}>
           <input
             type="number"
             min="0"
@@ -131,13 +144,17 @@ export default function Vendors() {
             checked={filters.verified}
             onChange={(e) => set("verified", e.target.checked)}
           />
-          <span>Verified only</span>
+          <span>{bn ? "শুধু যাচাইকৃত" : "Verified only"}</span>
         </label>
       </div>
       <p className="results-count">
         {results.data
-          ? `${results.data.total} ${results.data.total === 1 ? "professional" : "professionals"} match`
-          : "Searching…"}
+          ? bn
+            ? `${results.data.total} জন পেশাদার পাওয়া গেছে`
+            : `${results.data.total} ${results.data.total === 1 ? "professional" : "professionals"} match`
+          : bn
+            ? "খোঁজা হচ্ছে…"
+            : "Searching…"}
       </p>
       <div className="vendor-grid">
         {results.data?.items.map((v) => (
@@ -145,33 +162,39 @@ export default function Vendors() {
         ))}
       </div>
       {results.data && !results.data.items.length && (
-        <Empty title="No one matches yet">
-          Try a different date, area or budget.
+        <Empty title={bn ? "এখনও কাউকে পাওয়া যায়নি" : "No one matches yet"}>
+          {bn
+            ? "অন্য তারিখ, এলাকা বা বাজেট দিয়ে চেষ্টা করুন।"
+            : "Try a different date, area or budget."}
         </Empty>
       )}
       {results.data && results.data.pages > 1 && (
-        <nav className="pager" aria-label="Pages">
+        <nav className="pager" aria-label={bn ? "পৃষ্ঠা" : "Pages"}>
           <Button
             variant="secondary"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
           >
-            Previous
+            {bn ? "আগের পৃষ্ঠা" : "Previous"}
           </Button>
           <span>
-            Page {page} of {results.data.pages}
+            {bn
+              ? `পৃষ্ঠা ${page} / ${results.data.pages}`
+              : `Page ${page} of ${results.data.pages}`}
           </span>
           <Button
             variant="secondary"
             disabled={page >= results.data.pages}
             onClick={() => setPage(page + 1)}
           >
-            Next
+            {bn ? "পরের পৃষ্ঠা" : "Next"}
           </Button>
         </nav>
       )}
       <p className="helper-text">
-        Sponsored listings are paid placements and are always labelled.
+        {bn
+          ? "স্পন্সর করা তালিকা অর্থের বিনিময়ে দেখানো হয় এবং সবসময় চিহ্নিত থাকে।"
+          : "Sponsored listings are paid placements and are always labelled."}
       </p>
       {vendor && (
         <VendorSheet vendor={vendor} onClose={() => setVendor(null)} />

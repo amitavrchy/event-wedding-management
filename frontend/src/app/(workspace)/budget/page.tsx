@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -311,7 +312,8 @@ export default function Budget() {
                         className="icon-button"
                         aria-label={`Delete ${e.note}`}
                         onClick={async () => {
-                          if (!window.confirm(`Delete "${e.note}"?`)) return;
+                          if (!(await confirmAction(`Delete "${e.note}"?`)))
+                            return;
                           try {
                             await api(
                               `events/${event.id}/budget/expenses/${e.id}`,

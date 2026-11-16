@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import { useApp } from "@/lib/context";
 import { Heart, Columns3, Trash2 } from "lucide-react";
@@ -50,7 +51,10 @@ export default function Shortlist() {
                 className="icon-button"
                 aria-label={`Remove ${v.businessName} from shortlist`}
                 disabled={busy}
-                onClick={() =>
+                onClick={async () =>
+                  (await confirmAction(
+                    "Remove this vendor from your shortlist?",
+                  )) &&
                   void run(async () => {
                     await api(`favorites/${v.id}`, { method: "DELETE" });
                     setCompared((current) =>
