@@ -109,10 +109,10 @@ test(
         budgetMinor: 10000,
         guestCapacity: 10,
       };
-      assert.throws(() =>
+      await assert.rejects(() =>
         controller.create(req, { ...base, eventType: "UNKNOWN" }),
       );
-      assert.throws(() =>
+      await assert.rejects(() =>
         controller.create(req, { ...base, startsAt: "2020-01-01T00:00:00Z" }),
       );
     } finally {

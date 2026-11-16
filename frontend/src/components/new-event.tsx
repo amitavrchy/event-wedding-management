@@ -8,9 +8,12 @@ import { eventTypes, eventType } from "@/lib/event-types";
 import { Button, Field, Modal } from "./ui";
 export function NewEvent({
   onClose,
+  onBack,
   initialType = "GENERAL",
 }: {
   onClose: () => void;
+  /** Present when the occasion was chosen in the occasion picker. */
+  onBack?: () => void;
   initialType?: string;
 }) {
   const { refresh, selectEvent, notify } = useApp();
@@ -50,13 +53,31 @@ export function NewEvent({
     }
   }
   return (
-    <Modal title="Every good gathering starts here" onClose={onClose}>
+    <Modal
+      title={
+        onBack
+          ? `Your ${occasion.label.toLowerCase()} workspace`
+          : "Every good gathering starts here"
+      }
+      onClose={onClose}
+    >
       <p className="muted">
-        Choose your occasion. We’ll give you a thoughtful starting point to make
-        your own.
+        {onBack ? (
+          <>
+            {occasion.label} · <span lang="bn">{occasion.labelBn}</span>.{" "}
+            <button type="button" className="link-button" onClick={onBack}>
+              Choose a different occasion
+            </button>
+          </>
+        ) : (
+          "Choose your occasion. We’ll give you a thoughtful starting point to make your own."
+        )}
       </p>
       <form onSubmit={submit} className="form-stack">
-        <Field label="Occasion type">
+        <Field
+          label="Occasion type"
+          className={onBack ? "visually-hidden" : undefined}
+        >
           <select
             name="eventType"
             value={type}

@@ -2,6 +2,7 @@ export const eventTypes = [
   {
     type: "GENERAL",
     label: "General celebration",
+    labelBn: "অন্যান্য অনুষ্ঠান",
     short: "Any occasion",
     description: "Your people, your plans, your kind of celebration.",
     budget: 200000,
@@ -14,6 +15,7 @@ export const eventTypes = [
   {
     type: "WEDDING",
     label: "Wedding",
+    labelBn: "বিয়ে",
     short: "Weddings",
     description: "Your traditions, your people, your next beautiful chapter.",
     budget: 1500000,
@@ -26,6 +28,7 @@ export const eventTypes = [
   {
     type: "BIRTHDAY",
     label: "Birthday",
+    labelBn: "জন্মদিন",
     short: "Birthdays",
     description:
       "Another trip around the sun. A thousand little reasons for joy.",
@@ -39,6 +42,7 @@ export const eventTypes = [
   {
     type: "ANNIVERSARY",
     label: "Anniversary",
+    labelBn: "বিবাহবার্ষিকী",
     short: "Anniversaries",
     description:
       "Celebrate the memories you’ve made, and the ones still to come.",
@@ -52,6 +56,7 @@ export const eventTypes = [
   {
     type: "CORPORATE",
     label: "Corporate event",
+    labelBn: "কর্পোরেট ইভেন্ট",
     short: "Business events",
     description:
       "Bring your team, your ideas, and your next milestone together.",
@@ -65,6 +70,7 @@ export const eventTypes = [
   {
     type: "CONFERENCE",
     label: "Conference & seminar",
+    labelBn: "সম্মেলন ও সেমিনার",
     short: "Conferences",
     description: "Clear sessions, warm welcomes, and ideas worth sharing.",
     budget: 1500000,
@@ -77,6 +83,7 @@ export const eventTypes = [
   {
     type: "ENGAGEMENT",
     label: "Engagement",
+    labelBn: "বাগদান / আংটি বদল",
     short: "Engagements",
     description: "A beautiful beginning, shared with your favorite people.",
     budget: 400000,
@@ -89,6 +96,7 @@ export const eventTypes = [
   {
     type: "HOLUD",
     label: "Gaye Holud",
+    labelBn: "গায়ে হলুদ",
     short: "Gaye Holud",
     description:
       "A little color, a little music, and a whole lot of togetherness.",
@@ -102,6 +110,7 @@ export const eventTypes = [
   {
     type: "RECEPTION",
     label: "Reception",
+    labelBn: "বৌভাত / রিসেপশন",
     short: "Receptions",
     description: "A warm welcome and a celebration made for your people.",
     budget: 800000,
@@ -114,6 +123,7 @@ export const eventTypes = [
   {
     type: "BABY_SHOWER",
     label: "Baby shower",
+    labelBn: "সাধ / বেবি শাওয়ার",
     short: "Baby showers",
     description: "A sweet little gathering for a new little beginning.",
     budget: 80000,
@@ -126,6 +136,7 @@ export const eventTypes = [
   {
     type: "GRADUATION",
     label: "Graduation",
+    labelBn: "গ্র্যাজুয়েশন",
     short: "Graduations",
     description: "A well-earned milestone deserves a proper celebration.",
     budget: 120000,
@@ -138,6 +149,7 @@ export const eventTypes = [
   {
     type: "REUNION",
     label: "Family & friends reunion",
+    labelBn: "পুনর্মিলনী",
     short: "Reunions",
     description: "Familiar faces, good stories, and time to reconnect.",
     budget: 180000,
@@ -150,6 +162,7 @@ export const eventTypes = [
   {
     type: "COMMUNITY",
     label: "Community gathering",
+    labelBn: "কমিউনিটি অনুষ্ঠান",
     short: "Community events",
     description: "Bring your neighborhood, club, or cause a little closer.",
     budget: 300000,

@@ -1,5 +1,9 @@
 name: Verify Utsab
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
 permissions:
   contents: read
 jobs:
@@ -37,6 +41,7 @@ jobs:
       JWT_SECRET: ci-only-secret-with-at-least-thirty-two-characters
       WEBHOOK_SECRET: ci-only-separate-webhook-secret
       PAYMENT_MODE: sandbox
+      NODE_ENV: test
       CORS_ORIGINS: http://localhost:3000
       API_URL: http://localhost:4000
       NEXT_PUBLIC_SOCKET_URL: http://localhost:4000

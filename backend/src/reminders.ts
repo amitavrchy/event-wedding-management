@@ -1,8 +1,10 @@
+import { recordNotification } from "./notify/notifier";
 import { Database } from "./prisma";
 export async function createReminders(db: Database, now = new Date()) {
   const tomorrow = new Date(+now + 86400000),
     week = new Date(+now + 7 * 86400000),
-    day = now.toISOString().slice(0, 10);
+    // Day key in Asia/Dhaka so reminders roll over at local midnight (E-B9).
+    day = new Date(+now + 6 * 3600000).toISOString().slice(0, 10);
   const bookings = await db.booking.findMany({
     where: { status: "CONFIRMED", startAt: { gte: now, lte: week } },
     include: { event: true, service: true },
@@ -14,16 +16,7 @@ export async function createReminders(db: Database, now = new Date()) {
     });
     const remaining = b.priceMinor - (sum._sum.amountMinor || 0);
     if (remaining > 0)
-      await db.notification.upsert({
-        where: { key: `balance:${b.id}:${day}` },
-        update: {},
-        create: {
-          key: `balance:${b.id}:${day}`,
-          recipientId: b.event.hostId,
-          title: "A little payment reminder",
-          body: `Your ${b.service.title} booking is coming up. Balance remaining: BDT ${(remaining / 100).toFixed(2)}.`,
-        },
-      });
+      await recordNotification(db, b.event.hostId, { key: `balance:${b.id}:${day}`, title: "A little payment reminder", body: `Your ${b.service.title} booking is coming up. Balance remaining: BDT ${(remaining / 100).toFixed(2)}.`, kind: "REMINDER" });
   }
   const tasks = await db.checklistItem.findMany({
     where: { done: false, dueAt: { gte: now, lte: tomorrow } },
@@ -37,28 +30,10 @@ export async function createReminders(db: Database, now = new Date()) {
       where: { id: installment.eventId },
     });
     if (event)
-      await db.notification.upsert({
-        where: { key: `installment:${installment.id}:${day}` },
-        update: {},
-        create: {
-          key: `installment:${installment.id}:${day}`,
-          recipientId: event.hostId,
-          title: "A payment milestone is coming up",
-          body: `${installment.label}: BDT ${(installment.amountMinor / 100).toFixed(2)} due ${installment.dueAt.toISOString().slice(0, 10)}.`,
-        },
-      });
+      await recordNotification(db, event.hostId, { key: `installment:${installment.id}:${day}`, title: "A payment milestone is coming up", body: `${installment.label}: BDT ${(installment.amountMinor / 100).toFixed(2)} due ${installment.dueAt.toISOString().slice(0, 10)}.`, kind: "REMINDER" });
   }
   for (const task of tasks)
-    await db.notification.upsert({
-      where: { key: `task:${task.id}:${day}` },
-      update: {},
-      create: {
-        key: `task:${task.id}:${day}`,
-        recipientId: task.event.hostId,
-        title: "One lovely detail is nearly due",
-        body: task.title,
-      },
-    });
+    await recordNotification(db, task.event.hostId, { key: `task:${task.id}:${day}`, title: "One lovely detail is nearly due", body: task.title, kind: "REMINDER" });
   const events = await db.event.findMany({
     where: { rsvpDeadline: { gte: now, lte: week } },
     include: {
@@ -67,14 +42,5 @@ export async function createReminders(db: Database, now = new Date()) {
   });
   for (const e of events)
     if (e._count.guests)
-      await db.notification.upsert({
-        where: { key: `rsvp:${e.id}:${day}` },
-        update: {},
-        create: {
-          key: `rsvp:${e.id}:${day}`,
-          recipientId: e.hostId,
-          title: "A little nudge for your guest list",
-          body: `${e._count.guests} invitation replies are still pending for ${e.title}. Share their public invitation links before the deadline.`,
-        },
-      });
+      await recordNotification(db, e.hostId, { key: `rsvp:${e.id}:${day}`, title: "A little nudge for your guest list", body: `${e._count.guests} invitation replies are still pending for ${e.title}. Share their public invitation links before the deadline.`, kind: "REMINDER" });
 }

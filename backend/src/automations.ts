@@ -18,8 +18,10 @@ export async function executeAutomations(
   eventId?: string,
   now = new Date(),
 ) {
+  // Rules run once per arming; skip those already run instead of re-checking them every minute (E-B3).
+  const ran = await db.automationRun.findMany({ where: eventId ? { eventId } : {}, select: { ruleId: true } });
   const rules = await db.automationRule.findMany({
-    where: { enabled: true, eventId },
+    where: { enabled: true, eventId, id: { notIn: ran.map((r) => r.ruleId) } },
   });
   let executed = 0;
   for (const rule of rules) {
@@ -118,10 +120,14 @@ export class AutomationsController {
     @Body() body: unknown,
   ) {
     await ownEvent(this.db, id, req.user);
-    return this.db.automationRule.updateMany({
+    const data = parse(z.object({ enabled: z.boolean(), rearm: z.boolean().default(false) }), body);
+    const result = await this.db.automationRule.updateMany({
       where: { id: ruleId, eventId: id },
-      data: parse(z.object({ enabled: z.boolean() }), body),
+      data: { enabled: data.enabled },
     });
+    // Re-arming lets a rule that already ran fire again the next time it is eligible.
+    if (result.count && data.rearm) await this.db.automationRun.deleteMany({ where: { ruleId, eventId: id } });
+    return result;
   }
   @Delete(":ruleId") async remove(
     @Req() req: any,

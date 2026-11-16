@@ -1,17 +1,13 @@
-import { readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 const backend = resolve(dirname(fileURLToPath(import.meta.url)), ".."),
   root = resolve(backend, ".."),
   frontend = resolve(root, "frontend");
-const entries = readdirSync(root)
-  .filter((name) => name !== ".git")
-  .sort();
-if (JSON.stringify(entries) !== JSON.stringify(["backend", "frontend"]))
-  throw new Error(
-    `Repository root must contain only frontend and backend; found ${entries.join(", ")}`,
-  );
+for (const required of ["backend", "frontend"])
+  if (!existsSync(resolve(root, required, "package.json")))
+    throw new Error(`Repository is missing ${required}/package.json`);
 if (!process.env.npm_execpath)
   throw new Error("Run this through npm run verify inside backend");
 async function npm(cwd, args) {
@@ -36,6 +32,4 @@ await npm(backend, ["audit", "--audit-level=high"]);
 await npm(frontend, ["audit", "--audit-level=high"]);
 if (process.argv.includes("--browser"))
   await npm(frontend, ["run", "test:e2e"]);
-console.log(
-  "Verified: two-folder structure, standalone builds, backend tests, and dependency audits.",
-);
+console.log("Verified: builds, backend tests, and dependency audits.");

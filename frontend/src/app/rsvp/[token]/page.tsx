@@ -1,11 +1,23 @@
 "use client";
 import { use, useEffect, useState } from "react";
-import { Heart, CalendarDays, MapPin, Check, ArrowRight } from "lucide-react";
+import {
+  Heart,
+  CalendarDays,
+  MapPin,
+  Check,
+  ArrowRight,
+  Radio,
+  Languages,
+} from "lucide-react";
+import "@/app/tools.css";
 import { api, json } from "@/lib/api";
-import { dateLabel } from "@/lib/format";
-import { Day } from "@/lib/types";
-import { Button, Field } from "@/components/ui";
+import type { Day } from "@/lib/types";
+import { dateIn, usePublicLocale } from "@/lib/public-i18n";
+import { Button } from "@/components/ui";
 import { GuestPass } from "@/components/guest-pass";
+import { InvitationCard, type CardData } from "@/components/invitation-card";
+import { RsvpFields, readReply } from "@/components/rsvp-form";
+
 type Invitation = {
   name: string;
   rsvpStatus: string;
@@ -14,8 +26,11 @@ type Invitation = {
   mealPreference?: string;
   dietaryNotes?: string;
   responses?: { dayId: string; status: string }[];
+  card: CardData | null;
+  livestreamUrl: string | null;
   event: { title: string; days: Day[]; rsvpDeadline?: string };
 };
+
 export default function RSVP({
   params,
 }: {
@@ -26,23 +41,38 @@ export default function RSVP({
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
+  const { locale, t, toggle } = usePublicLocale(invitation?.card?.language);
   useEffect(() => {
     void api<Invitation>(`rsvp/${token}`)
       .then(setInvitation)
       .catch((e) => setError(e.message));
   }, [token]);
+  const days =
+    invitation?.event.days
+      .slice()
+      .sort((a, b) => a.startsAt.localeCompare(b.startsAt)) || [];
   return (
-    <main className="rsvp-page">
-      <a href="/" className="brand">
-        utsab<span>✳</span>
-      </a>
+    <main className="rsvp-page" lang={locale}>
+      <div className="rsvp-top">
+        <a href="/" className="brand">
+          utsab<span>✳</span>
+        </a>
+        <button className="link-button" onClick={toggle}>
+          <Languages size={16} /> {t.language}
+        </button>
+      </div>
+      {invitation?.card && (
+        <InvitationCard card={invitation.card} days={days} />
+      )}
       <section className="rsvp-card">
-        <div className="rsvp-flower">✳</div>
-        <span className="eyebrow">TOGETHER WITH OUR FAMILIES</span>
-        <h1>{invitation?.event.title || "You are warmly invited"}</h1>
-        <p className="rsvp-intro">
-          Some moments are too beautiful to celebrate without you.
-        </p>
+        {!invitation?.card && (
+          <>
+            <div className="rsvp-flower">✳</div>
+            <span className="eyebrow">{t.together}</span>
+            <h1>{invitation?.event.title || t.invitedTitle}</h1>
+            <p className="rsvp-intro">{t.intro}</p>
+          </>
+        )}
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -52,31 +82,45 @@ export default function RSVP({
           <>
             <div className="rsvp-greeting">
               <Heart size={18} />
-              <h2>Dear {invitation.name},</h2>
-              <p>We would love to have you by our side.</p>
+              <h2>
+                {t.dear} {invitation.name},
+              </h2>
+              <p>{t.wouldLove}</p>
             </div>
-            <div className="rsvp-days">
-              {invitation.event.days.map((d) => (
-                <div key={d.id}>
-                  <h3>{d.name}</h3>
-                  <p>
-                    <CalendarDays size={15} />
-                    {dateLabel(d.startsAt)}
-                  </p>
-                  <p>
-                    <MapPin size={15} />
-                    {d.venueName || "Venue to be announced"}
-                  </p>
-                </div>
-              ))}
-            </div>
+            {!invitation.card && (
+              <div className="rsvp-days">
+                {days.map((d) => (
+                  <div key={d.id}>
+                    <h3>{d.name}</h3>
+                    <p>
+                      <CalendarDays size={15} />
+                      {dateIn(locale, d.startsAt)}
+                    </p>
+                    <p>
+                      <MapPin size={15} />
+                      {d.venueName || t.venueTba}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {invitation.livestreamUrl && (
+              <a
+                className="button secondary livestream-link"
+                href={invitation.livestreamUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Radio size={17} /> {t.watchLive}
+              </a>
+            )}
             {saved ? (
               <div className="rsvp-success" role="status">
                 <Check size={32} />
-                <h2>Your reply means the world.</h2>
-                <p>Thank you for being part of our story.</p>
+                <h2>{t.thanks}</h2>
+                <p>{t.thanksSub}</p>
                 <Button variant="secondary" onClick={() => setSaved(false)}>
-                  Update your reply
+                  {t.update}
                 </Button>
               </div>
             ) : (
@@ -86,31 +130,17 @@ export default function RSVP({
                   e.preventDefault();
                   setBusy(true);
                   setError("");
-                  const f = new FormData(e.currentTarget);
+                  const reply = readReply(new FormData(e.currentTarget), days);
+                  if (invitation.maxPartySize <= 1) reply.partySize = 1;
                   try {
                     await api(`rsvp/${token}`, {
                       method: "POST",
-                      body: json({
-                        rsvpStatus: f.get("rsvpStatus"),
-                        partySize: Number(f.get("partySize")),
-                        mealPreference: f.get("mealPreference"),
-                        dietaryNotes: f.get("dietaryNotes") || undefined,
-                        dayResponses: invitation.event.days.map((d) => ({
-                          dayId: d.id,
-                          status: f.get(`day-${d.id}`) || "ACCEPTED",
-                        })),
-                      }),
+                      body: json(reply),
                     });
                     setInvitation({
                       ...invitation,
-                      rsvpStatus: String(f.get("rsvpStatus")),
-                      partySize: Number(f.get("partySize")),
-                      mealPreference: String(f.get("mealPreference")),
-                      dietaryNotes: String(f.get("dietaryNotes") || ""),
-                      responses: invitation.event.days.map((d) => ({
-                        dayId: d.id,
-                        status: String(f.get(`day-${d.id}`) || "ACCEPTED"),
-                      })),
+                      ...reply,
+                      responses: reply.dayResponses,
                     });
                     setSaved(true);
                   } catch (e) {
@@ -120,76 +150,13 @@ export default function RSVP({
                   }
                 }}
               >
-                <Field label="Will you celebrate with us?">
-                  <select
-                    name="rsvpStatus"
-                    defaultValue={
-                      invitation.rsvpStatus === "INVITED"
-                        ? "ACCEPTED"
-                        : invitation.rsvpStatus
-                    }
-                  >
-                    <option value="ACCEPTED">Joyfully accept</option>
-                    <option value="DECLINED">Regretfully decline</option>
-                    <option value="MAYBE">Let me get back to you</option>
-                  </select>
-                </Field>
-                <div className="form-row">
-                  <Field label="Your party size">
-                    <input
-                      name="partySize"
-                      type="number"
-                      min="1"
-                      max={invitation.maxPartySize}
-                      defaultValue={invitation.partySize}
-                      required
-                    />
-                  </Field>
-                  <Field label="Meal preference">
-                    <select
-                      name="mealPreference"
-                      defaultValue={invitation.mealPreference || "Regular"}
-                    >
-                      <option>Regular</option>
-                      <option>Vegetarian</option>
-                      <option>No beef</option>
-                    </select>
-                  </Field>
-                </div>
-                <Field label="Allergies or dietary notes">
-                  <textarea
-                    name="dietaryNotes"
-                    defaultValue={invitation.dietaryNotes}
-                    maxLength={500}
-                    placeholder="Anything our catering team should know?"
-                  />
-                </Field>
-                {invitation.event.days.length > 1 && (
-                  <div className="day-rsvp-options">
-                    <h3>A little reply for each celebration</h3>
-                    {invitation.event.days.map((d) => (
-                      <Field key={d.id} label={d.name}>
-                        <select
-                          name={`day-${d.id}`}
-                          defaultValue={
-                            invitation.responses?.find((r) => r.dayId === d.id)
-                              ?.status || "ACCEPTED"
-                          }
-                        >
-                          <option value="ACCEPTED">I’ll be there</option>
-                          <option value="DECLINED">Unable to attend</option>
-                          <option value="MAYBE">Still deciding</option>
-                        </select>
-                      </Field>
-                    ))}
-                  </div>
-                )}
+                <RsvpFields t={t} days={days} current={invitation} />
                 <Button busy={busy}>
-                  Send with love <ArrowRight size={17} />
+                  {t.send} <ArrowRight size={17} />
                 </Button>
                 {invitation.event.rsvpDeadline && (
                   <p className="helper-text">
-                    Kindly reply by {dateLabel(invitation.event.rsvpDeadline)}
+                    {t.replyBy} {dateIn(locale, invitation.event.rsvpDeadline)}
                   </p>
                 )}
               </form>
@@ -199,12 +166,9 @@ export default function RSVP({
             )}
           </>
         ) : (
-          !error && <p className="muted">Opening your invitation…</p>
+          !error && <p className="muted">{t.opening}</p>
         )}
       </section>
-      <p className="rsvp-footer">
-        A beautiful celebration begins with beautiful people.
-      </p>
     </main>
   );
 }

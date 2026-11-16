@@ -7,9 +7,11 @@ import {
   CircleDollarSign,
   Pencil,
   Download,
+  Paperclip,
+  Trash2,
 } from "lucide-react";
 import { useApp } from "@/lib/context";
-import { api, json } from "@/lib/api";
+import { api, json, uploadFile } from "@/lib/api";
 import { taka } from "@/lib/format";
 import { Payment, BudgetItem, Expense } from "@/lib/types";
 import {
@@ -49,6 +51,27 @@ export default function Budget() {
   }, [event?.id]);
   if (!event)
     return <Empty title="Create a celebration to start your budget" />;
+  const readOnly = event.access === "VIEWER";
+  const splitOn = Boolean(event.features?.includes("costSplit"));
+  async function editExpense(id: string, body: object) {
+    try {
+      await api(`events/${event!.id}/budget/expenses/${id}`, {
+        method: "PATCH",
+        body: json(body),
+      });
+      await load();
+    } catch (e) {
+      notify((e as Error).message, true);
+    }
+  }
+  async function openReceipt(id: string) {
+    try {
+      const { url } = await api<{ url: string }>(`uploads/${id}/url`);
+      window.open(url, "_blank", "noopener");
+    } catch (e) {
+      notify((e as Error).message, true);
+    }
+  }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -213,15 +236,97 @@ export default function Budget() {
               <tr>
                 <th>Expense</th>
                 <th>Category</th>
+                {splitOn && <th>Paid by</th>}
                 <th className="align-right">Amount</th>
+                {!readOnly && <th aria-label="Actions" />}
               </tr>
             </thead>
             <tbody>
               {data?.expenses.map((e) => (
                 <tr key={e.id}>
-                  <td>{e.note}</td>
+                  <td>
+                    {e.note}
+                    {e.receiptMediaId && (
+                      <button
+                        className="text-link"
+                        onClick={() => void openReceipt(e.receiptMediaId!)}
+                      >
+                        Receipt
+                      </button>
+                    )}
+                  </td>
                   <td>{e.category}</td>
+                  {splitOn && (
+                    <td>
+                      <select
+                        aria-label={`Who paid ${e.note}`}
+                        disabled={readOnly}
+                        value={e.paidBy || ""}
+                        onChange={(ev) =>
+                          void editExpense(e.id, {
+                            paidBy: ev.target.value || null,
+                          })
+                        }
+                      >
+                        <option value="">Not set</option>
+                        <option value="BRIDE">
+                          {event.sides?.BRIDE?.label || "Bride's side"}
+                        </option>
+                        <option value="GROOM">
+                          {event.sides?.GROOM?.label || "Groom's side"}
+                        </option>
+                        <option value="SHARED">Shared</option>
+                      </select>
+                    </td>
+                  )}
                   <td className="align-right">{taka(e.amountMinor)}</td>
+                  {!readOnly && (
+                    <td className="row-actions">
+                      <label
+                        className="icon-button"
+                        aria-label={`Attach receipt to ${e.note}`}
+                        title="Attach receipt"
+                      >
+                        <Paperclip size={16} />
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          onChange={async (ev) => {
+                            const file = ev.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const media = await uploadFile(file, "RECEIPT");
+                              await editExpense(e.id, {
+                                receiptMediaId: media.id,
+                              });
+                              notify("Receipt attached");
+                            } catch (err) {
+                              notify((err as Error).message, true);
+                            }
+                          }}
+                        />
+                      </label>
+                      <button
+                        className="icon-button"
+                        aria-label={`Delete ${e.note}`}
+                        onClick={async () => {
+                          if (!window.confirm(`Delete "${e.note}"?`)) return;
+                          try {
+                            await api(
+                              `events/${event.id}/budget/expenses/${e.id}`,
+                              { method: "DELETE" },
+                            );
+                            await Promise.all([load(), refresh()]);
+                          } catch (err) {
+                            notify((err as Error).message, true);
+                          }
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

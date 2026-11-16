@@ -1,3 +1,4 @@
+import { sandboxPaymentsEnabled } from "./config";
 import {
   BadRequestException,
   Body,
@@ -47,7 +48,7 @@ export class PaymentsController {
       where: { id: data.bookingId },
     });
     await ownEvent(this.db, booking.eventId, req.user);
-    if (data.provider !== "SANDBOX" || process.env.PAYMENT_MODE !== "sandbox")
+    if (data.provider !== "SANDBOX" || !sandboxPaymentsEnabled())
       throw new BadRequestException(
         "Live gateway is not configured. No payment has been taken.",
       );
@@ -114,7 +115,7 @@ export class PaymentsController {
     @Req() req: any,
     @Param("id") id: string,
   ) {
-    if (process.env.PAYMENT_MODE !== "sandbox")
+    if (!sandboxPaymentsEnabled())
       throw new BadRequestException("Sandbox is disabled");
     const payment = await this.db.payment.findUniqueOrThrow({ where: { id } });
     await ownEvent(this.db, payment.eventId, req.user);

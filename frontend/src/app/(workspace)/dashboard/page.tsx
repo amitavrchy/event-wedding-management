@@ -17,6 +17,7 @@ import { dateLabel, daysUntil } from "@/lib/format";
 import { Vendor } from "@/lib/types";
 import { Stats } from "@/components/stats";
 import { NewEvent } from "@/components/new-event";
+import { OccasionPicker } from "@/components/occasion-picker";
 import { eventType } from "@/lib/event-types";
 import { VendorCard } from "@/components/vendor-card";
 import { BookingModal } from "@/components/booking-modal";
@@ -25,7 +26,8 @@ export default function Dashboard() {
   const { event, user, vendors, refresh, notify, loading } = useApp();
   const [creating, setCreating] = useState(false),
     [vendor, setVendor] = useState<Vendor | null>(null);
-  const [initialType, setInitialType] = useState("GENERAL");
+  // Set when the visitor already chose an occasion on the landing page.
+  const [initialType, setInitialType] = useState<string | null>(null);
   const occasion = eventType(event?.eventType);
   useEffect(() => {
     const query = new URLSearchParams(location.search),
@@ -263,12 +265,19 @@ export default function Dashboard() {
           </Button>
         </div>
       )}
-      {creating && (
-        <NewEvent
-          initialType={initialType}
-          onClose={() => setCreating(false)}
-        />
-      )}{" "}
+      {creating &&
+        (initialType ? (
+          <NewEvent
+            initialType={initialType}
+            onBack={() => setInitialType(null)}
+            onClose={() => {
+              setCreating(false);
+              setInitialType(null);
+            }}
+          />
+        ) : (
+          <OccasionPicker onClose={() => setCreating(false)} />
+        ))}
       {vendor && (
         <BookingModal vendor={vendor} onClose={() => setVendor(null)} />
       )}

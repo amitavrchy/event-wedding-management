@@ -17,10 +17,15 @@ import { ownEvent, ownVendor } from "./access";
 import { parse, z } from "./validation";
 import { audit } from "./activity";
 import { disconnectUser } from "./realtime";
+import { Notifier } from "./notify/notifier";
+import { link, render } from "./notify/templates";
 @Controller("collaboration")
 @UseGuards(AuthGuard)
 export class CollaborationController {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private notifier: Notifier,
+  ) {}
   private async owner(scope: string, id: string, req: any) {
     if (scope === "EVENT") {
       const event = await ownEvent(this.db, id, req.user, "read");
@@ -102,7 +107,7 @@ export class CollaborationController {
     }
     if (memberExpiresAt <= new Date())
       throw new BadRequestException("This event has ended");
-    return this.db.workspaceInvite.create({
+    const invite = await this.db.workspaceInvite.create({
       data: {
         scope,
         scopeId: id,
@@ -113,6 +118,27 @@ export class CollaborationController {
         memberExpiresAt,
       },
     });
+    // Email the invitation link (the host can still copy and share it manually).
+    const name =
+      scope === "EVENT"
+        ? (await this.db.event.findUnique({ where: { id } }))?.title
+        : (await this.db.vendor.findUnique({ where: { id } }))?.businessName;
+    const message = render("workspaceInvite", "en", {
+      inviter: req.user.fullName,
+      event: name || "a celebration",
+      link: link(`/invite/${invite.token}`),
+    });
+    await this.notifier.direct("EMAIL", data.email, message.subject, message.body);
+    const existing = await this.db.user.findUnique({ where: { email: data.email } });
+    if (existing)
+      await this.notifier.notify(existing.id, {
+        title: message.subject,
+        body: `${req.user.fullName} invited you to ${name || "a workspace"}`,
+        link: link(`/invite/${invite.token}`),
+        kind: "INVITE",
+        key: `invite:${invite.id}`,
+      });
+    return invite;
   }
   @Post("accept/:token") async accept(
     @Req() req: any,

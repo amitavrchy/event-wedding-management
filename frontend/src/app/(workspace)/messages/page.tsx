@@ -18,11 +18,14 @@ export default function Messages() {
   async function load() {
     try {
       const result = await api<Conversation[]>("conversations");
-      setConversations(
-        result.filter(
-          (c) => user?.role === "VENDOR" || c.eventId === event?.id,
-        ),
+      const visible = result.filter(
+        (c) => user?.role === "VENDOR" || c.eventId === event?.id,
       );
+      setConversations(visible);
+      // Deep link from notifications and the inquiry inbox: /messages?c=<id>
+      const wanted = new URLSearchParams(location.search).get("c");
+      const match = wanted && visible.find((c) => c.id === wanted);
+      if (match) setSelected(match);
     } catch (e) {
       notify((e as Error).message, true);
     }
@@ -94,7 +97,8 @@ export default function Messages() {
               </span>
               <span>
                 <strong>
-                  {vendors.find((v) => v.id === c.vendorId)?.businessName ||
+                  {(user?.role === "VENDOR" ? c.eventTitle : c.vendorName) ||
+                    vendors.find((v) => v.id === c.vendorId)?.businessName ||
                     "Event conversation"}
                 </strong>
                 <small>Let’s make something beautiful</small>
@@ -112,8 +116,12 @@ export default function Messages() {
                 </span>
                 <div>
                   <h3>
-                    {vendors.find((v) => v.id === selected.vendorId)
-                      ?.businessName || "Your celebration conversation"}
+                    {(user?.role === "VENDOR"
+                      ? selected.eventTitle
+                      : selected.vendorName) ||
+                      vendors.find((v) => v.id === selected.vendorId)
+                        ?.businessName ||
+                      "Your celebration conversation"}
                   </h3>
                   <p>All the little details, together</p>
                 </div>

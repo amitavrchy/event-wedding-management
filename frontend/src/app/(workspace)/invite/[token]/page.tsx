@@ -28,7 +28,7 @@ export default function AcceptInvite({
         email.
       </p>
       {joined ? (
-          <Link className="button primary" href="/dashboard">
+        <Link className="button primary" href="/dashboard">
           Open your workspace
         </Link>
       ) : (

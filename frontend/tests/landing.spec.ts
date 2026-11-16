@@ -57,6 +57,7 @@ test("landing stays readable across desktop, tablet and mobile; mobile sign-in w
     ).toBeLessThanOrEqual(width);
     const small = await page
       .locator(".landing")
+      .first()
       .evaluate((root) =>
         [...root.querySelectorAll("*")]
           .filter(

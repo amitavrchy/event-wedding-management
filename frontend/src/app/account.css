@@ -1,0 +1,125 @@
+.account-flow {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  background: #fcfaf5;
+}
+.account-flow > section {
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border: 1px solid #eadfcf;
+  border-radius: 18px;
+  padding: 32px 28px;
+}
+.account-flow h1 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 30px;
+  color: #856246;
+  margin: 24px 0 10px;
+}
+.account-flow-intro {
+  color: #826f59;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.account-flow form {
+  display: grid;
+  gap: 16px;
+}
+.account-flow .form-success {
+  background: #eef6ec;
+  color: #2f5d2a;
+  border-radius: 10px;
+  padding: 12px 14px;
+  line-height: 1.6;
+}
+.account-flow-links {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+.auth-forgot {
+  font-size: 14px;
+  justify-self: end;
+  color: #856246;
+  text-decoration: underline;
+}
+/* Account & security settings */
+.security-grid {
+  display: grid;
+  gap: 20px;
+}
+.security-card {
+  background: #fff;
+  border: 1px solid #eadfcf;
+  border-radius: 16px;
+  padding: 22px;
+}
+.security-card h2 {
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+.security-card > p {
+  color: #826f59;
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+.security-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.security-row > label {
+  flex: 1 1 220px;
+}
+.session-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.session-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #f0e7da;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.session-list small {
+  display: block;
+  color: #826f59;
+}
+.totp-setup {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.totp-setup img {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  border: 1px solid #eadfcf;
+}
+.totp-setup code {
+  word-break: break-all;
+  font-size: 13px;
+}
+.danger-zone {
+  border-color: #f0c8c0;
+}
+@media (max-width: 640px) {
+  .totp-setup {
+    grid-template-columns: 1fr;
+  }
+}

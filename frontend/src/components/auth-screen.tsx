@@ -15,18 +15,33 @@ export function AuthScreen({
   const { login } = useApp();
   const [register, setRegister] = useState(initialRegister),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [challenge, setChallenge] = useState("");
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError("");
     const f = new FormData(e.currentTarget);
     try {
-      const result = await api<{ token: string; user: User }>(
-        `auth/${register ? "register" : "login"}`,
-        { method: "POST", body: json(Object.fromEntries(f)) },
-      );
-      login(result.token, result.user);
+      if (challenge) {
+        const result = await api<{ user: User }>("auth/login/2fa", {
+          method: "POST",
+          body: json({ challenge, code: f.get("code") }),
+        });
+        login(result.user);
+        return;
+      }
+      const result = await api<{
+        user?: User;
+        twoFactorRequired?: boolean;
+        challenge?: string;
+      }>(`auth/${register ? "register" : "login"}`, {
+        method: "POST",
+        body: json({ ...Object.fromEntries(f), client: "web" }),
+      });
+      if (result.twoFactorRequired && result.challenge)
+        setChallenge(result.challenge);
+      else if (result.user) login(result.user);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -65,7 +80,21 @@ export function AuthScreen({
               ? "Your celebration starts here"
               : "Welcome to your next chapter"}
           </h2>
-          {register && (
+          {challenge && (
+            <Field label="Code from your authenticator app">
+              <input
+                name="code"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                required
+                autoFocus
+                autoComplete="one-time-code"
+                placeholder="6-digit code"
+              />
+            </Field>
+          )}
+          {!challenge && register && (
             <Field label="Full name">
               <input
                 name="fullName"
@@ -76,28 +105,37 @@ export function AuthScreen({
               />
             </Field>
           )}
-          <Field label="Email address">
-            <input
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
-          </Field>
-          <Field label="Password">
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={register ? 10 : 1}
-              autoComplete={register ? "new-password" : "current-password"}
-              placeholder={
-                register ? "At least 10 characters" : "Your password"
-              }
-            />
-          </Field>
-          {register && (
+          {!challenge && (
+            <>
+              <Field label="Email address">
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                />
+              </Field>
+              <Field label="Password">
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  minLength={register ? 10 : 1}
+                  autoComplete={register ? "new-password" : "current-password"}
+                  placeholder={
+                    register ? "At least 10 characters" : "Your password"
+                  }
+                />
+              </Field>
+            </>
+          )}
+          {!challenge && !register && (
+            <a className="auth-forgot" href="/forgot-password">
+              Forgot your password?
+            </a>
+          )}
+          {!challenge && register && (
             <Field label="I am planning as">
               <select name="role" defaultValue={initialRole}>
                 <option value="HOST">A couple or event host</option>
@@ -113,7 +151,11 @@ export function AuthScreen({
             </p>
           )}
           <Button busy={busy} type="submit">
-            {register ? "Create your account" : "Sign in to your workspace"}
+            {challenge
+              ? "Verify and sign in"
+              : register
+                ? "Create your account"
+                : "Sign in to your workspace"}
             <ArrowRight size={18} />
           </Button>
           <p className="auth-switch">

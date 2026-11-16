@@ -1,7 +1,9 @@
 "use client";
-import { MapPin, ArrowUpRight } from "lucide-react";
+import { MapPin, ArrowUpRight, Star, BadgeCheck } from "lucide-react";
+import "@/app/tools.css";
 import { Vendor } from "@/lib/types";
 import { taka } from "@/lib/format";
+
 export function VendorCard({
   vendor,
   onSelect,
@@ -9,7 +11,9 @@ export function VendorCard({
   vendor: Vendor;
   onSelect: (vendor: Vendor) => void;
 }) {
-  const price = Math.min(...vendor.services.map((s) => s.basePriceMinor));
+  const prices = vendor.services.map((s) => s.basePriceMinor);
+  const price =
+    vendor.priceFromMinor ?? (prices.length ? Math.min(...prices) : NaN);
   return (
     <button className="vendor-card" onClick={() => onSelect(vendor)}>
       <div
@@ -17,6 +21,11 @@ export function VendorCard({
         style={{ backgroundImage: `url("${vendor.image}")` }}
       >
         <span className="image-pill">{vendor.category}</span>
+        {vendor.sponsored && (
+          <span className="image-pill badge-sponsored sponsored-pill">
+            Sponsored
+          </span>
+        )}
         <span className="vendor-open">
           <ArrowUpRight size={20} />
         </span>
@@ -24,13 +33,21 @@ export function VendorCard({
       <div className="vendor-body">
         <div className="vendor-title">
           <h3>{vendor.businessName}</h3>
-          <span className="verified" title="Active marketplace vendor">
-            ✓
-          </span>
+          {vendor.verified && (
+            <span className="verified" title="Documents verified by our team">
+              <BadgeCheck size={16} />
+            </span>
+          )}
         </div>
         <span className="vendor-city">
           <MapPin size={14} />
-          {vendor.city}, Bangladesh
+          {vendor.city}
+          {vendor.ratingCount ? (
+            <span className="vendor-rating">
+              <Star size={13} /> {vendor.ratingAvg?.toFixed(1)} (
+              {vendor.ratingCount})
+            </span>
+          ) : null}
         </span>
         <div className="vendor-price">
           <span>Starting from</span>

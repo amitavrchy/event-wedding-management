@@ -1,3 +1,4 @@
+import { notifierFor } from "./helpers";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PrismaClient } from "@prisma/client";
@@ -51,7 +52,7 @@ test(
       });
       eventId = event.id;
       const req = { user: { sub: suffix, role: "HOST" } };
-      const booking = new BookingsController(db as Database);
+      const booking = new BookingsController(db as Database, notifierFor(db as Database));
       const body = {
         eventId,
         serviceId,
@@ -219,7 +220,22 @@ test(
         ).capacityWarning,
         true,
       );
-      const quotes = new QuotesController(db as Database);
+      const quotes = new QuotesController(db as Database, notifierFor(db as Database));
+      await assert.rejects(
+        () =>
+          quotes.create(
+            { user: { sub: suffix, role: "VENDOR" } },
+            {
+              eventId,
+              vendorId,
+              amountMinor: 50000,
+              breakdown: [{ label: "Unsolicited", amountMinor: 50000 }],
+              expiresAt: new Date(Date.now() + 86400000).toISOString(),
+            },
+          ),
+        /after its host contacts you/,
+      );
+      await db.conversation.create({ data: { eventId, vendorId } });
       const quote = await quotes.create(
         { user: { sub: suffix, role: "VENDOR" } },
         {
@@ -295,6 +311,9 @@ test(
       await db.guest.deleteMany({ where: { eventId } });
       await db.quote.deleteMany({ where: { eventId } });
       await db.dispute.deleteMany({ where: { eventId } });
+      await db.message.deleteMany({ where: { conversation: { eventId } } });
+      await db.conversation.deleteMany({ where: { eventId } });
+      await db.installment.deleteMany({ where: { eventId } });
       if (eventId) await db.event.delete({ where: { id: eventId } });
       if (serviceId)
         await db.vendorService.delete({ where: { id: serviceId } });

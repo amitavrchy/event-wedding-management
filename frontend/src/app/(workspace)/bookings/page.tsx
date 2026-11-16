@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CalendarDays, CreditCard, Plus, Star, X } from "lucide-react";
 import { useApp } from "@/lib/context";
+import { useResource } from "@/lib/use-resource";
 import { api, json } from "@/lib/api";
 import { dateLabel, taka } from "@/lib/format";
 import { Booking } from "@/lib/types";
@@ -16,6 +17,40 @@ import {
 } from "@/components/ui";
 export default function Bookings() {
   const { event, user, refresh, notify } = useApp();
+  const health = useResource<{ paymentMode?: string } | null>("health", null);
+  const sandbox = health.data?.paymentMode === "sandbox";
+  async function vendorAction(b: Booking, action: "confirm" | "payment") {
+    try {
+      if (action === "confirm")
+        await api(`bookings/${b.id}/confirm`, { method: "POST", body: "{}" });
+      else {
+        const amount = window.prompt("Amount received (৳)");
+        if (!amount) return;
+        const method = (
+          window.prompt(
+            "Paid by: CASH, BKASH, NAGAD, ROCKET, BANK or OTHER",
+            "BKASH",
+          ) || ""
+        ).toUpperCase();
+        await api(`bookings/${b.id}/offline-payments`, {
+          method: "POST",
+          body: json({
+            amountMinor: Math.round(Number(amount) * 100),
+            method,
+            idempotencyKey: crypto.randomUUID(),
+          }),
+        });
+      }
+      await load();
+      notify(
+        action === "confirm"
+          ? "Booking confirmed. The family has been notified."
+          : "Payment recorded",
+      );
+    } catch (e) {
+      notify((e as Error).message, true);
+    }
+  }
   const [items, setItems] = useState<Booking[]>([]),
     [busy, setBusy] = useState(""),
     [review, setReview] = useState<Booking | null>(null),
@@ -138,7 +173,29 @@ export default function Bookings() {
             </div>
             <div className="booking-actions">
               <strong className="booking-total">{taka(b.priceMinor)}</strong>
+              {user?.role === "VENDOR" &&
+                ["HELD", "AWAITING_ADVANCE"].includes(b.status) && (
+                  <Button onClick={() => void vendorAction(b, "confirm")}>
+                    Confirm booking
+                  </Button>
+                )}
+              {user?.role === "VENDOR" && b.status === "CONFIRMED" && (
+                <Button
+                  variant="secondary"
+                  onClick={() => void vendorAction(b, "payment")}
+                >
+                  Record a payment
+                </Button>
+              )}
               {user?.role !== "VENDOR" &&
+                !sandbox &&
+                ["HELD", "AWAITING_ADVANCE"].includes(b.status) && (
+                  <small className="hold-note">
+                    Waiting for the vendor to confirm
+                  </small>
+                )}
+              {user?.role !== "VENDOR" &&
+                sandbox &&
                 ["HELD", "AWAITING_ADVANCE"].includes(b.status) && (
                   <Button
                     busy={busy === b.id}
@@ -147,15 +204,17 @@ export default function Bookings() {
                     Test advance · {taka(b.advanceMinor)}
                   </Button>
                 )}
-              {user?.role !== "VENDOR" && b.status === "CONFIRMED" && (
-                <Button
-                  variant="secondary"
-                  busy={busy === b.id}
-                  onClick={() => void pay(b, "BALANCE")}
-                >
-                  Test balance payment
-                </Button>
-              )}
+              {user?.role !== "VENDOR" &&
+                sandbox &&
+                b.status === "CONFIRMED" && (
+                  <Button
+                    variant="secondary"
+                    busy={busy === b.id}
+                    onClick={() => void pay(b, "BALANCE")}
+                  >
+                    Test balance payment
+                  </Button>
+                )}
               {user?.role === "VENDOR" &&
                 b.status === "CONFIRMED" &&
                 new Date(b.endAt) < new Date() && (
