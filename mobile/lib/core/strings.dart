@@ -39,6 +39,27 @@ class S {
       ? codeLabel(side)
       : label;
 
+  String alreadyArrivedMessage(String name) =>
+      t('alreadyArrivedMessage').replaceAll('{name}', name);
+  String partyTable(String count, String table) =>
+      t('partyTable').replaceAll('{count}', count).replaceAll('{table}', table);
+  String arrivalMessage(String name, String count, {bool pending = false}) =>
+      t(pending ? 'arrivalPendingMessage' : 'arrivalMessage')
+          .replaceAll('{name}', name)
+          .replaceAll('{count}', count);
+  String arrivalTotal(String arrived, String expected) =>
+      t('arrivalTotal')
+          .replaceAll('{arrived}', arrived)
+          .replaceAll('{expected}', expected);
+  String pendingCount(String count) =>
+      t('pendingCount').replaceAll('{count}', count);
+  String rosterUpdated(String date) =>
+      t('rosterUpdated').replaceAll('{date}', date);
+  String cueDetails(String owner, String minutes) =>
+      t('cueDetails')
+          .replaceAll('{owner}', owner)
+          .replaceAll('{minutes}', minutes);
+
   /// A server-owned code is translated when it is known to the app.
   String codeLabel(String code) {
     final key =
@@ -48,6 +69,18 @@ class S {
   }
 
   static const _en = {
+    'alreadyArrivedMessage': '{name}: already checked in',
+    'partyTable': '{count} guests · {table}',
+    'arrivalMessage': '{name} · {count} — arrived ✓',
+    'arrivalPendingMessage': '{name} · {count} — arrived ✓ (pending sync)',
+    'arrivalTotal': '{arrived} / {expected} arrived',
+    'pendingCount': '{count} pending sync',
+    'rosterUpdated': 'List updated {date}',
+    'cueDetails': '{owner} · {minutes} min',
+    'codeREADY': 'Ready',
+    'codeLIVE': 'Live',
+    'codeAPPROVED': 'Approved',
+    'codeHIDDEN': 'Hidden',
     'platesConfirmed': 'plates to order · {count} confirmed',
     'cateringShare': '{day}: {count} plates ({meals})',
     'replyMinutes': 'Usually replies in {count} min',
@@ -282,6 +315,18 @@ class S {
   };
 
   static const _bn = {
+    'alreadyArrivedMessage': '{name}: আগেই চেক-ইন হয়েছে',
+    'partyTable': '{count} অতিথি · {table}',
+    'arrivalMessage': '{name} · {count} — এসেছেন ✓',
+    'arrivalPendingMessage': '{name} · {count} — এসেছেন ✓ (সিঙ্কের অপেক্ষায়)',
+    'arrivalTotal': '{arrived} / {expected} এসেছেন',
+    'pendingCount': '{count} সিঙ্কের অপেক্ষায়',
+    'rosterUpdated': 'তালিকা হালনাগাদ {date}',
+    'cueDetails': '{owner} · {minutes} মিনিট',
+    'codeREADY': 'প্রস্তুত',
+    'codeLIVE': 'চলছে',
+    'codeAPPROVED': 'অনুমোদিত',
+    'codeHIDDEN': 'লুকানো',
     'platesConfirmed': 'প্লেট অর্ডার করুন · {count} জন নিশ্চিত',
     'cateringShare': '{day}: {count} প্লেট ({meals})',
     'replyMinutes': 'সাধারণত {count} মিনিটে উত্তর দেন',
@@ -404,7 +449,7 @@ class S {
     'textList': 'তালিকা ',
     'textPhotoWall': 'ফটো ওয়াল',
     'textOpenThePhotoWall': 'ফটো ওয়াল চালু করুন',
-    'textShareThisLinkOrIts': 'অতিথিদের এই লিংক/QR দিন',
+    'textShareThisLinkOrIts': 'অতিথিদের এই লিংক বা কিউআর কোড দিন',
     'textWaiting': 'অপেক্ষমাণ',
     'textOnWall': 'ওয়ালে',
     'textHidden': 'লুকানো',
