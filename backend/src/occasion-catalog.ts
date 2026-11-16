@@ -28,7 +28,7 @@ export const occasionCatalog = [
     "descriptionBn": "একসাথে পথচলার বছর উদযাপন",
     "icon": "💐",
     "preset": "ANNIVERSARY",
-    "iconKey": "favorite"
+    "iconKey": "bouquet"
   },
   {
     "type": "CORPORATE",
@@ -68,7 +68,7 @@ export const occasionCatalog = [
     "descriptionBn": "মেহেদির রঙে আনন্দ আয়োজন",
     "icon": "🌿",
     "preset": "HOLUD",
-    "iconKey": "flower"
+    "iconKey": "leaf"
   },
   {
     "type": "RECEPTION",
@@ -118,7 +118,7 @@ export const occasionCatalog = [
     "descriptionBn": "শিশুর প্রথম ভাত উদযাপন",
     "icon": "🥣",
     "preset": "BIRTHDAY",
-    "iconKey": "restaurant"
+    "iconKey": "bowl"
   },
   {
     "type": "BABY_SHOWER",
@@ -308,7 +308,7 @@ export const occasionCatalog = [
     "descriptionBn": "মহৎ কাজে সহায়তা সংগ্রহ",
     "icon": "❤️",
     "preset": "COMMUNITY",
-    "iconKey": "favorite"
+    "iconKey": "charity"
   },
   {
     "type": "MILAD",
