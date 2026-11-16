@@ -1,7 +1,9 @@
-/** iOS Universal Links. Set IOS_APP_ID as "<TEAMID>.com.ayojon.ayojon". */
+/** iOS Universal Links are enabled only when both identity values are configured. */
 export const dynamic = "force-dynamic";
 export function GET() {
-  const appId = process.env.IOS_APP_ID;
+  const teamId = process.env.IOS_TEAM_ID?.trim();
+  const bundleId = process.env.IOS_BUNDLE_ID?.trim();
+  const appId = teamId && bundleId ? `${teamId}.${bundleId}` : undefined;
   return Response.json({
     applinks: {
       details: appId
