@@ -1,7 +1,10 @@
 .occasion-actions { display: flex; align-items: center; gap: 12px; }
 .occasion-actions p { flex: 1; }
 .occasion-search-button { border: 0; background: transparent; cursor: pointer; color: #856246; }
-.occasion-search { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #c99a6b; border-radius: 8px; font: inherit; }
+.occasion-search { display: flex; align-items: center; gap: 12px; min-height: 48px; box-sizing: border-box; margin-top: 16px; padding: 0 16px; border: 1px solid #c99a6b; border-radius: 16px; color: #856246; }
+.occasion-search:focus-within { outline: 2px solid #856246; outline-offset: 2px; }
+.occasion-search input { flex: 1; min-width: 0; padding: 12px 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; }
+.occasion-search + [role="status"] { margin-top: 20px; }
 .occasion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); gap: 10px; margin-top: 18px; align-items: start; }
 .occasion-card { min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; border: 1px solid #eadfcf; border-radius: 16px; background: #fff; padding: 16px 10px; cursor: pointer; }
 .occasion-card:hover, .occasion-card:focus-visible { border-color: #c99a6b; box-shadow: 0 8px 20px rgba(133,98,70,.14); }

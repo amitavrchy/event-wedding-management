@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import '../strings.dart';
+
 /// A readable error from the API (its `message`) or the network.
 class ApiError implements Exception {
   ApiError(this.message, {this.status});
@@ -29,6 +31,20 @@ class ApiError implements Exception {
       return ApiError(message, status: error.response?.statusCode);
     }
     return ApiError(error.toString());
+  }
+
+  /// Never expose arbitrary server messages in the UI.
+  String localized(S s) {
+    final key = switch (status) {
+      400 || 422 => 'errorValidation',
+      401 => 'errorUnauthorized',
+      403 => 'errorForbidden',
+      404 => 'errorNotFound',
+      409 => 'errorConflict',
+      429 => 'errorRateLimit',
+      _ => message.startsWith('No internet connection.') ? 'errorNetwork' : 'genericError',
+    };
+    return s.t(key);
   }
 
   @override

@@ -3,14 +3,346 @@ class S {
   S._(this._m, this.locale);
   final Map<String, String> _m;
   final String locale;
-  static S of(String locale) => S._(locale == 'bn' ? _bn : _en, locale == 'bn' ? 'bn' : 'en');
+  static S of(String locale) =>
+      S._(locale == 'bn' ? _bn : _en, locale == 'bn' ? 'bn' : 'en');
   String t(String key) => _m[key] ?? _en[key] ?? key;
   bool get bn => locale == 'bn';
 
+  static Map<String, String> get english => Map.unmodifiable(_en);
+  static Map<String, String> get bangla => Map.unmodifiable(_bn);
+
+  String guestSummary(String total, String attending) =>
+      t('guestSummary')
+          .replaceAll('{total}', total)
+          .replaceAll('{attending}', attending);
+  String guestParty(String size, String maximum) =>
+      t('guestParty')
+          .replaceAll('{size}', size)
+          .replaceAll('{maximum}', maximum);
+  String invitation(String name, String event, String url) =>
+      t('invitation')
+          .replaceAll('{name}', name)
+          .replaceAll('{event}', event)
+          .replaceAll('{url}', url);
+
+  String platesConfirmed(String count) =>
+      t('platesConfirmed').replaceAll('{count}', count);
+  String cateringShare(String day, String count, String meals) =>
+      t('cateringShare')
+          .replaceAll('{day}', day)
+          .replaceAll('{count}', count)
+          .replaceAll('{meals}', meals);
+  String replyMinutes(String count) =>
+      t('replyMinutes').replaceAll('{count}', count);
+  String familyLabel(String side, String label) =>
+      label == "Bride's side" || label == "Groom's side"
+      ? codeLabel(side)
+      : label;
+
+  String alreadyArrivedMessage(String name) =>
+      t('alreadyArrivedMessage').replaceAll('{name}', name);
+  String partyTable(String count, String table) =>
+      t('partyTable').replaceAll('{count}', count).replaceAll('{table}', table);
+  String arrivalMessage(String name, String count, {bool pending = false}) =>
+      t(pending ? 'arrivalPendingMessage' : 'arrivalMessage')
+          .replaceAll('{name}', name)
+          .replaceAll('{count}', count);
+  String arrivalTotal(String arrived, String expected) =>
+      t('arrivalTotal')
+          .replaceAll('{arrived}', arrived)
+          .replaceAll('{expected}', expected);
+  String pendingCount(String count) =>
+      t('pendingCount').replaceAll('{count}', count);
+  String rosterUpdated(String date) =>
+      t('rosterUpdated').replaceAll('{date}', date);
+  String cueDetails(String owner, String minutes) =>
+      t('cueDetails')
+          .replaceAll('{owner}', owner)
+          .replaceAll('{minutes}', minutes);
+
+  String details(Iterable<String?> parts) =>
+      parts.whereType<String>().where((part) => part.isNotEmpty).join(' · ');
+  String percentage(String value) => '$value%';
+  String rating(String value) => '★ $value';
+  String mealCount(String meal, String count) =>
+      format('mealCount', {'meal': meal, 'count': count});
+  String bufferLabel(String value) => format('bufferValue', {'value': value});
+  String paidShare(String paid, String share) =>
+      format('paidShare', {'paid': paid, 'share': share});
+  String settlement(String from, String to, String amount) =>
+      format('settlement', {'from': from, 'to': to, 'amount': amount});
+  String shareSummary(String first, String second, String amount) => format(
+    'shareSummary',
+    {'first': first, 'second': second, 'amount': amount},
+  );
+
+  String format(String key, Map<String, String> values) {
+    var result = t(key);
+    for (final entry in values.entries) {
+      result = result.replaceAll('{${entry.key}}', entry.value);
+    }
+    return result;
+  }
+
+  /// A server-owned code is translated when it is known to the app.
+  String codeLabel(String code) {
+    final key =
+        'code${code.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '')}';
+    return _m[key] ??
+        (bn ? t('unknownStatus') : code.replaceAll('_', ' ').toLowerCase());
+  }
+
   static const _en = {
+    'bufferValue': 'Buffer: {value}%',
+    'paidShare': 'Paid {paid} · Fair share {share}',
+    'settlement': '{from} → {to}: {amount}',
+    'shareSummary': '{first}% / {second}% · {amount}',
+    'greeting': 'Hello, {name}',
+    'daysRemaining': '{count} days to go',
+    'taskProgress': '{done} of {total}',
+    'appDevice': 'Ayojon app',
+    'webBrowser': 'Web browser',
+    'dhaka': 'Dhaka',
+    'unknownDate': 'Date unavailable',
+    'sendMessage': 'Send message',
+    'workspaceFallback': 'a workspace',
+    'notificationInviteBody': '{name} invited you to {workspace}',
+    'dateToConfirm': 'a date to confirm',
+    'bookingRequestTitle': 'New booking request',
+    'yourBookingTitle': 'Your booking',
+    'bookingWaiting': 'waiting for advance',
+    'bookingPleaseConfirm': 'please confirm',
+    'bookingConfirmedVendor': 'confirmed by the vendor',
+    'bookingCancelledVendor': 'cancelled by the vendor',
+    'vendorFallback': 'A vendor',
+    "guestCount": "{count} guests",
+    "reportMonth": "{month} report",
+    "reportInquiries": "{count} inquiries · {rate} reply rate",
+    "reportBookings": "{count} bookings · {value}",
+    "reportAverage": "Average reply: {count} min",
+    "planLabel": "Plan: {plan}",
+    "codeFREE": "Free",
+    "codeBASIC": "Basic",
+    "codePRO": "Pro",
+    "codePREMIUM": "Premium",
+    "notificationReviewTitle": "New {rating}★ review",
+    "notificationArrivedTitle": "{name} has arrived",
+    "notificationReportTitle": "Your {month} report",
+    "notificationReportBody": "{inquiries} inquiries, {bookings} bookings",
+    "notificationReportAverage": "{summary}, average reply {minutes} min.",
+    "notificationReportNoAverage": "{summary}.",
+    "notificationInquiryBody":
+        "{name} asked a day ago. Quick replies win more bookings.",
+    "notificationRsvpBody": "{count} invitation replies are still pending for {event}. Share their public invitation links before the deadline.",
+    "notificationBalanceBody":
+        "Your {service} booking is coming up. Balance remaining: {amount}.",
+    "notificationInstallmentBody": "{label}: {amount} due {date}.",
+    "notificationRenewalBody":
+        "Your {plan} plan ends on {date}. Renew to keep your listing benefits.",
+    "notificationQuoteAmount": "{amount}",
+    "notificationTitlePayment": "A little payment reminder",
+    "notificationTitleMilestone": "A payment milestone is coming up",
+    "notificationTitleTask": "One lovely detail is nearly due",
+    "notificationTitleRsvp": "A little nudge for your guest list",
+    "notificationTitleInquiry": "An inquiry is waiting for you",
+    "notificationTitleActive": "Your plan is active",
+    "notificationTitlePaymentFailed": "We could not confirm your payment",
+    "notificationTitleRenewal": "Your plan renews soon",
+    "notificationTitleVerified": "Your business is verified",
+    "notificationTitleVerification": "Verification needs another look",
+    "notificationVerifiedBody": "The Verified badge now shows on your profile.",
+    "notificationTitleReviewRequest": "How did it go?",
+    "notificationReviewRequestBody": "Your booking is complete. A short review helps other families choose well.",
+    "notificationTitleAccepted": "Your quotation was accepted",
+    "notificationTitleDeclined": "Your quotation was declined",
+    "notificationTitleBooking": "Your booking is recorded",
+    "notificationBookingBody":
+        "Arrange the advance and balance directly with your vendor.",
+    "notificationActiveBody":
+        "{plan} is active until {date}. Receipt {receipt}.",
+    "notificationTitleMessage": "New message",
+    "notificationTitleNewInquiry": "New inquiry on Ayojon",
+    "notificationTitleQuote": "You received a quotation",
+    "notificationTitleBookingUpdate": "Booking update",
+    "notificationTitleInvite": "You're invited to plan together",
+    "notificationInquiryTemplate":
+        "{name} sent you an inquiry for {date}. Reply soon: {link}",
+    "notificationQuoteTemplate":
+        "{vendor} sent a quotation of {amount}. Review it: {link}",
+    "notificationBookingTemplate": "{title}: {status}. Details: {link}",
+
+    'alreadyArrivedMessage': '{name}: already checked in',
+    'partyTable': '{count} guests · {table}',
+    'arrivalMessage': '{name} · {count} — arrived ✓',
+    'arrivalPendingMessage': '{name} · {count} — arrived ✓ (pending sync)',
+    'arrivalTotal': '{arrived} / {expected} arrived',
+    'pendingCount': '{count} pending sync',
+    'rosterUpdated': 'List updated {date}',
+    'cueDetails': '{owner} · {minutes} min',
+    'codeREADY': 'Ready',
+    'codeLIVE': 'Live',
+    'codeAPPROVED': 'Approved',
+    'codeHIDDEN': 'Hidden',
+    'platesConfirmed': 'plates to order · {count} confirmed',
+    'cateringShare': '{day}: {count} plates ({meals})',
+    'replyMinutes': 'Usually replies in {count} min',
+    'codeBRIDE': "Bride's side",
+    'codeGROOM': "Groom's side",
+    'codeREGULAR': 'Regular',
+    'codeVEGETARIAN': 'Vegetarian',
+    'codeNOBEEF': 'No beef',
+    'mealCount': '{meal} {count}',
+    'guestSummary': '{total} guests · {attending} attending',
+    'guestParty': '{size} of {maximum}',
+    'invitation':
+        'Dear {name},\n{event}. Please let us know if you can come: {url}',
+    'codeINVITED': 'Invited',
+    'codeCASH': 'Cash',
+    'codeGIFT': 'Gift',
+    'codeGOLD': 'Gold',
+    'unknownStatus': 'Unknown',
+    'errorNetwork': 'No internet connection. Check your network and try again.',
+    'errorUnauthorized': 'Please sign in again.',
+    'errorForbidden': 'You do not have permission to do this.',
+    'errorNotFound': 'This item could not be found.',
+    'errorConflict': 'This item has changed. Please try again.',
+    'errorValidation': 'Please check your information and try again.',
+    'errorRateLimit': 'Too many requests. Please try again later.',
+    'codePENDING': 'Pending',
+    'codeNEW': 'New',
+    'codeSENT': 'Sent',
+    'codeACCEPTED': 'Accepted',
+    'codeREJECTED': 'Rejected',
+    'codeDECLINED': 'Declined',
+    'codeCONFIRMED': 'Confirmed',
+    'codeCANCELLED': 'Cancelled',
+    'codeCANCELED': 'Cancelled',
+    'codeHELD': 'Held',
+    'codeAWAITINGADVANCE': 'Awaiting advance',
+    'codePAID': 'Paid',
+    'codeUNPAID': 'Unpaid',
+    'codePARTIAL': 'Partially paid',
+    'codeEXPIRED': 'Expired',
+    'codeDRAFT': 'Draft',
+    'codeCOMPLETED': 'Completed',
+    'codeDONE': 'Done',
+    'codeTODO': 'To do',
+    'codeINPROGRESS': 'In progress',
+    'codeNOANSWER': 'No response',
+    'codeMAYBE': 'Maybe',
+    'codeATTENDING': 'Attending',
+    'codeNOTATTENDING': 'Not attending',
+    'codeVENUE': 'Venue',
+    'codeCATERING': 'Catering',
+    'codeDECORATION': 'Decoration',
+    'codePHOTOGRAPHY': 'Photography',
+    'codeATTIRE': 'Attire',
+    'codeOTHER': 'Other',
+
+    'minutes': 'min',
+    'sponsored': 'Sponsored',
+
+    'ok': 'OK',
+    'phone': 'Phone',
+    'acceptQuote': 'Accept quote and book',
+    'chooseDate': 'Choose date',
+    'chooseTime': 'Choose time (Dhaka)',
+    'accept': 'Accept',
+    'noServices': 'This vendor has no available services',
+    'genericError': 'Something went wrong. Please try again.',
+
+    'textHello': 'Hello',
+    'textAllCaughtUp': 'All caught up!',
+    'textFullChecklist': 'Full checklist',
+    'textSwitchEvent': 'Switch event',
+    'textPlanAnotherOccasion': '+ Plan another occasion',
+    'textAddMoreTools': 'Add more tools',
+    'textToolsForThisEvent': 'Tools for this event',
+    'textSuggested': ' · suggested',
+    'textCateringHeadcount': 'Catering headcount',
+    'textBuffer': 'Buffer',
+    'textWholeEvent': 'Whole event',
+    'textSendToCaterer': 'Send to caterer',
+    'textFamilyCostSplit': 'Family cost split',
+    'textBothFamiliesAreEven': 'Both families are even',
+    'textPaid': 'Paid',
+    'textFairShare': 'Fair share',
+    'textFindVendors': 'Find vendors',
+    'textFreeOnMyDateFits': 'Free on my date, fits my guests',
+    'textTellThemAboutYourEvent': 'Tell them about your event',
+    'textYourPhoneOptional': 'Your phone (optional)',
+    'textInquirySent': 'Inquiry sent',
+    'textFullProfile': 'Full profile',
+    'textBookingConfirmed': 'Booking confirmed',
+    'textPaymentRecorded': 'Payment recorded',
+    'textQuotations': 'Quotations',
+    'textSendInvitations': 'Send invitations',
+    'textAddGuestsFirst': 'Add guests first',
+    'textOpened': 'Opened',
+    'textSent': 'Sent',
+    'textNotSent': 'Not sent',
+    'textChecklist': 'Checklist',
+    'textNewTask': 'New task',
+    'textMaxPartySize': 'Max party size',
+    'textRelationship': 'Relationship',
+    'textGuestList': 'Guest list',
+    'textAll': 'All',
+    'textWhatFor': 'What for',
+    'textPaidBy': 'Paid by',
+    'textShared': 'Shared',
+    'textPhotoOfReceipt': 'Photo of receipt',
+    'textReceiptAttached': 'Receipt attached',
+    'textBudget': 'Budget',
+    'textPlanned': 'Planned',
+    'textCommitted': 'Committed',
+    'textBookingsExceedYourBudget': 'Bookings exceed your budget',
+    'textFrom': 'From',
+    'textCash': 'Cash',
+    'textGift': 'Gift',
+    'textGold': 'Gold',
+    'textDescription': 'Description',
+    'textGiftRegister': 'Gift register',
+    'textGifts': 'Gifts',
+    'textThankYous': 'Thank-yous',
+    'textWelcomeDesk': 'Welcome desk',
+    'textAddAnEventDayFirst': 'Add an event day first',
+    'textList': 'List ',
+    'textPhotoWall': 'Photo wall',
+    'textOpenThePhotoWall': 'Open the photo wall',
+    'textShareThisLinkOrIts': 'Share this link or its QR with guests',
+    'textWaiting': 'Waiting',
+    'textOnWall': 'On wall',
+    'textHidden': 'Hidden',
+    'textApprove': 'Approve',
+    'textHide': 'Hide',
+    'textRunSheet': 'Run sheet',
+    'textSendAVendorAnInquiry':
+        'Send a vendor an inquiry to start a conversation',
+    'textAtLeast10Characters': 'At least 10 characters',
+    'textByCreatingAnAccountYou':
+        'By creating an account you agree to our terms and privacy policy.',
+    'textConfirmYourEmail': 'Confirm your email',
+    'textEnterTheCodeWeEmailed': 'Enter the code we emailed you',
+    'textEmailCode': 'Email code',
+    'textTwoStepSignIn': 'Two-step sign-in',
+    'textOn': 'On',
+    'textTurnOnFromTheWebsite': 'Turn on from the website',
+    'textThisDevice': 'This device',
+    'textTermsPrivacy': 'Terms & privacy',
+    'textBn': 'bn',
+    'textBusiness': 'Business',
+    'textAddYourBusinessOnThe': 'Add your business on the website',
+    'textReply': 'Reply',
+    'textReplyRate': 'reply rate',
+    'textAverageReply': 'Average reply',
+    'textAddPortfolioPhotos': 'Add portfolio photos',
+    'textPhotosAdded': 'Photos added',
+    'textProfileServicesAndCalendar': 'Profile, services and calendar',
+
     'appName': 'Ayojon',
     'whatPlanning': 'What are you planning?',
-    'whatPlanningSub': 'Choose your occasion. We will show only the tools it needs.',
+    'whatPlanningSub':
+        'Choose your occasion. We will show only the tools it needs.',
     'moreOccasions': 'More occasions',
     'searchOccasions': 'Search occasions',
     'noOccasions': 'No occasions found.',
@@ -74,7 +406,8 @@ class S {
     'alreadyArrived': 'Already checked in',
     'notInvited': 'Not on the list for this day',
     'openOnWeb': 'Open on the web',
-    'webOnly': 'This tool works best on a larger screen. It opens in your browser.',
+    'webOnly':
+        'This tool works best on a larger screen. It opens in your browser.',
     'updateRequired': 'Please update Ayojon to continue.',
     'update': 'Update',
     'plan': 'Plan',
@@ -87,6 +420,249 @@ class S {
   };
 
   static const _bn = {
+    'bufferValue': 'অতিরিক্ত: {value}%',
+    'paidShare': 'পরিশোধিত {paid} · ন্যায্য ভাগ {share}',
+    'settlement': '{from} থেকে {to}: {amount}',
+    'shareSummary': '{first}% ও {second}% · মোট {amount}',
+    'greeting': 'হ্যালো, {name}',
+    'daysRemaining': 'আর {count} দিন বাকি',
+    'taskProgress': '{total}টির মধ্যে {done}টি',
+    'appDevice': 'আয়োজন অ্যাপ',
+    'webBrowser': 'ওয়েব ব্রাউজার',
+    'dhaka': 'ঢাকা',
+    'unknownDate': 'তারিখ পাওয়া যায়নি',
+    'sendMessage': 'বার্তা পাঠান',
+    'workspaceFallback': 'একটি কর্মপরিসর',
+    'notificationInviteBody': '{name} আপনাকে {workspace} এ আমন্ত্রণ জানিয়েছেন',
+    'dateToConfirm': 'তারিখ এখনো ঠিক হয়নি',
+    'bookingRequestTitle': 'নতুন বুকিং অনুরোধ',
+    'yourBookingTitle': 'আপনার বুকিং',
+    'bookingWaiting': 'অগ্রিমের অপেক্ষায়',
+    'bookingPleaseConfirm': 'অনুগ্রহ করে নিশ্চিত করুন',
+    'bookingConfirmedVendor': 'ভেন্ডর নিশ্চিত করেছেন',
+    'bookingCancelledVendor': 'ভেন্ডর বাতিল করেছেন',
+    'vendorFallback': 'একজন ভেন্ডর',
+    "guestCount": "{count} জন অতিথি",
+    "reportMonth": "{month} প্রতিবেদন",
+    "reportInquiries": "{count}টি জিজ্ঞাসা · উত্তরের হার {rate}",
+    "reportBookings": "{count}টি বুকিং · {value}",
+    "reportAverage": "গড় উত্তর: {count} মিনিট",
+    "planLabel": "প্ল্যান: {plan}",
+    "codeFREE": "বিনামূল্যে",
+    "codeBASIC": "বেসিক",
+    "codePRO": "প্রো",
+    "codePREMIUM": "প্রিমিয়াম",
+    "notificationReviewTitle": "নতুন {rating}★ রিভিউ",
+    "notificationArrivedTitle": "{name} এসে পৌঁছেছেন",
+    "notificationReportTitle": "আপনার {month} প্রতিবেদন",
+    "notificationReportBody": "{inquiries}টি জিজ্ঞাসা, {bookings}টি বুকিং",
+    "notificationReportAverage": "{summary}, গড় উত্তর {minutes} মিনিট।",
+    "notificationReportNoAverage": "{summary}।",
+    "notificationInquiryBody": "{name} এক দিন আগে জিজ্ঞাসা পাঠিয়েছেন। দ্রুত উত্তর দিলে বুকিংয়ের সম্ভাবনা বাড়ে।",
+    "notificationRsvpBody": "{event} অনুষ্ঠানের {count}টি আমন্ত্রণের উত্তর বাকি। শেষ সময়ের আগে আমন্ত্রণের লিংক পাঠান।",
+    "notificationBalanceBody":
+        "আপনার {service} বুকিংয়ের দিন এগিয়ে আসছে। বাকি আছে: {amount}।",
+    "notificationInstallmentBody":
+        "{label}: {date} তারিখে {amount} পরিশোধ করতে হবে।",
+    "notificationRenewalBody": "আপনার {plan} প্ল্যানের মেয়াদ {date} শেষ হবে। সুবিধা পেতে নবায়ন করুন।",
+    "notificationQuoteAmount": "পরিমাণ: {amount}",
+    "notificationTitlePayment": "পেমেন্টের স্মরণবার্তা",
+    "notificationTitleMilestone": "পেমেন্টের সময় এগিয়ে আসছে",
+    "notificationTitleTask": "একটি কাজের সময় প্রায় শেষ",
+    "notificationTitleRsvp": "অতিথি তালিকার স্মরণবার্তা",
+    "notificationTitleInquiry": "আপনার উত্তরের অপেক্ষায় একটি জিজ্ঞাসা",
+    "notificationTitleActive": "আপনার প্ল্যান চালু হয়েছে",
+    "notificationTitlePaymentFailed": "আপনার পেমেন্ট নিশ্চিত করা যায়নি",
+    "notificationTitleRenewal": "আপনার প্ল্যান শিগগির নবায়ন করতে হবে",
+    "notificationTitleVerified": "আপনার ব্যবসা যাচাই হয়েছে",
+    "notificationTitleVerification": "যাচাইয়ের জন্য আরও তথ্য প্রয়োজন",
+    "notificationVerifiedBody":
+        "আপনার প্রোফাইলে এখন যাচাইয়ের ব্যাজ দেখানো হচ্ছে।",
+    "notificationTitleReviewRequest": "অভিজ্ঞতা কেমন ছিল?",
+    "notificationReviewRequestBody": "আপনার বুকিং সম্পন্ন হয়েছে। ছোট্ট একটি রিভিউ অন্য পরিবারকে সঠিক সিদ্ধান্ত নিতে সাহায্য করবে।",
+    "notificationTitleAccepted": "আপনার কোটেশন গৃহীত হয়েছে",
+    "notificationTitleDeclined": "আপনার কোটেশন প্রত্যাখ্যাত হয়েছে",
+    "notificationTitleBooking": "আপনার বুকিং নথিভুক্ত হয়েছে",
+    "notificationBookingBody":
+        "অগ্রিম ও বাকি পেমেন্ট সরাসরি ভেন্ডরের সঙ্গে ঠিক করুন।",
+    "notificationActiveBody":
+        "{plan} প্ল্যান {date} পর্যন্ত চালু আছে। রসিদ {receipt}।",
+    "notificationTitleMessage": "নতুন বার্তা",
+    "notificationTitleNewInquiry": "আয়োজনে নতুন জিজ্ঞাসা",
+    "notificationTitleQuote": "নতুন কোটেশন",
+    "notificationTitleBookingUpdate": "বুকিং আপডেট",
+    "notificationTitleInvite": "একসাথে পরিকল্পনার আমন্ত্রণ",
+    "notificationInquiryTemplate": "{name} {date} তারিখের জন্য জিজ্ঞাসা পাঠিয়েছেন। দ্রুত উত্তর দিন: {link}",
+    "notificationQuoteTemplate":
+        "{vendor} {amount} এর কোটেশন পাঠিয়েছে। দেখুন: {link}",
+    "notificationBookingTemplate": "{title}: {status}। বিস্তারিত: {link}",
+
+    'alreadyArrivedMessage': '{name}: আগেই চেক-ইন হয়েছে',
+    'partyTable': '{count} অতিথি · {table}',
+    'arrivalMessage': '{name} · {count} — এসেছেন ✓',
+    'arrivalPendingMessage': '{name} · {count} — এসেছেন ✓ (সিঙ্কের অপেক্ষায়)',
+    'arrivalTotal': '{arrived} / {expected} এসেছেন',
+    'pendingCount': '{count} সিঙ্কের অপেক্ষায়',
+    'rosterUpdated': 'তালিকা হালনাগাদ {date}',
+    'cueDetails': '{owner} · {minutes} মিনিট',
+    'codeREADY': 'প্রস্তুত',
+    'codeLIVE': 'চলছে',
+    'codeAPPROVED': 'অনুমোদিত',
+    'codeHIDDEN': 'লুকানো',
+    'platesConfirmed': 'প্লেট অর্ডার করুন · {count} জন নিশ্চিত',
+    'cateringShare': '{day}: {count} প্লেট ({meals})',
+    'replyMinutes': 'সাধারণত {count} মিনিটে উত্তর দেন',
+    'codeBRIDE': 'কনের পক্ষ',
+    'codeGROOM': 'বরের পক্ষ',
+    'codeREGULAR': 'সাধারণ',
+    'codeVEGETARIAN': 'নিরামিষ',
+    'codeNOBEEF': 'গরুর মাংস ছাড়া',
+    'mealCount': '{meal}: {count}',
+    'guestSummary': '{total} জন অতিথি · {attending} জন আসছেন',
+    'guestParty': '{maximum} জনের মধ্যে {size} জন',
+    'invitation': 'আসসালামু আলাইকুম {name},\n{event} — উপস্থিতি জানাতে এই লিংকে ক্লিক করুন: {url}',
+    'codeINVITED': 'আমন্ত্রিত',
+    'codeCASH': 'নগদ',
+    'codeGIFT': 'উপহার',
+    'codeGOLD': 'স্বর্ণ',
+    'unknownStatus': 'অজানা',
+    'errorNetwork': 'ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
+    'errorUnauthorized': 'অনুগ্রহ করে আবার সাইন ইন করুন।',
+    'errorForbidden': 'এটি করার অনুমতি আপনার নেই।',
+    'errorNotFound': 'তথ্যটি পাওয়া যায়নি।',
+    'errorConflict': 'তথ্যটি পরিবর্তিত হয়েছে। আবার চেষ্টা করুন।',
+    'errorValidation': 'তথ্য যাচাই করে আবার চেষ্টা করুন।',
+    'errorRateLimit': 'অনেকবার অনুরোধ করা হয়েছে। পরে আবার চেষ্টা করুন।',
+    'codePENDING': 'অপেক্ষমাণ',
+    'codeNEW': 'নতুন',
+    'codeSENT': 'পাঠানো হয়েছে',
+    'codeACCEPTED': 'গৃহীত',
+    'codeREJECTED': 'প্রত্যাখ্যাত',
+    'codeDECLINED': 'প্রত্যাখ্যাত',
+    'codeCONFIRMED': 'নিশ্চিত',
+    'codeCANCELLED': 'বাতিল',
+    'codeCANCELED': 'বাতিল',
+    'codeHELD': 'সংরক্ষিত',
+    'codeAWAITINGADVANCE': 'অগ্রিমের অপেক্ষায়',
+    'codePAID': 'পরিশোধিত',
+    'codeUNPAID': 'অপরিশোধিত',
+    'codePARTIAL': 'আংশিক পরিশোধিত',
+    'codeEXPIRED': 'মেয়াদোত্তীর্ণ',
+    'codeDRAFT': 'খসড়া',
+    'codeCOMPLETED': 'সম্পন্ন',
+    'codeDONE': 'সম্পন্ন',
+    'codeTODO': 'করতে হবে',
+    'codeINPROGRESS': 'চলমান',
+    'codeNOANSWER': 'উত্তর নেই',
+    'codeMAYBE': 'হতে পারে',
+    'codeATTENDING': 'উপস্থিত থাকবেন',
+    'codeNOTATTENDING': 'উপস্থিত থাকবেন না',
+    'codeVENUE': 'অনুষ্ঠানস্থল',
+    'codeCATERING': 'খাবার',
+    'codeDECORATION': 'সাজসজ্জা',
+    'codePHOTOGRAPHY': 'ফটোগ্রাফি',
+    'codeATTIRE': 'পোশাক',
+    'codeOTHER': 'অন্যান্য',
+
+    'minutes': 'মিনিট',
+    'sponsored': 'পৃষ্ঠপোষকতায়',
+
+    'ok': 'ঠিক আছে',
+    'phone': 'ফোন',
+    'acceptQuote': 'দরপ্রস্তাব গ্রহণ করে বুক করুন',
+    'chooseDate': 'তারিখ বেছে নিন',
+    'chooseTime': 'সময় বেছে নিন (ঢাকা)',
+    'accept': 'গ্রহণ করুন',
+    'noServices': 'এই সেবাদাতার কোনো সেবা এখন পাওয়া যাচ্ছে না',
+    'genericError': 'কিছু সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+
+    'textHello': 'শুভেচ্ছা',
+    'textAllCaughtUp': 'সব কাজ শেষ!',
+    'textFullChecklist': 'পুরো চেকলিস্ট',
+    'textSwitchEvent': 'অনুষ্ঠান বদলান',
+    'textPlanAnotherOccasion': '+ নতুন অনুষ্ঠান',
+    'textAddMoreTools': 'আরও টুল যোগ করুন',
+    'textToolsForThisEvent': 'এই অনুষ্ঠানের টুল',
+    'textSuggested': ' · প্রস্তাবিত',
+    'textCateringHeadcount': 'খাবারের হিসাব',
+    'textBuffer': 'বাড়তি',
+    'textWholeEvent': 'পুরো অনুষ্ঠান',
+    'textSendToCaterer': 'ক্যাটারারকে পাঠান',
+    'textFamilyCostSplit': 'খরচ ভাগাভাগি',
+    'textBothFamiliesAreEven': 'দুই পরিবার সমান',
+    'textPaid': 'নিজে দিয়েছেন',
+    'textFairShare': 'ন্যায্য অংশ',
+    'textFindVendors': 'ভেন্ডর খুঁজুন',
+    'textFreeOnMyDateFits': 'আমার তারিখ ও অতিথি সংখ্যায় মেলে',
+    'textTellThemAboutYourEvent': 'আপনার অনুষ্ঠান ও প্রয়োজন লিখুন',
+    'textYourPhoneOptional': 'আপনার ফোন (ঐচ্ছিক)',
+    'textInquirySent': 'জিজ্ঞাসা পাঠানো হয়েছে',
+    'textFullProfile': 'পুরো প্রোফাইল',
+    'textBookingConfirmed': 'বুকিং নিশ্চিত',
+    'textPaymentRecorded': 'পেমেন্ট লেখা হয়েছে',
+    'textQuotations': 'কোটেশন',
+    'textSendInvitations': 'দাওয়াত পাঠান',
+    'textAddGuestsFirst': 'আগে অতিথি যোগ করুন',
+    'textOpened': 'দেখেছেন',
+    'textSent': 'পাঠানো হয়েছে',
+    'textNotSent': 'পাঠানো হয়নি',
+    'textChecklist': 'চেকলিস্ট',
+    'textNewTask': 'নতুন কাজ',
+    'textMaxPartySize': 'সর্বোচ্চ সদস্য',
+    'textRelationship': 'সম্পর্ক',
+    'textGuestList': 'অতিথি তালিকা',
+    'textAll': 'সবাই',
+    'textWhatFor': 'কী খরচ',
+    'textPaidBy': 'কে দিলেন',
+    'textShared': 'যৌথ',
+    'textPhotoOfReceipt': 'রসিদের ছবি',
+    'textReceiptAttached': 'রসিদ যুক্ত হয়েছে',
+    'textBudget': 'বাজেট',
+    'textPlanned': 'পরিকল্পিত',
+    'textCommitted': 'বুক করা',
+    'textBookingsExceedYourBudget': 'বাজেট ছাড়িয়ে গেছে',
+    'textFrom': 'কার কাছ থেকে',
+    'textCash': 'নগদ',
+    'textGift': 'উপহার',
+    'textGold': 'স্বর্ণ',
+    'textDescription': 'বিবরণ',
+    'textGiftRegister': 'উপহার খাতা',
+    'textGifts': 'উপহার',
+    'textThankYous': 'ধন্যবাদ বাকি',
+    'textWelcomeDesk': 'স্বাগত ডেস্ক',
+    'textAddAnEventDayFirst': 'আগে অনুষ্ঠানের দিন যোগ করুন',
+    'textList': 'তালিকা ',
+    'textPhotoWall': 'ফটো ওয়াল',
+    'textOpenThePhotoWall': 'ফটো ওয়াল চালু করুন',
+    'textShareThisLinkOrIts': 'অতিথিদের এই লিংক বা কিউআর কোড দিন',
+    'textWaiting': 'অপেক্ষমাণ',
+    'textOnWall': 'ওয়ালে',
+    'textHidden': 'লুকানো',
+    'textApprove': 'অনুমোদন',
+    'textHide': 'লুকান',
+    'textRunSheet': 'রান শিট',
+    'textSendAVendorAnInquiry': 'ভেন্ডরকে জিজ্ঞাসা পাঠালে কথোপকথন এখানে আসবে',
+    'textAtLeast10Characters': 'কমপক্ষে ১০ অক্ষর',
+    'textByCreatingAnAccountYou':
+        'অ্যাকাউন্ট খুলে আপনি আমাদের শর্তাবলী ও গোপনীয়তা নীতিতে সম্মত হচ্ছেন।',
+    'textConfirmYourEmail': 'ইমেইল নিশ্চিত করুন',
+    'textEnterTheCodeWeEmailed': 'ইমেইলে পাঠানো কোড দিন',
+    'textEmailCode': 'ইমেইল কোড',
+    'textTwoStepSignIn': 'দুই ধাপে সাইন-ইন',
+    'textOn': 'চালু',
+    'textTurnOnFromTheWebsite': 'ওয়েবসাইট থেকে চালু করুন',
+    'textThisDevice': 'এই ডিভাইস',
+    'textTermsPrivacy': 'শর্তাবলী ও গোপনীয়তা',
+    'textBn': 'en',
+    'textBusiness': 'ব্যবসা',
+    'textAddYourBusinessOnThe': 'ওয়েবসাইট থেকে ব্যবসা যোগ করুন',
+    'textReply': 'উত্তর দিন',
+    'textReplyRate': 'উত্তরের হার',
+    'textAverageReply': 'গড় উত্তর',
+    'textAddPortfolioPhotos': 'পোর্টফোলিওতে ছবি যোগ',
+    'textPhotosAdded': 'ছবি যোগ হয়েছে',
+    'textProfileServicesAndCalendar': 'প্রোফাইল, সার্ভিস ও ক্যালেন্ডার',
+
     'appName': 'আয়োজন',
     'whatPlanning': 'কোন অনুষ্ঠানের পরিকল্পনা করছেন?',
     'whatPlanningSub': 'অনুষ্ঠান বেছে নিন। শুধু দরকারি টুলগুলোই দেখাব।',

@@ -22,11 +22,17 @@ test("new host chooses an occasion first and sees only that occasion's tools", a
   await expect(firstCard.locator("svg")).toBeVisible();
   const layout = await firstCard.evaluate((card) => {
     const title = card.querySelector("strong")!.getBoundingClientRect();
-    const subtitle = card.querySelector(".occasion-bn")!.getBoundingClientRect();
     const description = card.querySelector(".occasion-description")!.getBoundingClientRect();
-    return { ordered: title.bottom <= subtitle.top && subtitle.bottom <= description.top, overflow: card.scrollWidth > card.clientWidth || document.documentElement.scrollWidth > innerWidth };
+    return { ordered: title.bottom <= description.top, overflow: card.scrollWidth > card.clientWidth || document.documentElement.scrollWidth > innerWidth };
   });
   expect(layout).toEqual({ ordered: true, overflow: false });
+  await expect(firstCard).toContainText("Celebrate your wedding together");
+  await expect(firstCard).not.toContainText("বিয়ে");
+  await picker.getByRole("button", { name: "বাংলা", exact: true }).click();
+  const banglaPicker = page.getByRole("dialog", { name: "কোন অনুষ্ঠানের পরিকল্পনা করছেন?" });
+  await expect(banglaPicker.getByRole("listitem").first()).toHaveAccessibleName("বিয়ে বেছে নিন");
+  await expect(banglaPicker.getByRole("listitem").first()).not.toContainText("Wedding");
+  await banglaPicker.getByRole("button", { name: "English", exact: true }).click();
   await picker.getByRole("button", { name: "Search occasions" }).click();
   const search = picker.getByRole("textbox", { name: "Search occasions" });
   await search.fill("BIRTHDAY");

@@ -6,6 +6,7 @@ void main() {
   test('money is shown in taka from paisa', () {
     expect(taka(150000), '৳1,500');
     expect(taka(12345), '৳123.45');
+    expect(taka(150000, locale: 'bn'), '৳১,৫০০');
   });
 
   test('guest tokens are read from scanned RSVP links or raw tokens', () {
