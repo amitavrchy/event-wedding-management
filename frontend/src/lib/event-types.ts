@@ -1,4 +1,5 @@
-export const eventTypes = [
+import catalogue from "./occasion-catalog.json";
+const existing = [
   {
     type: "GENERAL",
     label: "General celebration",
@@ -173,7 +174,11 @@ export const eventTypes = [
     tagline: "GOOD THINGS HAPPEN WHEN WE COME TOGETHER",
   },
 ] as const;
-export type EventType = (typeof eventTypes)[number]["type"];
+export const eventTypes = catalogue.map((item) => {
+  const base = existing.find((entry) => entry.type === item.preset) || existing[0];
+  return { ...base, ...item, short: item.label };
+});
+export type EventType = string;
 export function eventType(type?: string) {
-  return eventTypes.find((t) => t.type === type) || eventTypes[0];
+  return eventTypes.find((t) => t.type === type) || eventTypes.find((t) => t.type === "GENERAL")!;
 }

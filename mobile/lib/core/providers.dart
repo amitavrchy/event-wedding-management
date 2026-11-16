@@ -11,6 +11,7 @@ import 'api/api_client.dart';
 import 'api/api_error.dart';
 import 'auth/token_store.dart';
 import 'strings.dart';
+import 'occasion_catalog.dart';
 
 final sharedPrefsProvider = Provider<SharedPreferences>((ref) => throw UnimplementedError('Overridden in main'));
 final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStore());
@@ -180,8 +181,13 @@ class ChosenOccasion extends Notifier<String?> {
 }
 
 final eventTypesProvider = FutureProvider<List<OccasionType>>((ref) async {
-  final list = await ref.read(apiProvider).get<List<dynamic>>('event-types');
-  return [for (final j in list) OccasionType.fromJson(j as Json)];
+  try {
+    final list = await ref.read(apiProvider).get<List<dynamic>>('event-types');
+    return [for (final j in list) OccasionType.fromJson(j as Json)];
+  } catch (_) {
+    final list = jsonDecode(occasionCatalogJson) as List<dynamic>;
+    return [for (final j in list) OccasionType.fromJson(j as Json)];
+  }
 });
 
 final catalogProvider = FutureProvider<FeatureCatalog>((ref) async => FeatureCatalog.fromJson(await ref.read(apiProvider).get<Json>('features')));

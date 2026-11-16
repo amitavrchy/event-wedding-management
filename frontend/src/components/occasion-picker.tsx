@@ -1,101 +1,32 @@
 "use client";
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Search } from "lucide-react";
 import "@/app/occasion.css";
-import { useApp } from "@/lib/context";
 import { eventTypes } from "@/lib/event-types";
+import { usePublicLocale } from "@/lib/public-i18n";
 import { Modal } from "./ui";
 import { NewEvent } from "./new-event";
 
-const featured = [
-  "WEDDING",
-  "HOLUD",
-  "RECEPTION",
-  "ENGAGEMENT",
-  "BIRTHDAY",
-  "ANNIVERSARY",
-  "CORPORATE",
-  "CONFERENCE",
-];
-
-/**
- * First step of every new event: "What are you planning?". The chosen
- * occasion decides which tools the workspace shows.
- */
-export function OccasionPicker({
-  onClose,
-  dismissible = true,
-}: {
-  onClose: () => void;
-  dismissible?: boolean;
-}) {
-  const { catalog } = useApp();
+export function OccasionPicker({ onClose, dismissible = true }: { onClose: () => void; dismissible?: boolean }) {
   const [chosen, setChosen] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
-  if (chosen)
-    return (
-      <NewEvent
-        initialType={chosen}
-        onClose={onClose}
-        onBack={() => setChosen(null)}
-      />
-    );
-  const list = showAll
-    ? eventTypes
-    : eventTypes.filter((t) => featured.includes(t.type));
-  const toolsFor = (type: string) =>
-    (catalog?.occasionDefaults[type] || [])
-      .map((key) => catalog?.features.find((f) => f.key === key)?.label)
-      .filter(Boolean)
-      .slice(0, 4) as string[];
-  return (
-    <Modal
-      title="What are you planning?"
-      onClose={dismissible ? onClose : () => undefined}
-    >
-      <p className="muted">
-        কোন অনুষ্ঠানের পরিকল্পনা করছেন? Choose your occasion and we’ll show only
-        the tools it needs. You can add more any time from settings.
-      </p>
-      <div className="occasion-grid" role="list">
-        {list.map((t) => {
-          const tools = toolsFor(t.type);
-          return (
-            <button
-              key={t.type}
-              role="listitem"
-              className="occasion-card"
-              onClick={() => setChosen(t.type)}
-              aria-label={`Plan a ${t.label}`}
-            >
-              <span
-                className="occasion-image"
-                style={{ backgroundImage: `url(${t.image})` }}
-              />
-              <span className="occasion-body">
-                <strong>{t.label}</strong>
-                <span className="occasion-bn" lang="bn">
-                  {t.labelBn}
-                </span>
-                {tools.length > 0 && (
-                  <span className="occasion-tools">
-                    {tools.map((tool) => (
-                      <span key={tool}>
-                        <Check size={12} /> {tool}
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      {!showAll && (
-        <button className="occasion-more" onClick={() => setShowAll(true)}>
-          More occasions: baby shower, graduation, reunion, community, other
-        </button>
-      )}
-    </Modal>
-  );
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState("");
+  const { locale, toggle } = usePublicLocale();
+  const bn = locale === "bn";
+  if (chosen) return <NewEvent initialType={chosen} onClose={onClose} onBack={() => setChosen(null)} />;
+  const term = query.trim().toLocaleLowerCase();
+  const list = eventTypes.filter((t) => [t.label, t.labelBn, t.description, t.descriptionBn].some((value) => value.toLocaleLowerCase().includes(term)));
+  return <Modal title={bn ? "কোন অনুষ্ঠানের পরিকল্পনা করছেন?" : "What are you planning?"} onClose={dismissible ? onClose : () => undefined}>
+    <div className="occasion-actions">
+      <p className="muted">{bn ? "আপনার অনুষ্ঠান বেছে নিন।" : "Choose your occasion to get started."}</p>
+      <button type="button" className="occasion-search-button" aria-label={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} onClick={() => { if (searching) setQuery(""); setSearching(!searching); }}><Search size={22} /></button>
+      <button type="button" className="link-button" onClick={toggle}>{bn ? "English" : "বাংলা"}</button>
+    </div>
+    {searching && <input autoFocus className="occasion-search" aria-label={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} placeholder={bn ? "অনুষ্ঠান খুঁজুন" : "Search occasions"} value={query} onChange={(e) => setQuery(e.target.value)} />}
+    {list.length === 0 ? <p role="status">{bn ? "কোনো অনুষ্ঠান পাওয়া যায়নি।" : "No occasions found."}</p> :
+      <div className="occasion-grid" role="list">{list.map((t) => <button key={t.type} role="listitem" className="occasion-card" onClick={() => setChosen(t.type)} aria-label={`Plan a ${t.label}`}>
+        <span className="occasion-icon" aria-hidden="true">{t.icon}</span>
+        <span className="occasion-body"><strong>{bn ? t.labelBn : t.label}</strong><span className="occasion-bn">{bn ? t.label : t.labelBn}</span><span className="occasion-description">{bn ? t.descriptionBn : t.description}</span></span>
+      </button>)}</div>}
+  </Modal>;
 }

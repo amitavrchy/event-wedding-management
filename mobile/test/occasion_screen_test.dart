@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:ayojon/core/occasion_catalog.dart';
 import 'package:ayojon/core/providers.dart';
 import 'package:ayojon/features/onboarding/occasion_screen.dart';
 import 'package:ayojon/models/models.dart';
@@ -6,41 +8,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-OccasionType _type(String type, String label, String bn, List<String> features) =>
-    OccasionType(type: type, label: label, labelBn: bn, description: '', budgetMinor: 100000, guestCapacity: 50, features: features);
-
 void main() {
-  testWidgets('first screen asks what you are planning and lists occasions with their tools', (tester) async {
-    SharedPreferences.setMockInitialValues({'locale': 'bn'});
+  testWidgets('ordered cards, bilingual search, empty state and centered icon', (tester) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({'locale': 'en'});
     final prefs = await SharedPreferences.getInstance();
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        sharedPrefsProvider.overrideWithValue(prefs),
-        authProvider.overrideWith(_SignedOutAuth.new),
-        eventTypesProvider.overrideWith((ref) async => [
-              _type('WEDDING', 'Wedding', 'বিয়ে', ['sides', 'gifts']),
-              _type('BIRTHDAY', 'Birthday', 'জন্মদিন', ['gifts']),
-              _type('REUNION', 'Family & friends reunion', 'পুনর্মিলনী', []),
-            ]),
-        catalogProvider.overrideWith((ref) async => FeatureCatalog([], [
-              Feature(key: 'sides', group: 'people', label: 'Bride & groom sides', labelBn: 'বর ও কনে পক্ষ', description: '', path: '/guests'),
-              Feature(key: 'gifts', group: 'plan', label: 'Gift register', labelBn: 'উপহার খাতা', description: '', path: '/gifts'),
-            ])),
-      ],
-      child: const MaterialApp(home: OccasionScreen()),
-    ));
+    final list = (jsonDecode(occasionCatalogJson) as List).map((j) => OccasionType.fromJson(j as Map<String, dynamic>)).toList();
+    await tester.pumpWidget(ProviderScope(overrides: [sharedPrefsProvider.overrideWithValue(prefs), authProvider.overrideWith(_SignedOutAuth.new), eventTypesProvider.overrideWith((ref) async => list)], child: const MaterialApp(home: OccasionScreen())));
     await tester.pumpAndSettle();
-    expect(find.text('কোন অনুষ্ঠানের পরিকল্পনা করছেন?'), findsOneWidget);
-    expect(find.text('বিয়ে'), findsOneWidget);
-    expect(find.text('বর ও কনে পক্ষ · উপহার খাতা'), findsOneWidget);
-    // Less common occasions sit behind "more occasions".
-    expect(find.text('পুনর্মিলনী'), findsNothing);
-    await tester.tap(find.text('আরও অনুষ্ঠান'));
+    expect(tester.getTopLeft(find.text('Wedding')).dx, lessThan(tester.getTopLeft(find.text('Birthday')).dx));
+    expect(tester.getTopLeft(find.text('Anniversary')).dy, greaterThan(tester.getTopLeft(find.text('Wedding')).dy));
+    expect(find.text('Office Program'), findsOneWidget);
+    final iconCenter = tester.getCenter(find.text('💍'));
+    final cardCenter = tester.getCenter(find.ancestor(of: find.text('💍'), matching: find.byType(Card)).first);
+    expect((iconCenter.dx - cardCenter.dx).abs(), lessThan(2));
+    await tester.tap(find.byTooltip('Search occasions'));
     await tester.pumpAndSettle();
-    expect(find.text('পুনর্মিলনী'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'birthday');
+    await tester.pumpAndSettle();
+    expect(find.text('Birthday'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'গায়ে হলুদ');
+    await tester.pumpAndSettle();
+    expect(find.text('Gaye Holud'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'zzzzzz');
+    await tester.pumpAndSettle();
+    expect(find.text('No occasions found.'), findsOneWidget);
   });
 }
-
 class _SignedOutAuth extends AuthController {
   @override
   AuthState build() => const SignedOut();

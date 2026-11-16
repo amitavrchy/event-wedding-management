@@ -11,6 +11,22 @@ test("new host chooses an occasion first and sees only that occasion's tools", a
   // The occasion popup opens before anything else.
   const picker = page.getByRole("dialog", { name: "What are you planning?" });
   await expect(picker).toBeVisible();
+  const cards = picker.getByRole("listitem");
+  await expect(cards).toHaveCount(46);
+  await expect(cards.nth(0)).toHaveAccessibleName("Plan a Wedding");
+  await expect(cards.nth(1)).toHaveAccessibleName("Plan a Birthday");
+  await expect(cards.nth(2)).toHaveAccessibleName("Plan a Anniversary");
+  await expect(cards.nth(3)).toHaveAccessibleName("Plan a Office Program");
+  await picker.getByRole("button", { name: "Search occasions" }).click();
+  const search = picker.getByRole("textbox", { name: "Search occasions" });
+  await search.fill("BIRTHDAY");
+  await expect(cards).toHaveCount(1);
+  await search.fill("গায়ে হলুদ");
+  await expect(cards.first()).toHaveAccessibleName("Plan a Gaye Holud");
+  await search.fill("no-such-occasion");
+  await expect(picker.getByRole("status")).toHaveText("No occasions found.");
+  await search.fill("");
+
   await picker.getByRole("listitem", { name: "Plan a Birthday" }).click();
   await page.getByLabel("Event name").fill("Riya's 30th");
   await page.getByRole("button", { name: "Create event workspace" }).click();
