@@ -35,7 +35,7 @@ export function OccasionPicker({ onClose, dismissible = true }: { onClose: () =>
     {list.length === 0 ? <p role="status">{bn ? "কোনো অনুষ্ঠান পাওয়া যায়নি।" : "No occasions found."}</p> :
       <div className="occasion-grid" role="list">{list.map((t) => { const OccasionIcon = occasionIcons[t.iconKey] || PartyPopper; return <button key={t.type} role="listitem" className="occasion-card" onClick={() => setChosen(t.type)} aria-label={bn ? `${t.labelBn} বেছে নিন` : `Choose ${t.label}`}>
         <span className="occasion-icon" aria-hidden="true"><OccasionIcon size={44} strokeWidth={1.7} /></span>
-        <span className="occasion-body"><strong>{bn ? t.labelBn : t.label}</strong><span className="occasion-bn">{bn ? t.label : t.labelBn}</span><span className="occasion-description">{bn ? t.descriptionBn : t.description}</span></span>
+        <span className="occasion-body"><strong>{bn ? t.labelBn : t.label}</strong><span className="occasion-description">{bn ? t.descriptionBn : t.description}</span></span>
       </button>; })}</div>}
   </Modal>;
 }
