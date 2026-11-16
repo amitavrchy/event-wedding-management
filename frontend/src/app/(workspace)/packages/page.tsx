@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Gift, Check, ArrowRight, Plus } from "lucide-react";
@@ -117,13 +118,21 @@ export default function Packages() {
                       busy={busy === q.id}
                       onClick={async () => {
                         if (status === "ACCEPTED") {
-                          if (!vendors.find((v) => v.id === q.vendorId)?.services.length) {
-                            notify("This vendor has no available service to book", true);
+                          if (
+                            !vendors.find((v) => v.id === q.vendorId)?.services
+                              .length
+                          ) {
+                            notify(
+                              "This vendor has no available service to book",
+                              true,
+                            );
                             return;
                           }
                           setBookingQuote(q);
                           return;
                         }
+                        if (!(await confirmAction("Decline this quote?")))
+                          return;
                         setBusy(q.id);
                         try {
                           await api(`quotes/${q.id}/respond`, {
@@ -212,11 +221,14 @@ export default function Packages() {
           onClose={() => setSelected(null)}
         />
       )}
-      {bookingQuote && (
-        vendors.find((v) => v.id === bookingQuote.vendorId) && <QuoteCheckout
+      {bookingQuote && vendors.find((v) => v.id === bookingQuote.vendorId) && (
+        <QuoteCheckout
           quote={bookingQuote}
           vendor={vendors.find((v) => v.id === bookingQuote.vendorId)!}
-          onClose={() => { setBookingQuote(null); void load(); }}
+          onClose={() => {
+            setBookingQuote(null);
+            void load();
+          }}
         />
       )}
     </>

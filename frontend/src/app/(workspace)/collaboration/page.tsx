@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import { Plus, UserPlus, Copy, ShieldCheck, Trash2 } from "lucide-react";
 import { api, json } from "@/lib/api";
@@ -111,7 +112,8 @@ export default function Collaboration() {
             <Button
               variant="ghost"
               busy={busy}
-              onClick={() =>
+              onClick={async () =>
+                (await confirmAction("Remove this member’s access?")) &&
                 void run(async () => {
                   await api(`collaboration/${scope}/${id}/members/${m.id}`, {
                     method: "DELETE",
@@ -175,7 +177,8 @@ export default function Collaboration() {
             <button
               className="icon-button"
               aria-label={`Cancel invite to ${i.email}`}
-              onClick={() =>
+              onClick={async () =>
+                (await confirmAction("Cancel this invitation?")) &&
                 void run(async () => {
                   await api(`collaboration/${scope}/${id}/invites/${i.id}`, {
                     method: "DELETE",

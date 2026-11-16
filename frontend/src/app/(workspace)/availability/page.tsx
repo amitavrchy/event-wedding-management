@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import {
   ChevronLeft,
@@ -231,7 +232,8 @@ export default function Availability() {
                   className="icon-button"
                   aria-label={`Remove block ${entry.title}`}
                   disabled={busy}
-                  onClick={() =>
+                  onClick={async () =>
+                    (await confirmAction("Remove this availability block?")) &&
                     void run(async () => {
                       await api(
                         `vendors/${business.id}/availability/blocks/${entry.id}`,

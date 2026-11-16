@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -403,8 +404,8 @@ function StudioPage() {
                         <button
                           className="icon-button"
                           aria-label={`Remove ${s.title}`}
-                          onClick={() =>
-                            window.confirm(`Remove ${s.title}?`) &&
+                          onClick={async () =>
+                            (await confirmAction(`Remove ${s.title}?`)) &&
                             void run(
                               "rm",
                               async () => {
@@ -470,7 +471,8 @@ function StudioPage() {
                   <button
                     className="icon-button"
                     aria-label="Remove photo"
-                    onClick={() =>
+                    onClick={async () =>
+                      (await confirmAction("Remove this photo?")) &&
                       void run("gallery", async () => {
                         await api(`vendors/${vendor.id}`, {
                           method: "PATCH",

@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useCallback, useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { MonitorSmartphone, ShieldCheck, Trash2 } from "lucide-react";
@@ -470,7 +471,8 @@ export default function Account() {
                   <Button
                     variant="ghost"
                     busy={busy === s.id}
-                    onClick={() =>
+                    onClick={async () =>
+                      (await confirmAction("End this session?")) &&
                       void run(
                         s.id,
                         async () => {
@@ -514,12 +516,12 @@ export default function Account() {
           </p>
           <form
             className="security-row"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               const f = form(e);
               if (
-                !window.confirm(
+                !(await confirmAction(
                   "Delete your account permanently? This cannot be undone.",
-                )
+                ))
               )
                 return;
               void run("delete", async () => {

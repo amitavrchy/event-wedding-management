@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import {
   Plus,
@@ -177,7 +178,9 @@ export default function Gifts() {
                         className="icon-button"
                         aria-label={`Delete gift from ${g.giverName}`}
                         onClick={async () => {
-                          if (!window.confirm("Delete this gift record?"))
+                          if (
+                            !(await confirmAction("Delete this gift record?"))
+                          )
                             return;
                           try {
                             await api(`events/${event.id}/gifts/${g.id}`, {

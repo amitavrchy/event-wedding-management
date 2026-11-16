@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import { Plus, Trash2, Palette, ImageIcon, StickyNote } from "lucide-react";
 import { api, json } from "@/lib/api";
@@ -75,7 +76,8 @@ export default function Inspiration() {
                   className="icon-button"
                   aria-label={`Remove inspiration ${i.title}`}
                   disabled={busy}
-                  onClick={() =>
+                  onClick={async () =>
+                    (await confirmAction("Remove this inspiration item?")) &&
                     void run(async () => {
                       await api(`events/${event.id}/inspiration/${i.id}`, {
                         method: "DELETE",

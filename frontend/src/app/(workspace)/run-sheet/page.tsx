@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import {
   Plus,
@@ -195,7 +196,8 @@ export default function RunSheet() {
                   className="icon-button"
                   aria-label={`Remove ${cue.title}`}
                   disabled={busy}
-                  onClick={() =>
+                  onClick={async () =>
+                    (await confirmAction("Remove this cue?")) &&
                     void run(async () => {
                       await api(`events/${event.id}/run-sheet/${cue.id}`, {
                         method: "DELETE",

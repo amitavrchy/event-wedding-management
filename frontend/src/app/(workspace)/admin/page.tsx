@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, Search } from "lucide-react";
@@ -297,8 +298,10 @@ function AdminPage() {
                         <Button
                           variant="ghost"
                           busy={busy === `s-${v.id}`}
-                          onClick={() =>
-                            window.confirm(`Suspend ${v.businessName}?`) &&
+                          onClick={async () =>
+                            (await confirmAction(
+                              `Suspend ${v.businessName}?`,
+                            )) &&
                             void act(
                               `s-${v.id}`,
                               `admin/vendors/${v.id}`,
@@ -369,11 +372,14 @@ function AdminPage() {
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => {
+                        onClick={async () => {
                           const note = window.prompt(
                             "Reason shown to the vendor",
                           );
-                          if (note)
+                          if (
+                            note &&
+                            (await confirmAction("Reject this request?"))
+                          )
                             void act(
                               `no-${p.id}`,
                               `admin/subscription-payments/${p.id}/reject`,
@@ -438,9 +444,12 @@ function AdminPage() {
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => {
+                        onClick={async () => {
                           const note = window.prompt("What is missing?");
-                          if (note)
+                          if (
+                            note &&
+                            (await confirmAction("Reject this request?"))
+                          )
                             void act(
                               `vr-${v.id}`,
                               `admin/verifications/${v.id}/reject`,
@@ -541,7 +550,8 @@ function AdminPage() {
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() =>
+                    onClick={async () =>
+                      (await confirmAction("Reject this dispute?")) &&
                       void act(
                         `x-${d.id}`,
                         `disputes/${d.id}/resolve`,

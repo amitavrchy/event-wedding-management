@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { Suspense, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -135,7 +136,7 @@ function GuestsPage() {
     }
   }
   async function remove(g: Guest) {
-    if (!window.confirm(`Remove ${g.name} from the guest list?`)) return;
+    if (!(await confirmAction(`Remove ${g.name} from the guest list?`))) return;
     try {
       await api(`events/${event!.id}/guests/${g.id}`, { method: "DELETE" });
       await reloadAll();

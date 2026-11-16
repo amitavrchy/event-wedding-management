@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useState } from "react";
 import { BedDouble, Bus, Plus, Trash2 } from "lucide-react";
 import "@/app/tools.css";
@@ -72,7 +73,9 @@ export default function Logistics() {
   }
   async function remove(kind: string, id: string) {
     if (
-      !window.confirm("Remove this? Guests assigned to it are kept unassigned.")
+      !(await confirmAction(
+        "Remove this? Guests assigned to it are kept unassigned.",
+      ))
     )
       return;
     await api(`events/${event!.id}/logistics/${kind}/${id}`, {

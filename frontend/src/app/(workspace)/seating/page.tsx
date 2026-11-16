@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useRef, useState } from "react";
 import { Plus, Printer, Armchair, Move, Trash2, Search } from "lucide-react";
 import { useApp } from "@/lib/context";
@@ -239,7 +240,10 @@ export default function SeatingPage() {
                 className="icon-button"
                 aria-label="Remove selected table"
                 disabled={busy}
-                onClick={() =>
+                onClick={async () =>
+                  (await confirmAction(
+                    "Remove this table? Guests will be unassigned.",
+                  )) &&
                   void run(async () => {
                     await api(`events/${event.id}/seating/tables/${table.id}`, {
                       method: "DELETE",
@@ -284,7 +288,14 @@ export default function SeatingPage() {
                     <Button
                       variant="ghost"
                       busy={busy}
-                      onClick={() => void place(g.id, null)}
+                      onClick={async () => {
+                        if (
+                          await confirmAction(
+                            `Remove ${g.name} from this table?`,
+                          )
+                        )
+                          void place(g.id, null);
+                      }}
                     >
                       Remove
                     </Button>

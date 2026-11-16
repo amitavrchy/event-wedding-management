@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Check, EyeOff, MonitorPlay, QrCode } from "lucide-react";
@@ -127,7 +128,10 @@ export default function PhotoWall() {
                   <div className="button-group">
                     <Button
                       variant="ghost"
-                      onClick={() =>
+                      onClick={async () =>
+                        (await confirmAction(
+                          "Create a new QR code? The old code will stop working.",
+                        )) &&
                         void settings({
                           enabled: true,
                           moderation: w.moderation,
@@ -139,7 +143,10 @@ export default function PhotoWall() {
                     </Button>
                     <Button
                       variant="ghost"
-                      onClick={() => void settings({ enabled: false })}
+                      onClick={async () =>
+                        (await confirmAction("Close the photo wall?")) &&
+                        void settings({ enabled: false })
+                      }
                     >
                       Close the photo wall
                     </Button>
@@ -203,7 +210,10 @@ export default function PhotoWall() {
                 <button
                   className="icon-button"
                   aria-label="Hide"
-                  onClick={() => void moderate(p.id, "HIDDEN")}
+                  onClick={async () =>
+                    (await confirmAction("Hide this photo?")) &&
+                    void moderate(p.id, "HIDDEN")
+                  }
                 >
                   <EyeOff size={16} />
                 </button>

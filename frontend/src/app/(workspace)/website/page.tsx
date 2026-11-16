@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction } from "@/components/confirmation";
 import { useEffect, useState } from "react";
 import {
   Globe,
@@ -87,6 +88,17 @@ export default function WebsiteEditor() {
               const f = new FormData(form),
                 submitter = (e.nativeEvent as SubmitEvent)
                   .submitter as HTMLButtonElement | null;
+              if (
+                f.get("clearPassword") === "on" &&
+                !(await confirmAction("Remove the website password?"))
+              )
+                return;
+              if (
+                data?.published &&
+                submitter?.value !== "publish" &&
+                !(await confirmAction("Make this website private?"))
+              )
+                return;
               await run(
                 async () => {
                   await api(`events/${event.id}/website`, {
@@ -222,7 +234,8 @@ export default function WebsiteEditor() {
                   <button
                     type="button"
                     className="text-link"
-                    onClick={() =>
+                    onClick={async () =>
+                      (await confirmAction("Remove this answer?")) &&
                       setFaqs((current) => current.filter((_, n) => n !== i))
                     }
                   >
@@ -345,7 +358,8 @@ export default function WebsiteEditor() {
             <button
               className="icon-button"
               aria-label={`Delete message by ${entry.name}`}
-              onClick={() =>
+              onClick={async () =>
+                (await confirmAction("Delete this guestbook message?")) &&
                 void run(async () => {
                   await api(
                     `events/${event.id}/website/guestbook/${entry.id}`,

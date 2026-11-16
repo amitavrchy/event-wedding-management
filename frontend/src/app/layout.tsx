@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ConfirmationHost } from "@/components/confirmation";
 import { Provider } from "@/lib/context";
 import "./globals.css";
 import "./advanced.css";
@@ -19,7 +20,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Provider>{children}</Provider>
+        <Provider>
+          {children}
+          <ConfirmationHost />
+        </Provider>
       </body>
     </html>
   );
