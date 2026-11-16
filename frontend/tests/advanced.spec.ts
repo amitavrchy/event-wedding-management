@@ -291,7 +291,44 @@ test("website publishing password protection and guestbook moderation work publi
   const review = page
     .locator(".guestbook-review")
     .filter({ hasText: "Our dear friend" });
-  await review.getByRole("button", { name: "Approve", exact: true }).click();
+  // Hold the moderation request to exercise the period before it is saved.
+  let releaseModeration!: () => void;
+  const moderationGate = new Promise<void>((resolve) => {
+    releaseModeration = resolve;
+  });
+  await page.route("**/api/events/*/website/guestbook/*", async (route) => {
+    if (route.request().method() === "PATCH") await moderationGate;
+    await route.continue();
+  });
+  try {
+    const pending = page.waitForRequest(
+      (request) =>
+        request.method() === "PATCH" &&
+        /\/website\/guestbook\//.test(request.url()),
+    );
+    await review.getByRole("button", { name: "Approve", exact: true }).click();
+    await pending;
+    await publicPage.reload();
+    await publicPage
+      .getByLabel("Celebration website password")
+      .fill("OurPrivate123");
+    await publicPage.getByRole("button", { name: "Step inside" }).click();
+    await expect(
+      publicPage.getByRole("heading", {
+        name: "A beautiful beginning, together",
+      }),
+    ).toBeVisible();
+    await expect(publicPage.locator(".public-wishes")).not.toContainText(
+      "A lifetime of warmth",
+    );
+  } finally {
+    releaseModeration();
+  }
+  // The public page reads a snapshot on access; wait for the saved state
+  // before requesting that snapshot again.
+  await expect(
+    review.getByRole("button", { name: "Hide", exact: true }),
+  ).toBeVisible();
   await publicPage.reload();
   await publicPage
     .getByLabel("Celebration website password")

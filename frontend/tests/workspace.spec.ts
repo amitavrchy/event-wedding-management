@@ -58,21 +58,73 @@ test("vendor studio creates a quote that the host can accept; admin ledger is ac
   await page
     .getByLabel("Event", { exact: true })
     .selectOption({ label: "Ayesha & Raihan" });
-  await page.getByLabel("Item 1").fill("Personalized ceremony flowers");
+  const quoteItem = `Personalized ceremony flowers ${Date.now()}`;
+  await page.getByLabel("Item 1").fill(quoteItem);
   await page.getByLabel("Amount (৳)").fill("50000");
-  await page.getByLabel("Valid until").fill("2027-12-01T18:00");
+  const expiry = new Date(Date.now() + 86400000 * 365)
+    .toISOString()
+    .slice(0, 16);
+  await page.getByLabel("Valid until").fill(expiry);
   await page.getByRole("button", { name: "Send quotation" }).click();
   await expect(page.getByRole("status")).toContainText("Quotation sent");
   const ctx = await browser.newContext();
   const host = await ctx.newPage();
   await login(host);
   await host.goto("/packages");
-  await host
-    .locator(".quote-row")
-    .last()
-    .getByRole("button", { name: "Accept", exact: true })
-    .click();
-  await expect(host.locator(".quote-row").last()).toContainText("accepted");
+  const quote = host.locator(".quote-row").filter({ hasText: quoteItem });
+  await quote.getByRole("button", { name: "Accept", exact: true }).click();
+  const dialog = host.getByRole("dialog", {
+    name: "A celebration, made personal",
+  });
+  const service = dialog.getByLabel("Service covered by your quote");
+  const serviceName = await service.locator("option").first().textContent();
+  await service.selectOption({ index: 0 });
+  const start = new Date(
+    Date.now() + 86400000 * (700 + Math.floor(Math.random() * 300)),
+  )
+    .toISOString()
+    .slice(0, 16);
+  await dialog.getByLabel("Date and time (Asia/Dhaka)").fill(start);
+  await dialog.getByRole("button", { name: "Accept and book" }).click();
+  await expect(host).toHaveURL("/bookings");
+  await expect(host.getByRole("status")).toContainText(
+    "Your quote was accepted and your booking recorded",
+  );
+  const bookingDate = new Date(`${start}:00+06:00`);
+  const dateLabel = bookingDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Dhaka",
+  });
+  const timeLabel = bookingDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Dhaka",
+  });
+  const booking = host.locator(".booking-card").filter({
+    hasText: `${dateLabel} · ${timeLabel} BST`,
+  });
+  await expect(booking).toHaveCount(1);
+  await expect(booking).toContainText("The Grand Palace");
+  await expect(booking).toContainText(serviceName!.trim());
+  await expect(booking.locator(".badge")).toHaveText("confirmed");
+  await expect(booking.locator(".booking-total")).toHaveText("৳ 50,000");
+  await expect(
+    booking.getByText("Advance: ৳ 15,000 · pending", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    booking.getByText("Balance: ৳ 35,000 · pending", { exact: true }),
+  ).toBeVisible();
+  await host.reload();
+  await expect(
+    booking.getByText("Advance: ৳ 15,000 · pending", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    booking.getByText("Balance: ৳ 35,000 · pending", { exact: true }),
+  ).toBeVisible();
+  await host.goto("/packages");
+  await expect(quote.locator(".badge")).toHaveText("accepted");
   await ctx.close();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page.getByLabel("Email address").fill("admin@utsab.local");
@@ -246,7 +298,9 @@ test("mobile navigation and layouts fit the viewport", async ({ page }) => {
     page.getByRole("heading", { name: "Find your dream team" }),
   ).toBeVisible();
   await expect(page.locator(".mobile-scrim")).not.toBeVisible();
-  const filtered = page.waitForResponse((r) => r.url().includes("category=Venue"));
+  const filtered = page.waitForResponse((r) =>
+    r.url().includes("category=Venue"),
+  );
   await page.getByLabel("Category").selectOption("Venue");
   await filtered;
   await page.waitForTimeout(200);
