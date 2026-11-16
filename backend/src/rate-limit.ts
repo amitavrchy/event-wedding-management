@@ -53,18 +53,46 @@ export class Limiter {
 
 export const limiter = new Limiter();
 
+/**
+ * Session upkeep the web client performs on page loads and tab focus. These
+ * need a valid session or refresh token, so they cannot be used to guess
+ * credentials and use the normal per-route limit instead of the auth limit.
+ */
+const SESSION_UPKEEP = new Set([
+  "GET auth/me",
+  "GET auth/sessions",
+  "GET auth/socket-token",
+  "POST auth/refresh",
+  "POST auth/logout",
+  "POST auth/logout-all",
+  "POST auth/devices",
+  "POST auth/devices/remove",
+]);
+
+/**
+ * Picks the rate-limit bucket for a request path such as `/api/auth/login`.
+ * Credential, verification and account-security endpoints share the strict
+ * per-IP auth bucket; everything else is limited per route.
+ */
+export function rateBucket(method: string, path: string | undefined, routePath?: string) {
+  const parts = (path || "").split("/").filter(Boolean);
+  const bucket = parts[1] || "api";
+  const strict = bucket === "auth" && !SESSION_UPKEEP.has(`${method.toUpperCase()} ${parts.slice(1).join("/")}`);
+  return {
+    name: strict ? "auth" : routePath || bucket,
+    limit: strict
+      ? Number(process.env.RATE_LIMIT_AUTH_PER_MINUTE || 20)
+      : Number(process.env.RATE_LIMIT_PER_MINUTE || 180),
+  };
+}
+
 @Injectable()
 export class RateLimit implements CanActivate, OnModuleDestroy {
   async canActivate(ctx: ExecutionContext) {
     const req = ctx.switchToHttp().getRequest();
-    const bucket = req.path?.split("/")[2] || "api";
     const ip = req.ip || req.socket?.remoteAddress;
-    const auth = bucket === "auth";
-    const key = `${ip}:${auth ? "auth" : req.route?.path || bucket}`;
-    const limit = auth
-      ? Number(process.env.RATE_LIMIT_AUTH_PER_MINUTE || 20)
-      : Number(process.env.RATE_LIMIT_PER_MINUTE || 180);
-    await limiter.check(key, { limit, windowSeconds: 60 });
+    const bucket = rateBucket(req.method || "GET", req.path, req.route?.path);
+    await limiter.check(`${ip}:${bucket.name}`, { limit: bucket.limit, windowSeconds: 60 });
     return true;
   }
   async onModuleDestroy() {
