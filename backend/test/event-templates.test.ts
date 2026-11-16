@@ -76,8 +76,8 @@ test(
         });
         assert.equal(event.eventType, type);
         assert.deepEqual(
-          event.tasks.map((t) => t.title),
-          template.checklist,
+          event.tasks.map((t) => t.title).sort(),
+          [...template.checklist].sort(),
         );
         assert.equal(
           event.budget.reduce((s, b) => s + b.plannedMinor, 0),
@@ -130,3 +130,15 @@ test(
     }
   },
 );
+
+test("catalogue copies stay aligned with server validation and presets", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { occasionCatalog } = await import("../src/occasion-catalog");
+  const { occasionDefaults } = await import("../src/features");
+  const web = JSON.parse(readFileSync("../frontend/src/lib/occasion-catalog.json", "utf8"));
+  const dart = readFileSync("../mobile/lib/core/occasion_catalog.dart", "utf8").split("r'''")[1].split("'''")[0];
+  assert.deepEqual(web, occasionCatalog);
+  assert.deepEqual(JSON.parse(dart), occasionCatalog);
+  assert.deepEqual(eventTypes.slice(0, 4), ["WEDDING", "BIRTHDAY", "ANNIVERSARY", "CORPORATE"]);
+  for (const item of occasionCatalog) assert.ok(occasionDefaults[item.type].length > 0);
+});

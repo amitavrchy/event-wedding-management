@@ -1,4 +1,5 @@
 import type { EventType } from "./event-templates";
+import { occasionCatalog } from "./occasion-catalog";
 
 /**
  * Occasion-driven workspace. Each event shows only the tools that fit its
@@ -81,7 +82,7 @@ const business: FeatureKey[] = [
 ];
 
 /** Default tools per occasion (in addition to the core tools). */
-export const occasionDefaults: Record<EventType, FeatureKey[]> = {
+const presetDefaults: Partial<Record<EventType, FeatureKey[]>> = {
   WEDDING: weddingFamily,
   HOLUD: ["datePlanner", "costSplit", "gifts", "inspiration", "sides", "households", "invitations", "catering", "photoWall", "runSheet", "collaboration"],
   RECEPTION: ["datePlanner", "costSplit", "gifts", "sides", "households", "invitations", "seating", "logistics", "checkIn", "contracts", "finance", "runSheet", "vendorPortal", "catering", "photoWall", "livestream", "collaboration"],
@@ -96,6 +97,8 @@ export const occasionDefaults: Record<EventType, FeatureKey[]> = {
   COMMUNITY: ["datePlanner", "invitations", "checkIn", "runSheet", "catering", "livestream", "website", "collaboration"],
   GENERAL: ["invitations", "catering"],
 };
+
+export const occasionDefaults = Object.fromEntries(occasionCatalog.map((item) => [item.type, presetDefaults[item.preset]!])) as Record<EventType, FeatureKey[]>;
 
 export function isFeatureKey(value: string): value is FeatureKey {
   return (featureKeys as string[]).includes(value);
