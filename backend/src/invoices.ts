@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { Database } from "./prisma";
+import { vendorContactSelect } from "./vendors";
 import { AuthGuard } from "./auth";
 import { ownEvent, vendorAccess } from "./access";
 import { amount, date, parse, z } from "./validation";
@@ -31,7 +32,7 @@ export class InvoicesController {
   async records(where: any) {
     const bookings = await this.db.booking.findMany({
       where,
-      include: { service: { include: { vendor: true } }, event: true },
+      include: { service: { include: { vendor: { select: vendorContactSelect } } }, event: true },
       orderBy: { createdAt: "desc" },
     });
     return Promise.all(

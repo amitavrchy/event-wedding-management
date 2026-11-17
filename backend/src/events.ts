@@ -18,6 +18,7 @@ import { Database } from "./prisma";
 import { ownEvent, eventAccess } from "./access";
 import { amount, date, parse, z } from "./validation";
 import { eventTypes, templateFor, allocateBudget } from "./event-templates";
+import { vendorContactSelect } from "./vendors";
 @Controller("events")
 @UseGuards(AuthGuard)
 export class EventsController {
@@ -93,7 +94,7 @@ export class EventsController {
       include: {
         days: true,
         tasks: { orderBy: { position: "asc" } },
-        bookings: { include: { service: { include: { vendor: true } } } },
+        bookings: { include: { service: { include: { vendor: { select: vendorContactSelect } } } } },
         guests: true,
         budget: true,
         expenses: true,
