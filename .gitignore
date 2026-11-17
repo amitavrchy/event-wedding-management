@@ -6,6 +6,8 @@ out/
 coverage/
 
 # Local environment files (examples are committed)
+.env
+.env.*
 !.env.example
 
 # Test and tooling artefacts
@@ -30,4 +32,3 @@ mobile/ios/Runner/GoogleService-Info.plist
 *.jks
 *.keystore
 uploads/
-config.bat
