@@ -325,3 +325,32 @@ test("offline check-in sync is idempotent", { skip: !enabled }, async () => {
   );
   assert.equal(await db.guestCheckin.count({ where: { dayId: day.data.id } }), 1);
 });
+
+test("booking, event and invoice records expose only public vendor fields to hosts", { skip: !enabled }, async () => {
+  const owner = await account("VENDOR");
+  const vendor = await vendorFor(owner);
+  await db.vendor.update({ where: { id: vendor.id }, data: { commissionBps: 1500, planCode: "PREMIUM" } });
+  const host = await account("HOST");
+  const event = await call("events", { token: host.token, body: { title: "Private leak check", budgetMinor: 100000, guestCapacity: 50 } });
+  assert.equal(event.status, 201, JSON.stringify(event.data));
+  const startAt = new Date(Date.now() + 120 * 86400000).toISOString();
+  const hold = await call("bookings", { token: host.token, body: { eventId: event.data.id, serviceId: vendor.serviceId, startAt } });
+  assert.equal(hold.status, 201, JSON.stringify(hold.data));
+  const bookings = await call("bookings", { token: host.token });
+  const row = bookings.data.find((b: any) => b.id === hold.data.id);
+  assert.ok(row?.service?.vendor, "vendor card is attached");
+  const detail = await call(`events/${event.data.id}`, { token: host.token });
+  const invoices = await call(`invoices/event/${event.data.id}`, { token: host.token });
+  const packages = await call("packages");
+  const vendorsSeen = [
+    row.service.vendor,
+    ...detail.data.bookings.map((b: any) => b.service.vendor),
+    ...invoices.data.map((i: any) => i.booking?.service?.vendor).filter(Boolean),
+    ...packages.data.flatMap((p: any) => p.services.map((s: any) => s.vendor)),
+  ];
+  assert.ok(vendorsSeen.length >= 2);
+  for (const v of vendorsSeen)
+    for (const hidden of ["ownerId", "commissionBps", "planCode", "status", "featuredUntil"])
+      assert.equal(v[hidden], undefined, `${hidden} must not reach other users`);
+  assert.equal(row.service.vendor.businessName, (await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } })).businessName);
+});

@@ -10,6 +10,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { Database } from "./prisma";
+import { vendorCardSelect } from "./vendors";
 import { AuthGuard } from "./auth";
 import { ownEvent, ownVendor } from "./access";
 import { amount, date, parse, z } from "./validation";
@@ -28,7 +29,7 @@ export class PackagesController {
       packages.map(async (p) => {
         const services = await this.db.vendorService.findMany({
           where: { id: { in: p.serviceIds }, vendor: { status: "ACTIVE" } },
-          include: { vendor: true },
+          include: { vendor: { select: vendorCardSelect } },
         });
         return {
           ...p,

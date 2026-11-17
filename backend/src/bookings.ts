@@ -21,6 +21,7 @@ import { publishBooking } from "./realtime";
 import { Notifier } from "./notify/notifier";
 import { link } from "./notify/templates";
 import { sandboxPaymentsEnabled } from "./config";
+import { vendorContactSelect } from "./vendors";
 @Controller("bookings")
 @UseGuards(AuthGuard)
 export class BookingsController {
@@ -34,7 +35,7 @@ export class BookingsController {
         req.user.role === "VENDOR"
           ? { service: { vendor: vendorAccess(req.user.sub) } }
           : { event: eventAccess(req.user.sub) },
-      include: { service: { include: { vendor: true } }, event: true, installments: { orderBy: { dueAt: "asc" } }, payments: { where: { status: "CAPTURED" } } },
+      include: { service: { include: { vendor: { select: vendorContactSelect } } }, event: true, installments: { orderBy: { dueAt: "asc" } }, payments: { where: { status: "CAPTURED" } } },
       orderBy: { startAt: "asc" },
     });
   }

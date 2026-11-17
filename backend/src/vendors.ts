@@ -24,6 +24,27 @@ import { entitlements } from "./plans";
 import { readyPublicUrl } from "./storage";
 
 type VendorRow = Prisma.VendorGetPayload<{ include: { services: true } }>;
+/**
+ * Vendor fields safe to embed in records other users read (bookings, invoices,
+ * event detail, public packages). Never includes the owner id, commission rate,
+ * plan or moderation status.
+ */
+export const vendorCardSelect = {
+  id: true,
+  slug: true,
+  businessName: true,
+  category: true,
+  city: true,
+  description: true,
+  image: true,
+  logo: true,
+  ratingAvg: true,
+  ratingCount: true,
+  verifiedAt: true,
+  priceFromMinor: true,
+} satisfies Prisma.VendorSelect;
+/** As above plus the business phone, for hosts who already hold a booking with the vendor. */
+export const vendorContactSelect = { ...vendorCardSelect, phone: true } satisfies Prisma.VendorSelect;
 /** Public fields only: no owner id, commission, plan or contact phone (shared after an inquiry). */
 export function publicVendor(v: VendorRow, sponsored = false) {
   return {
